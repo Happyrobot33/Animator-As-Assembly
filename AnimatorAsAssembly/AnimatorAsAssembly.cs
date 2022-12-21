@@ -2089,6 +2089,7 @@ namespace AnimatorAsCodeFramework.Examples
         //integer to binary is done by dividing the number by two, then using the remainder as the bit, and the quotient as the next number to divide by, till the quotient is 0
         //remember, internally binary is stored as either 1 or 4, not 0 or 1 due to the way unity truncates 0 from the front of integers and floating point imprecision from the copy
         //Due to how this calculation is done, the result is stored least significant bit first
+        //THIS STORES THE RESULT AS LITTLE ENDIAN, NOT BIG ENDIAN TODO: Find a way around this
         public AacFlState[] INTTOBINARY(Register rin, Register rout, AacFlLayer FX)
         {
             //create internal register
@@ -2135,15 +2136,14 @@ namespace AnimatorAsCodeFramework.Examples
         }
 
         //binary to integer is done by multiplying the number by 2 to the power of the bit, then adding it to the result. 1 is 0 and 4 is 1
-        //little endian form means the least significant bit is first
+        //data comes in as big endian so we avoid as much data loss as possible due to floating point innacuracy
         public AacFlState[] BINARYTOINT(Register rin, Register rout, AacFlLayer FX)
         {
             Register BINARYTOINTAC1 = Register.CreateRegister("&BINARYTOINTAC1", FX); //result
             Register BINARYTOINTAC2 = Register.CreateRegister("&BINARYTOINTAC2", FX); //used to store the working bit
 
             //sequence of operations is get the first bit, multiply it by 2^0, add it to the result, repeat for the next bit
-            //7 is LSB since we are using little endian form
-            AacFlState[] GetBit = GETDIGIT(rin, BINARYTOINTAC2, 7, FX);
+            AacFlState[] GetBit = GETDIGIT(rin, BINARYTOINTAC2, 0, FX);
             //make the last state reset the result register since it might have a value from a previous run
             GetBit[GetBit.Length - 1].Drives(BINARYTOINTAC1.param, 0);
             //add 1 to the result if the bit is 4
@@ -2153,43 +2153,43 @@ namespace AnimatorAsCodeFramework.Examples
             GetBitToBIT_PLACE_ONE.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //LSB + 1   
-            AacFlState[] GetBit2 = GETDIGIT(rin, BINARYTOINTAC2, 6, FX);
+            AacFlState[] GetBit2 = GETDIGIT(rin, BINARYTOINTAC2, 1, FX);
             AacFlState BIT_PLACE_TWO = FX.NewState("{BINARYTOINT} BIT_PLACE_TWO").DrivingIncreases(BINARYTOINTAC1.param, 2);
             AacFlTransition GetBitToBIT_PLACE_TWO = GetBit2[GetBit2.Length - 1].TransitionsTo(BIT_PLACE_TWO);
             GetBitToBIT_PLACE_TWO.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //LSB + 2
-            AacFlState[] GetBit3 = GETDIGIT(rin, BINARYTOINTAC2, 5, FX);
+            AacFlState[] GetBit3 = GETDIGIT(rin, BINARYTOINTAC2, 2, FX);
             AacFlState BIT_PLACE_THREE = FX.NewState("{BINARYTOINT} BIT_PLACE_THREE").DrivingIncreases(BINARYTOINTAC1.param, 4);
             AacFlTransition GetBitToBIT_PLACE_THREE = GetBit3[GetBit3.Length - 1].TransitionsTo(BIT_PLACE_THREE);
             GetBitToBIT_PLACE_THREE.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //LSB + 3
-            AacFlState[] GetBit4 = GETDIGIT(rin, BINARYTOINTAC2, 4, FX);
+            AacFlState[] GetBit4 = GETDIGIT(rin, BINARYTOINTAC2, 3, FX);
             AacFlState BIT_PLACE_FOUR = FX.NewState("{BINARYTOINT} BIT_PLACE_FOUR").DrivingIncreases(BINARYTOINTAC1.param, 8);
             AacFlTransition GetBitToBIT_PLACE_FOUR = GetBit4[GetBit4.Length - 1].TransitionsTo(BIT_PLACE_FOUR);
             GetBitToBIT_PLACE_FOUR.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //LSB + 4
-            AacFlState[] GetBit5 = GETDIGIT(rin, BINARYTOINTAC2, 3, FX);
+            AacFlState[] GetBit5 = GETDIGIT(rin, BINARYTOINTAC2, 4, FX);
             AacFlState BIT_PLACE_FIVE = FX.NewState("{BINARYTOINT} BIT_PLACE_FIVE").DrivingIncreases(BINARYTOINTAC1.param, 16);
             AacFlTransition GetBitToBIT_PLACE_FIVE = GetBit5[GetBit5.Length - 1].TransitionsTo(BIT_PLACE_FIVE);
             GetBitToBIT_PLACE_FIVE.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //LSB + 5
-            AacFlState[] GetBit6 = GETDIGIT(rin, BINARYTOINTAC2, 2, FX);
+            AacFlState[] GetBit6 = GETDIGIT(rin, BINARYTOINTAC2, 5, FX);
             AacFlState BIT_PLACE_SIX = FX.NewState("{BINARYTOINT} BIT_PLACE_SIX").DrivingIncreases(BINARYTOINTAC1.param, 32);
             AacFlTransition GetBitToBIT_PLACE_SIX = GetBit6[GetBit6.Length - 1].TransitionsTo(BIT_PLACE_SIX);
             GetBitToBIT_PLACE_SIX.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //LSB + 6
-            AacFlState[] GetBit7 = GETDIGIT(rin, BINARYTOINTAC2, 1, FX);
+            AacFlState[] GetBit7 = GETDIGIT(rin, BINARYTOINTAC2, 6, FX);
             AacFlState BIT_PLACE_SEVEN = FX.NewState("{BINARYTOINT} BIT_PLACE_SEVEN").DrivingIncreases(BINARYTOINTAC1.param, 64);
             AacFlTransition GetBitToBIT_PLACE_SEVEN = GetBit7[GetBit7.Length - 1].TransitionsTo(BIT_PLACE_SEVEN);
             GetBitToBIT_PLACE_SEVEN.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
 
             //MSB
-            AacFlState[] GetBit8 = GETDIGIT(rin, BINARYTOINTAC2, 0, FX);
+            AacFlState[] GetBit8 = GETDIGIT(rin, BINARYTOINTAC2, 7, FX);
             AacFlState BIT_PLACE_EIGHT = FX.NewState("{BINARYTOINT} BIT_PLACE_EIGHT").DrivingIncreases(BINARYTOINTAC1.param, 128);
             AacFlTransition GetBitToBIT_PLACE_EIGHT = GetBit8[GetBit8.Length - 1].TransitionsTo(BIT_PLACE_EIGHT);
             GetBitToBIT_PLACE_EIGHT.When(BINARYTOINTAC2.param.IsNotEqualTo(1));
