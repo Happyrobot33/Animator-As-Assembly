@@ -1573,15 +1573,21 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[2] { doubleState, move };
         }
 
+        //properly calculates the remainder of a division
         public AacFlState[] HALF(Register register, AacFlLayer FX)
         {
             var halfRegister = Register.CreateRegister("&HALF", FX);
+            var halfRemainder = Register.CreateRegister("&HALFREM", FX);
             var halfState = FX.NewState("{HALF} HALF REGISTER").DrivingRemaps(register.param, 0, int.MaxValue - 1, halfRegister.param, 0, (int.MaxValue / 2) - 1);
+            AacFlState[] mult = MULN(halfRegister, 2, halfRemainder, FX);
+            AacFlState[] remainder = SUB(register, halfRemainder, halfRemainder, FX);
             var move = FX.NewState("{HALF} MOVE REGISTER").DrivingCopies(halfRegister.param, register.param);
 
-            halfState.AutomaticallyMovesTo(move);
+            halfState.AutomaticallyMovesTo(mult[0]);
+            mult[mult.Length - 1].AutomaticallyMovesTo(remainder[0]);
+            remainder[remainder.Length - 1].AutomaticallyMovesTo(move);
 
-            return new AacFlState[2] { halfState, move };
+            return ConcatArrays(halfState, mult, remainder, move);
         }
 
         //Shift left by multiplying by 10
@@ -2094,15 +2100,12 @@ namespace AnimatorAsCodeFramework.Examples
         {
             //create internal register
             Register INTTOBINARYAC1 = Register.CreateRegister("&INTTOBINARYAC1", FX); //quotient
-            Register INTTOBINARYAC2 = Register.CreateRegister("&INTTOBINARYAC2", FX); //dividend
             Register INTTOBINARYACR = Register.CreateRegister("&INTTOBINARYACR", FX); //result
-            Register DAC2 = Register.CreateRegister("&DAC2", FX); //used to determine if to add a bit or not
-            //override INTTOBINARYAC2 with 2 (this is used for the divide by 2)
-            FX.OverrideValue(INTTOBINARYAC2.param, 2);
+            Register REMAINDER = Register.CreateRegister("&HALFREM", FX); //used to determine if to add a bit or not
             AacFlState movToRegister = FX.NewState("{INTTOBINARY} movToRegister").DrivingCopies(rin.param, INTTOBINARYAC1.param).Drives(INTTOBINARYACR.param, 0);
             AacFlState CalculationBranch = FX.NewState("{INTTOBINARY} CalculationBranch"); //used to determine if we are done calculating
-            AacFlState[] Calculation = DIV(INTTOBINARYAC1, INTTOBINARYAC2, INTTOBINARYAC1, FX); //do the divide
-            //append the remainder to the result register. do this by shifting the result register left by 1, then incrementing by 1. skip this step if DAC2 is 0
+            AacFlState[] Calculation = HALF(INTTOBINARYAC1, FX); //do the divide
+            //append the remainder to the result register. do this by shifting the result register left by 1, then incrementing by 1. skip this step if REMAINDER is 0
             AacFlState[] ShiftState = SHL(INTTOBINARYACR, FX);
             ShiftState[ShiftState.Length - 1].DrivingIncreases(INTTOBINARYACR.param, 1); //increase to 1 to represent a 0
             AacFlState BitIsOne = FX.NewState("{INTTOBINARY} BitIsOne").DrivingIncreases(INTTOBINARYACR.param, 3); //increase to 4 to represent a 1
@@ -2128,7 +2131,7 @@ namespace AnimatorAsCodeFramework.Examples
             CalculationDone.When(INTTOBINARYAC1.param.IsEqualTo(0));
             CalculationBranch.AutomaticallyMovesTo(Calculation[0]);
             AacFlTransition CalculationBranchToShiftState = ShiftState[ShiftState.Length - 1].TransitionsTo(BitIsOne);
-            CalculationBranchToShiftState.When(DAC2.param.IsNotEqualTo(0));
+            CalculationBranchToShiftState.When(REMAINDER.param.IsNotEqualTo(0));
             Calculation[Calculation.Length - 1].AutomaticallyMovesTo(ShiftState[0]);
             ShiftState[ShiftState.Length - 1].AutomaticallyMovesTo(CalculationBranch);
 
@@ -2220,7 +2223,7 @@ namespace AnimatorAsCodeFramework.Examples
         //generates a random number between 0 and 255
         public AacFlState[] RAND8(Register rout, AacFlLayer FX)
         {
-            AacFlState randomize = FX.NewState("{RAND8} randomize").DrivingRandomizesLocally(rout.param, 0, 255);
+            AacFlState randomize = FX.NewState("{RAND8} randomize").DrivingRandomizes(rout.param, 0, 255);
 
             return ConcatArrays(randomize);
         }

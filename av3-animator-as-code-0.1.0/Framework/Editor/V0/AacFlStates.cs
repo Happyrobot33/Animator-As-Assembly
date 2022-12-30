@@ -382,6 +382,17 @@ namespace AnimatorAsCode.V0
             return this;
         }
 
+        public AacFlState DrivingRandomizes(AacFlIntParameter parameter, int min, int max)
+        {
+            CreateDriverBehaviorIfNotExists();
+            _driver.parameters.Add(new VRC_AvatarParameterDriver.Parameter
+            {
+                type = VRC_AvatarParameterDriver.ChangeType.Random,
+                name = parameter.Name, valueMin = min, valueMax = max
+            });
+            return this;
+        }
+
         public AacFlState DrivingRandomizesLocally(AacFlFloatParameter parameter, float min, float max)
         {
             CreateDriverBehaviorIfNotExists();
