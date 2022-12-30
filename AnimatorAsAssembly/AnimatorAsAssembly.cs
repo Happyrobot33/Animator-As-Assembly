@@ -31,6 +31,8 @@ SHIFTSCREENRIGHT - Shifts the screen right by inputted amount {SHIFTSCREENRIGHT 
 SHIFTLINERIGHT - Shifts the line right by inputted amount {SHIFTLINERIGHT AMOUNT}
 SHIFTSCREENDOWN - Shifts the screen down by inputted amount {SHIFTSCREENDOWN AMOUNT}
 UPDATESCREEN - Stops the GPU where it is, clears the screen and starts a new loop of redrawing
+CLEARSCREEN - Clears the screen
+DRAWCHARCODE - Draws a character to the screen using a INT code {DRAWCHARCODE INT_CODE} (ASCII Table)
 
 Opcodes
 INC: Increments the register by 1
@@ -114,6 +116,20 @@ namespace AnimatorAsCodeFramework.Examples
         public void Create()
         {
             try {
+                /*
+                //Attempt to modify where the animator controller window is looking at, in order to prevent a redraw callback happening every edit
+                //This is not a perfect solution, but it does help SIGNFICANTLY
+                //get a reference to AnimatorControllerTool
+                Type animatorWindowType = Type.GetType("UnityEditor.Graphs.AnimatorControllerTool, UnityEditor.Graphs");
+                var window = EditorWindow.GetWindow(animatorWindowType);
+                foreach (var property in animatorWindowType.GetProperties())
+                {
+                    Debug.Log(property.Name + " " + property.PropertyType + " " + property.GetValue(window));
+                }
+                //change the selected layer to 0
+                animatorWindowType.GetProperty("selectedLayerIndex").SetValue(window, 0);
+                */
+
                 //Place the Asset Database in a state where
                 //importing is suspended for most APIs
                 AssetDatabase.StartAssetEditing();
@@ -950,6 +966,9 @@ namespace AnimatorAsCodeFramework.Examples
                     case "UPDATESCREEN":
                         Instructions = CopyIntoArray(Instructions, UPDATESCREEN(FX), i);
                         break;
+                    case "CLEARSCREEN":
+                        Instructions = CopyIntoArray(Instructions, CLEARSCREEN(FX), i);
+                        break;
                     case "DRAWSTRING":
                         Instructions = CopyIntoArray(Instructions, DRAWSTRING(instructionParts[1], FX), i);
                         break;
@@ -961,6 +980,9 @@ namespace AnimatorAsCodeFramework.Examples
                         break;
                     case "RAND8":
                         Instructions = CopyIntoArray(Instructions, RAND8(Register.FindRegisterInArray(instructionParts[1], Registers), FX), i);
+                        break;
+                    case "DRAWCHARCODE":
+                        Instructions = CopyIntoArray(Instructions, DRAWCHARCODE(Register.FindRegisterInArray(instructionParts[1], Registers), FX), i);
                         break;
                     default:
                         //throw an exception if the instruction is not valid
@@ -1834,6 +1856,17 @@ namespace AnimatorAsCodeFramework.Examples
                 }
             }
 
+            //make copy from buffer clear every pixel that was copied from
+            for (int x = 0; x < displayWidth; x++)
+            {
+                for (int y = 0; y < pixels; y++)
+                {
+                    string VRAMAddress = "*VRAM " + x + "," + y;
+                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
+                    copyFromBuffer.Drives(ADDRESS, false);
+                }
+            }
+
             //link the states together
             copyToBuffer.AutomaticallyMovesTo(copyFromBuffer);
 
@@ -2092,6 +2125,23 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(TurnOffScreen, TurnOnScreen);
         }
 
+        public AacFlState[] CLEARSCREEN(AacFlLayer FX)
+        {
+            AacFlState ClearState = FX.NewState("ClearScreen");
+            //drive every single vram parameter to 0
+            for (int x = 0; x < displayWidth; x++)
+            {
+                for (int y = 0; y < displayHeight; y++)
+                {
+                    string VRAMAddress = "*VRAM " + x + "," + y;
+                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
+                    ClearState.Drives(ADDRESS, false);
+                }
+            }
+
+            return new AacFlState[] { ClearState };
+        }
+
         //integer to binary is done by dividing the number by two, then using the remainder as the bit, and the quotient as the next number to divide by, till the quotient is 0
         //remember, internally binary is stored as either 1 or 4, not 0 or 1 due to the way unity truncates 0 from the front of integers and floating point imprecision from the copy
         //Due to how this calculation is done, the result is stored least significant bit first
@@ -2226,6 +2276,54 @@ namespace AnimatorAsCodeFramework.Examples
             AacFlState randomize = FX.NewState("{RAND8} randomize").DrivingRandomizes(rout.param, 0, 255);
 
             return ConcatArrays(randomize);
+        }
+
+        //takes in a ascii character code and draws the character to the screen
+        public AacFlState[] DRAWCHARCODE(Register code, AacFlLayer FX)
+        {
+            var font = AnimatorAsAssemblyFont.GetFont();
+
+            //create a entry state
+            AacFlState ENTRY = FX.NewState("{DRAWCHARCODE} ENTRY");
+
+            //create a exit state
+            AacFlState EXIT = FX.NewState("{DRAWCHARCODE} EXIT");
+
+            //create a state for every single character in the font
+            AacFlState[] CHARACTERS = new AacFlState[font.Count];
+            AacFlState UNKOWN_CHARACTER = null;
+            for (int i = 0; i < font.Count; i++)
+            {
+                char character = font.Keys.ElementAt(i);
+                CHARACTERS[i] = FX.NewState("{DRAWCHARCODE} " + character);
+                for (int j = 0; j < 15; j++)
+                {
+                    bool value = font[character][j];
+                    int VRAMx = j % 3;
+                    int VRAMy = j / 3;
+                    string VRAMAddress = "*VRAM " + VRAMx + "," + VRAMy;
+                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
+                    CHARACTERS[i].Drives(ADDRESS, value);
+                }
+
+                //make a transition from entry to this state if the code is equal to the character code
+                AacFlTransition entryToCharacter = ENTRY.TransitionsTo(CHARACTERS[i]);
+                entryToCharacter.When(code.param.IsEqualTo(AnimatorAsAssemblyFont.CharToInt(character)));
+
+                //automatically move to exit
+                CHARACTERS[i].AutomaticallyMovesTo(EXIT);
+
+                //if the character is a question mark, save it for later
+                if (character == '?')
+                {
+                    UNKOWN_CHARACTER = CHARACTERS[i];
+                }
+            }
+
+            //if the character is not in the font, draw a question mark
+            ENTRY.AutomaticallyMovesTo(UNKOWN_CHARACTER);
+
+            return ConcatArrays(ENTRY, CHARACTERS, EXIT);
         }
     }
 

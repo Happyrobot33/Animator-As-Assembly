@@ -23,6 +23,8 @@ A Unity editor script to compile custom assembly into animator layers
 - `SHIFTLINERIGHT`: Shifts the line right by the specified amount (syntax: `SHIFTLINERIGHT AMOUNT`)
 - `SHIFTSCREENDOWN`: Shifts the screen down by the specified amount (syntax: `SHIFTSCREENDOWN AMOUNT`)
 - `UPDATESCREEN`: Stops the GPU, clears the screen, and starts a new loop of redrawing
+- `CLEARSCREEN`: Clears the entire VRAM, essentially clearing the screen. ***Does not initiate a redraw***
+- `DRAWCHARCODE`: Draws a character to the screen based on a register, determining the character based on the ASCII standard {DRAWCHARCODE INT_CODE}
 
 ### Opcodes:
 - `INC`: Increments the register by 1

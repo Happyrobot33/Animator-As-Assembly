@@ -336,11 +336,60 @@ public class AnimatorAsAssemblyFont : MonoBehaviour
                             false, false, false,
                             false, false, false,
                             false, true, false,
+                            false, false, false}},
+        {'░', new bool[]{   true, false, true,
+                            false, true, false,
+                            true, false, true,
+                            false, true, false,
+                            true, false, true}},
+        {'▒', new bool[]{   true, true, true,
+                            false, true, false,
+                            true, true, true,
+                            false, true, false,
+                            true, true, true}},
+        {'▓', new bool[]{   true, true, true,
+                            true, true, true,
+                            true, true, true,
+                            true, true, true,
+                            true, true, true}},
+        {'█', new bool[]{   true, true, true,
+                            true, true, true,
+                            true, true, true,
+                            true, true, true,
+                            true, true, true}},
+        {'▄', new bool[]{   false, false, false,
+                            false, false, false,
+                            true, true, true,
+                            true, true, true,
+                            true, true, true}},
+        {'▀', new bool[]{   true, true, true,
+                            true, true, true,
+                            true, true, true,
+                            false, false, false,
                             false, false, false}}
     };
 
     public static Dictionary<char, bool[]> GetFont()
     {
         return font;
+    }
+
+    //convert from a char to ascii INT value
+    public static int CharToInt(char c)
+    {
+        return (int)c;
+    }
+
+    //convert from ascii INT value to a char
+    public static char IntToChar(int i)
+    {
+        //check if the int is a valid ascii value in our font
+        char c = (char)i;
+        if (!font.ContainsKey(c))
+        {
+            //if not, return a ?
+            return '?';
+        }
+        return (char)i;
     }
 }
