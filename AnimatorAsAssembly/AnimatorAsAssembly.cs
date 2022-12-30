@@ -277,7 +277,12 @@ namespace AnimatorAsCodeFramework.Examples
             for (int i = 0; i < PE.Length; i++)
             {
                 EditorUtility.DisplayProgressBar("Compiling", "Generating Animations", ((float)i / (float)PE.Length));
-                clips[i] = aac.NewClip().Toggling(PE[i], true);
+                //clips[i] = aac.NewClip().Toggling(PE[i], true); //takes up 2 frames
+                clips[i] = aac.NewClip().Animating(clip => {
+                    clip.Animates(PE[i]).WithFrameCountUnit(keyframes =>
+                        keyframes.Bool(0, true)
+                    );
+                });
                 //disable the pixel gameobject
                 PE[i].SetActive(false);
                 //add the pixel gameobject animation to the blendtree
