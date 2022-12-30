@@ -30,7 +30,6 @@ DRAWCOMPLETEREGISTER - Writes a register to the screen {DRAWCOMPLETEREGISTER REG
 SHIFTSCREENRIGHT - Shifts the screen right by inputted amount {SHIFTSCREENRIGHT AMOUNT}
 SHIFTLINERIGHT - Shifts the line right by inputted amount {SHIFTLINERIGHT AMOUNT}
 SHIFTSCREENDOWN - Shifts the screen down by inputted amount {SHIFTSCREENDOWN AMOUNT}
-UPDATESCREEN - Stops the GPU where it is, clears the screen and starts a new loop of redrawing
 CLEARSCREEN - Clears the screen
 DRAWCHARCODE - Draws a character to the screen using a INT code {DRAWCHARCODE INT_CODE} (ASCII Table)
 
@@ -98,9 +97,8 @@ namespace AnimatorAsCodeFramework.Examples
         public bool useDisplay = false;
         public int displayWidth = 20;
         public int displayHeight = 20;
-        public GameObject displayXDrive;
-        public GameObject displayBeamPrefab;
-        public GameObject pixelTransformReference;
+        public GameObject screenRoot;
+        public GameObject pixelPrefab;
 
         [Header("Contact Senders")]
         public GameObject[] contactSenders;
@@ -155,6 +153,14 @@ namespace AnimatorAsCodeFramework.Examples
                     if (allSubAssets[i].GetType() != typeof(AnimatorController) && allSubAssets[i].GetType() != typeof(AnimatorStateMachine))
                     {
                         DestroyImmediate(allSubAssets[i], true);
+                    }
+
+                    //if it is the animator controller, remove all parameters
+                    if (allSubAssets[i].GetType() == typeof(AnimatorController))
+                    {
+                        //remove all parameters, which are objects in the animator controller AnimatorParameters array
+                        var controller = (AnimatorController)allSubAssets[i];
+                        controller.parameters = new AnimatorControllerParameter[0];
                     }
                 }
                 AssetDatabase.StopAssetEditing();
@@ -225,149 +231,69 @@ namespace AnimatorAsCodeFramework.Examples
             Profiler.BeginSample("GenerateDisplay");
 
             //create the horizontal drive layer
-            AacFlLayer HD = aac.CreateSupportingFxLayer("GPU Horizontal Drive");
+            AacFlLayer GPU = aac.CreateSupportingFxLayer("GPU");
 
-            //create a refresh layer for each row of the display
-            AacFlLayer[] RL = new AacFlLayer[height];
-            for (int i = 0; i < RL.Length; i++)
-            {
-                RL[i] = aac.CreateSupportingFxLayer("GPU Refresh Layer " + i);
-            }
-
-            //create a pixel emitter for each row of the display using the beam prefab
-            GameObject[] PE = new GameObject[height];
             //remove all previous pixel emitters
-            var tempList = displayXDrive.transform.Cast<Transform>().ToList();
+            var tempList = screenRoot.transform.Cast<Transform>().ToList();
             foreach(var child in tempList)
             {
                 DestroyImmediate(child.gameObject);
             }
-            //create new pixel emitters
-            for (int i = 0; i < PE.Length; i++)
-            {
-                PE[i] = Instantiate(displayBeamPrefab);
-                PE[i].name = "Pixel Emitter " + i;
-                PE[i].transform.SetParent(displayXDrive.transform);
-                PE[i].transform.localPosition = new Vector3(0, 0, -i);
-                PE[i].transform.localRotation = Quaternion.Euler(0, 0, 0);
-                PE[i].transform.localScale = new Vector3(1, 1, 1);
-                //set the particle system to use the custom simulation space
-                var main = PE[i].GetComponent<ParticleSystem>().main;
-                main.simulationSpace = ParticleSystemSimulationSpace.Custom;
-                main.customSimulationSpace = pixelTransformReference.transform;
-            }
 
-            //create the registers needed for the display
-            AacFlIntParameter X = FX.IntParameter("*X");
-            AacFlFloatParameter Xf = FX.FloatParameter("*Xf");
-            AacFlBoolParameter[] VRAM = new AacFlBoolParameter[width * height];
-            AacFlBoolParameter FakeFalse = FX.BoolParameter("*FakeFalse");
+            AacFlFloatParameter[] VRAM = new AacFlFloatParameter[width * height];
 
             //create the registers for the VRAM
             for (int i = 0; i < VRAM.Length; i++)
             {
                 int x = i % width;
                 int y = i / width;
-                VRAM[i] = FX.BoolParameter("*VRAM " + x + "," + y);
+                VRAM[i] = FX.FloatParameter("*VRAM_" + x + "," + y);
             }
 
-            //HORIZONTAL DRIVE GENERATION
-            //generate the animation to drive the Xdrive gameobject from 0 to width linearly from 0 to keyframe width
-            AacFlState HORIZDRIVE = HD.NewState("HORIZDRIVE").WithAnimation(aac.NewClip("Horizontal Drive").Animating(clip => {
-                clip.Animates(displayXDrive.transform, "localPosition.x").WithFrameCountUnit(keyframes =>
-                    keyframes.Linear(0, 0).Linear(width - 1, displayWidth - 1)
-                );
-            })).MotionTime(Xf);
-            //make the state loop on itself
-            AacFlTransition HORIZDRIVELOOP = HORIZDRIVE.TransitionsTo(HORIZDRIVE).WithTransitionToSelf();
-            HORIZDRIVELOOP.When(X.IsLessThan(width));
-            //the percent should be about 3 frames
-            float percent = 3f / (float)width;
-            HORIZDRIVELOOP.AfterAnimationIsAtLeastAtPercent(percent);
-            HORIZDRIVE.DrivingCasts(X, 0, width - 1, Xf, 0, 1);
-            HORIZDRIVE.DrivingIncreases(X, 1);
-
-            for (int i = 0; i < RL.Length; i++)
+            //create a gameobject for each pixel in the display
+            GameObject[] PE = new GameObject[width * height];
+            for (int i = 0; i < PE.Length; i++)
             {
-                AacFlLayer Refresh = RL[i];
-                GameObject PixelEmitter = PE[i];
-                //generate the animation to draw the pixels for this row
-                AacFlClip BeamOn = aac.NewClip("Beam On (" + i + ")").Animating(clip => {
-                    clip.Animates(PixelEmitter.GetComponent<ParticleSystem>(), "EmissionModule.enabled").WithFrameCountUnit(keyframes =>
-                        keyframes.Bool(0, true).Bool(1, true).Bool(2, false)
-                    );
-                });
-
-                AacFlState VRAMBRANCH = Refresh.NewState("VRAMBRANCH");
-                //generate the pixel draw states
-                AacFlState[] PixelStates = new AacFlState[width];
-                for (int x = 0; x < PixelStates.Length; x++)
-                {
-                    EditorUtility.DisplayProgressBar("Compiling", "Generating Display {Pixel Draw State " + x + "} Layer " + i, 0.1f + 0.8f * (float)(i * width + x) / (float)(width * height));
-                    //create the state
-                    AacFlState PixelDrawState = Refresh.NewState("Draw " + x);
-                    //set the animation of the beam
-                    PixelDrawState.WithAnimation(BeamOn);
-                    //make it transition from the vram state to this draw state if the X and Y registers are correct, and the correct VRAM is true
-                    AacFlTransition PixelDrawTransition = VRAMBRANCH.TransitionsTo(PixelDrawState);
-                    PixelDrawTransition.When(
-                        X.IsEqualTo(x + 1))
-                        .And(VRAM[i * width + x].IsEqualTo(true));
-                    //make it transition back to the VRAM state
-                    AacFlTransition PixelDrawTransitionBack = PixelDrawState.TransitionsTo(VRAMBRANCH);
-                    PixelDrawTransitionBack.When(X.IsNotEqualTo(x));
-                    PixelStates[x] = PixelDrawState;
-                }
-            }
-
-
-            /* OLD SCREEN REFRESH
-            //SCREEN REFRSH GENERATION
-            //generate the VRAM decision states
-            AacFlState VRAMBRANCH = Refresh.NewState("VRAMBRANCH").DrivingIncreases(X, 1);
-            AacFlState XRESET = Refresh.NewState("XRESET").Drives(X, -1).DrivingIncreases(Y, 1);
-            AacFlState FINISHEDRENDERING = Refresh.NewState("FINISHEDRENDERING");
-            AacFlTransition FINISHEDRENDERINGTRANSITION = VRAMBRANCH.TransitionsTo(FINISHEDRENDERING);
-            FINISHEDRENDERINGTRANSITION.When(Y.IsGreaterThan(height - 1)).And(X.IsGreaterThan(width - 1));
-            AacFlTransition STARTRENDERINGAGAIN = FINISHEDRENDERING.TransitionsTo(VRAMBRANCH);
-            STARTRENDERINGAGAIN.When(Y.IsLessThan(height - 1)).And(X.IsLessThan(width - 1));
-            AacFlTransition XRESETTRANSITION = VRAMBRANCH.TransitionsTo(XRESET);
-            XRESETTRANSITION.When(X.IsGreaterThan(width - 1));
-            XRESET.AutomaticallyMovesTo(VRAMBRANCH);
-
-            //generate the animation to draw a pixel on the screen
-            AacFlClip BeamOn = aac.NewClip("Display Beam On").Animating(clip => {
-                clip.Animates(displayBeam, "EmissionModule.enabled").WithFrameCountUnit(keyframes =>
-                    keyframes.Bool(0, false).Bool(1, true).Bool(2, true)
-                );
-            });
-            //generate the pixel draw states
-            AacFlState[] PixelStates = new AacFlState[VRAM.Length];
-            for (int i = 0; i < VRAM.Length; i++)
-            {
-                EditorUtility.DisplayProgressBar("Compiling", "Generating Display {Pixel Draw State " + i + "}", 0.1f + 0.8f * i / VRAM.Length);
+                EditorUtility.DisplayProgressBar("Compiling", "Generating Gameobjects", ((float)i / (float)PE.Length));
                 int x = i % width;
                 int y = i / width;
-                //create the state
-                AacFlState PixelDrawState = Refresh.NewState("Draw " + x + "," + y);
-                //set the animation of the beam
-                PixelDrawState.WithAnimation(BeamOn);
-                //make it transition from the vram state to this draw state if the X and Y registers are correct, and the correct VRAM is true
-                AacFlTransition PixelDrawTransition = VRAMBRANCH.TransitionsTo(PixelDrawState);
-                PixelDrawTransition.When(
-                    X.IsEqualTo(x))
-                    .And(Y.IsEqualTo(y))
-                    .And(VRAM[i].IsEqualTo(true));
-                //make it transition back to the VRAM state
-                AacFlTransition PixelDrawTransitionBack = PixelDrawState.TransitionsTo(VRAMBRANCH);
-                PixelDrawTransitionBack.AfterAnimationFinishes();
-                PixelStates[i] = PixelDrawState;
+                PE[i] = Instantiate(pixelPrefab, screenRoot.transform);
+                PE[i].transform.parent = screenRoot.transform;
+                PE[i].transform.localPosition = new Vector3(x, -y, 0);
+                PE[i].name = "Pixel " + x + "," + y;
             }
 
-            //make the VRAM branch state transition to itself if there is no pixel to draw
-            AacFlTransition VRAMBRANCHLOOP = VRAMBRANCH.TransitionsTo(VRAMBRANCH).WithTransitionToSelf();
-            VRAMBRANCHLOOP.When(FakeFalse.IsEqualTo(false));
-            */
+            //create a blendtree to drive the screen
+            BlendTree blendTree = aac.NewBlendTreeAsRaw();
+            blendTree.blendType = BlendTreeType.Direct;
+
+            //create a state with the blendtree in the GPU
+            AacFlState GPUState = GPU.NewState("GPU State");
+            //set the motion to the blendtree
+            GPUState.State.motion = blendTree;
+
+            //generate a toggle animation for every single pixel gameobject
+            AacFlClip[] clips = new AacFlClip[PE.Length];
+            for (int i = 0; i < PE.Length; i++)
+            {
+                EditorUtility.DisplayProgressBar("Compiling", "Generating Animations", ((float)i / (float)PE.Length));
+                clips[i] = aac.NewClip().Toggling(PE[i], true);
+                //disable the pixel gameobject
+                PE[i].SetActive(false);
+                //add the pixel gameobject animation to the blendtree
+                blendTree.AddChild(clips[i].Clip);
+            }
+
+            //get the children array
+            var children = blendTree.children;
+            for (int i = 0; i < PE.Length; i++)
+            {
+                int x = i % width;
+                int y = i / width;
+                //set the blendtree child's parameter to the VRAM register
+                children[i].directBlendParameter = "*VRAM_" + x + "," + y;
+            }
+            blendTree.children = children;
 
             EditorUtility.ClearProgressBar();
         }
@@ -962,9 +888,6 @@ namespace AnimatorAsCodeFramework.Examples
                         break;
                     case "SHIFTLINERIGHT":
                         Instructions = CopyIntoArray(Instructions, SHIFTLINERIGHT(int.Parse(instructionParts[1]), FX), i);
-                        break;
-                    case "UPDATESCREEN":
-                        Instructions = CopyIntoArray(Instructions, UPDATESCREEN(FX), i);
                         break;
                     case "CLEARSCREEN":
                         Instructions = CopyIntoArray(Instructions, CLEARSCREEN(FX), i);
@@ -1736,9 +1659,9 @@ namespace AnimatorAsCodeFramework.Examples
                 bool value = font[character[0]][i];
                 int VRAMx = i % 3;
                 int VRAMy = i / 3;
-                string VRAMAddress = "*VRAM " + VRAMx + "," + VRAMy;
-                AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                driveVRAM.Drives(ADDRESS, value);
+                string VRAMAddress = "*VRAM_" + VRAMx + "," + VRAMy;
+                AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                driveVRAM.Drives(ADDRESS, System.Convert.ToSingle(value));
             }
 
             return new AacFlState[] { driveVRAM };
@@ -1755,10 +1678,10 @@ namespace AnimatorAsCodeFramework.Examples
                 shiftPixels[x - 1] = FX.NewState("{SHIFTSCREENRIGHT} SHIFT PIXEL " + x);
                 for (int y = 0; y < displayHeight; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
-                    string VRAMAddressLeft = "*VRAM " + (x - pixels) + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    AacFlBoolParameter ADDRESSLEFT = FX.BoolParameter(VRAMAddressLeft);
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
+                    string VRAMAddressLeft = "*VRAM_" + (x - pixels) + "," + y;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    AacFlFloatParameter ADDRESSLEFT = FX.FloatParameter(VRAMAddressLeft);
                     shiftPixels[x - 1].DrivingCopies(ADDRESSLEFT, ADDRESS);
                 }
             }
@@ -1776,9 +1699,9 @@ namespace AnimatorAsCodeFramework.Examples
             AacFlState clearLeftmostPixels = FX.NewState("{SHIFTSCREENRIGHT} CLEAR LEFTMOST PIXEL");
             for (int y = 0; y < displayHeight; y++)
             {
-                string VRAMAddress = "*VRAM 0," + y;
-                AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                clearLeftmostPixels.Drives(ADDRESS, false);
+                string VRAMAddress = "*VRAM_0," + y;
+                AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                clearLeftmostPixels.Drives(ADDRESS, 0f);
             }
 
             //link the last state to the clear state
@@ -1790,17 +1713,17 @@ namespace AnimatorAsCodeFramework.Examples
         //shifts just the topmost 6pxl rows of the screen right
         public AacFlState[] SHIFTLINERIGHT(int pixels, AacFlLayer FX)
         {
-            AacFlBoolParameter[] VRAMBUFFER = new AacFlBoolParameter[displayWidth * 6];
+            AacFlFloatParameter[] VRAMBUFFER = new AacFlFloatParameter[displayWidth * 6];
             //make a state to copy from the screen to the buffer, offset by the number of pixels
             AacFlState copyToBuffer = FX.NewState("{SHIFTLINERIGHT} COPY TO BUFFER");
             for (int x = 0; x < displayWidth; x++)
             {
                 for (int y = 0; y < 6; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
                     string VRAMAddressBuffer = "*VRAMBUFFER " + (x + pixels) + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    AacFlBoolParameter ADDRESSBUFFER = FX.BoolParameter(VRAMAddressBuffer);
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    AacFlFloatParameter ADDRESSBUFFER = FX.FloatParameter(VRAMAddressBuffer);
                     copyToBuffer.DrivingCopies(ADDRESS, ADDRESSBUFFER);
                 }
             }
@@ -1811,10 +1734,10 @@ namespace AnimatorAsCodeFramework.Examples
             {
                 for (int y = 0; y < 6; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
                     string VRAMAddressBuffer = "*VRAMBUFFER " + x + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    AacFlBoolParameter ADDRESSBUFFER = FX.BoolParameter(VRAMAddressBuffer);
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    AacFlFloatParameter ADDRESSBUFFER = FX.FloatParameter(VRAMAddressBuffer);
                     copyFromBuffer.DrivingCopies(ADDRESSBUFFER, ADDRESS);
                 }
             }
@@ -1827,17 +1750,17 @@ namespace AnimatorAsCodeFramework.Examples
 
         public AacFlState[] SHIFTSCREENDOWN(int pixels, AacFlLayer FX)
         {
-            AacFlBoolParameter[] VRAMBUFFER = new AacFlBoolParameter[displayWidth * displayHeight];
+            AacFlFloatParameter[] VRAMBUFFER = new AacFlFloatParameter[displayWidth * displayHeight];
             //make a state to copy from the screen to the buffer, offset by the number of pixels
             AacFlState copyToBuffer = FX.NewState("{SHIFTSCREENDOWN} COPY TO BUFFER");
             for (int x = 0; x < displayWidth; x++)
             {
                 for (int y = 0; y < displayHeight; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
                     string VRAMAddressBuffer = "*VRAMBUFFER " + x + "," + (y + pixels);
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    AacFlBoolParameter ADDRESSBUFFER = FX.BoolParameter(VRAMAddressBuffer);
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    AacFlFloatParameter ADDRESSBUFFER = FX.FloatParameter(VRAMAddressBuffer);
                     copyToBuffer.DrivingCopies(ADDRESS, ADDRESSBUFFER);
                 }
             }
@@ -1848,10 +1771,10 @@ namespace AnimatorAsCodeFramework.Examples
             {
                 for (int y = 0; y < displayHeight; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
                     string VRAMAddressBuffer = "*VRAMBUFFER " + x + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    AacFlBoolParameter ADDRESSBUFFER = FX.BoolParameter(VRAMAddressBuffer);
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    AacFlFloatParameter ADDRESSBUFFER = FX.FloatParameter(VRAMAddressBuffer);
                     copyFromBuffer.DrivingCopies(ADDRESSBUFFER, ADDRESS);
                 }
             }
@@ -1861,9 +1784,9 @@ namespace AnimatorAsCodeFramework.Examples
             {
                 for (int y = 0; y < pixels; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    copyFromBuffer.Drives(ADDRESS, false);
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    copyFromBuffer.Drives(ADDRESS, 0f);
                 }
             }
 
@@ -1882,10 +1805,10 @@ namespace AnimatorAsCodeFramework.Examples
                 shiftRight[x - 1] = FX.NewState("{WRITECHAR} SHIFT PIXEL " + x);
                 for (int y = 0; y < 5; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
-                    string VRAMAddressLeft = "*VRAM " + (x - 4) + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    AacFlBoolParameter ADDRESSLEFT = FX.BoolParameter(VRAMAddressLeft);
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
+                    string VRAMAddressLeft = "*VRAM_" + (x - 4) + "," + y;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    AacFlFloatParameter ADDRESSLEFT = FX.FloatParameter(VRAMAddressLeft);
                     shiftRight[x - 1].DrivingCopies(ADDRESSLEFT, ADDRESS);
                 }
             }
@@ -1903,9 +1826,9 @@ namespace AnimatorAsCodeFramework.Examples
             AacFlState clearLeftmostPixels = FX.NewState("{WRITECHAR} CLEAR LEFTMOST PIXEL");
             for (int y = 0; y < 5; y++)
             {
-                string VRAMAddress = "*VRAM 0," + y;
-                AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                clearLeftmostPixels.Drives(ADDRESS, false);
+                string VRAMAddress = "*VRAM_0," + y;
+                AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                clearLeftmostPixels.Drives(ADDRESS, 0f);
             }
 
             //link the last state to the clear state
@@ -1944,9 +1867,9 @@ namespace AnimatorAsCodeFramework.Examples
                     }
                     int VRAMx = (i % 3) + (t * 4);
                     int VRAMy = i / 3;
-                    string VRAMAddress = "*VRAM " + VRAMx + "," + VRAMy;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    driveVRAM.Drives(ADDRESS, value);
+                    string VRAMAddress = "*VRAM_" + VRAMx + "," + VRAMy;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    driveVRAM.Drives(ADDRESS, System.Convert.ToSingle(value));
                 }
             }
 
@@ -2107,24 +2030,6 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(ShiftState1, ShiftState2, ShiftState3, ShiftState4, ShiftState5, ShiftState6, ShiftState7, ShiftState8, GetDigit0, GetDigit1, GetDigit2, GetDigit3, GetDigit4, GetDigit5, GetDigit6, GetDigit7, DrawDigit0, DrawDigit1, DrawDigit2, DrawDigit3, DrawDigit4, DrawDigit5, DrawDigit6, DrawDigit7);
         }
 
-        public AacFlState[] UPDATESCREEN(AacFlLayer FX)
-        {
-            Register X = Register.CreateRegister("*X", FX);
-            //create a animation to turn off the screen particle system for a few frames, then turn it back on and set the GPU *x and *y to -1
-            AacFlState TurnOffScreen = FX.NewState("TurnOffScreen").WithAnimation(aac.NewClip().Animating(clip =>
-            {
-                clip.Animates(displayXDrive.gameObject).WithFrameCountUnit(keyframes =>
-                    keyframes.Bool(0, false).Bool(10, true)
-                );
-            }));
-
-            AacFlState TurnOnScreen = FX.NewState("TurnOnScreen").Drives(X.param, -1);
-            
-            TurnOffScreen.AutomaticallyMovesTo(TurnOnScreen);
-
-            return ConcatArrays(TurnOffScreen, TurnOnScreen);
-        }
-
         public AacFlState[] CLEARSCREEN(AacFlLayer FX)
         {
             AacFlState ClearState = FX.NewState("ClearScreen");
@@ -2133,9 +2038,9 @@ namespace AnimatorAsCodeFramework.Examples
             {
                 for (int y = 0; y < displayHeight; y++)
                 {
-                    string VRAMAddress = "*VRAM " + x + "," + y;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    ClearState.Drives(ADDRESS, false);
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    ClearState.Drives(ADDRESS, 0f);
                 }
             }
 
@@ -2301,9 +2206,9 @@ namespace AnimatorAsCodeFramework.Examples
                     bool value = font[character][j];
                     int VRAMx = j % 3;
                     int VRAMy = j / 3;
-                    string VRAMAddress = "*VRAM " + VRAMx + "," + VRAMy;
-                    AacFlBoolParameter ADDRESS = FX.BoolParameter(VRAMAddress);
-                    CHARACTERS[i].Drives(ADDRESS, value);
+                    string VRAMAddress = "*VRAM_" + VRAMx + "," + VRAMy;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    CHARACTERS[i].Drives(ADDRESS, System.Convert.ToSingle(value));
                 }
 
                 //make a transition from entry to this state if the code is equal to the character code

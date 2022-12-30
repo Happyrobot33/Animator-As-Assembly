@@ -485,6 +485,19 @@ namespace AnimatorAsCode.V0
             return this;
         }
 
+        public AacFlState DrivingCopies(AacFlFloatParameter source, AacFlFloatParameter destination)
+        {
+            CreateDriverBehaviorIfNotExists();
+            _driver.parameters.Add(new VRC_AvatarParameterDriver.Parameter
+            {
+                type = VRC_AvatarParameterDriver.ChangeType.Copy,
+                source = source.Name,
+                name = destination.Name,
+                convertRange = false
+            });
+            return this;
+        }
+
         public AacFlState DrivingRemaps(AacFlIntParameter source, int sourceMin, int sourceMax, AacFlIntParameter destination, int destinationMin, int destinationMax)
         {
             CreateDriverBehaviorIfNotExists();
