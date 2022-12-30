@@ -32,6 +32,7 @@ SHIFTLINERIGHT - Shifts the line right by inputted amount {SHIFTLINERIGHT AMOUNT
 SHIFTSCREENDOWN - Shifts the screen down by inputted amount {SHIFTSCREENDOWN AMOUNT}
 CLEARSCREEN - Clears the screen
 DRAWCHARCODE - Draws a character to the screen using a INT code {DRAWCHARCODE INT_CODE} (ASCII Table)
+PIXEL - Draws a pixel to the screen {PIXEL X Y}
 
 Opcodes
 INC: Increments the register by 1
@@ -69,6 +70,7 @@ GETDIGIT: gets a digit from a number {GETDIGIT NUMBER_REGISTER DIGIT_REGISTER DI
 INTTOBINARY: turns a number into a binary number {INTTOBINARY NUMBER_REGISTER BINARY_REGISTER}
 BINARYTOINT: turns a binary number into a number {BINARYTOINT BINARY_REGISTER NUMBER_REGISTER}
 RAND8: generates a random number between 0 and 255 {RAND8 REGISTER_NUMBER}
+RANDOM: generates a random number between a min and max {RANDOM MIN MAX REGISTER_NUMBER}
 */
 
 namespace AnimatorAsCodeFramework.Examples
@@ -909,8 +911,14 @@ namespace AnimatorAsCodeFramework.Examples
                     case "RAND8":
                         Instructions = CopyIntoArray(Instructions, RAND8(Register.FindRegisterInArray(instructionParts[1], Registers), FX), i);
                         break;
+                    case "RANDOM":
+                        Instructions = CopyIntoArray(Instructions, RANDOM(int.Parse(instructionParts[1]), int.Parse(instructionParts[2]), Register.FindRegisterInArray(instructionParts[3], Registers), FX), i);
+                        break;
                     case "DRAWCHARCODE":
                         Instructions = CopyIntoArray(Instructions, DRAWCHARCODE(Register.FindRegisterInArray(instructionParts[1], Registers), FX), i);
+                        break;
+                    case "PIXEL":
+                        Instructions = CopyIntoArray(Instructions, PIXEL(Register.FindRegisterInArray(instructionParts[1], Registers), Register.FindRegisterInArray(instructionParts[2], Registers), FX), i);
                         break;
                     default:
                         //throw an exception if the instruction is not valid
@@ -2188,6 +2196,13 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(randomize);
         }
 
+        public AacFlState[] RANDOM(int min, int max, Register rout, AacFlLayer FX)
+        {
+            AacFlState randomize = FX.NewState("{RANDOM} randomize").DrivingRandomizes(rout.param, min, max);
+
+            return ConcatArrays(randomize);
+        }
+
         //takes in a ascii character code and draws the character to the screen
         public AacFlState[] DRAWCHARCODE(Register code, AacFlLayer FX)
         {
@@ -2234,6 +2249,29 @@ namespace AnimatorAsCodeFramework.Examples
             ENTRY.AutomaticallyMovesTo(UNKOWN_CHARACTER);
 
             return ConcatArrays(ENTRY, CHARACTERS, EXIT);
+        }
+
+        public AacFlState[] PIXEL(Register X, Register Y, AacFlLayer FX)
+        {
+            AacFlState ENTRY = FX.NewState("{PIXEL} ENTRY");
+            AacFlState EXIT = FX.NewState("{PIXEL} EXIT");
+
+            AacFlState[] PIXELS = new AacFlState[displayWidth * displayHeight];
+            for (int i = 0; i < displayWidth; i++)
+            {
+                for (int j = 0; j < displayHeight; j++)
+                {
+                    PIXELS[i * displayHeight + j] = FX.NewState("{PIXEL} " + i + "," + j);
+                    string VRAMAddress = "*VRAM_" + i + "," + j;
+                    AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
+                    PIXELS[i * displayHeight + j].Drives(ADDRESS, 1);
+                    AacFlTransition entryToPixel = ENTRY.TransitionsTo(PIXELS[i * displayHeight + j]);
+                    entryToPixel.When(X.param.IsEqualTo(i)).And(Y.param.IsEqualTo(j));
+                    PIXELS[i * displayHeight + j].AutomaticallyMovesTo(EXIT);
+                }
+            }
+
+            return ConcatArrays(ENTRY, PIXELS, EXIT);
         }
     }
 

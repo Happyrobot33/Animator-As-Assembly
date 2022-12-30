@@ -24,6 +24,7 @@ A Unity editor script to compile custom assembly into animator layers
 - `SHIFTSCREENDOWN`: Shifts the screen down by the specified amount (syntax: `SHIFTSCREENDOWN AMOUNT`)
 - `CLEARSCREEN`: Clears the entire VRAM, essentially clearing the screen. ***Does not initiate a redraw***
 - `DRAWCHARCODE`: Draws a character to the screen based on a register, determining the character based on the ASCII standard {DRAWCHARCODE INT_CODE}
+- `PIXEL` - Draws a pixel to the screen {PIXEL X Y}
 
 ### Opcodes:
 - `INC`: Increments the register by 1
@@ -62,3 +63,4 @@ A Unity editor script to compile custom assembly into animator layers
 - `INTTOBINARY`: Converts a number into a binary number (syntax: `INTTOBINARY NUMBER_REGISTER BINARY_REGISTER`)
 - `BINARYTOINT`: Converts a binary number into a number (syntax: `BINARYTOINT BINARY_REGISTER NUMBER_REGISTER`)
 - `RAND8`: Generates a random number between 0 and 255 (syntax: `RAND8 REGISTER`)
+- `RANDOM`: generates a random number between a min and max {RANDOM MIN MAX REGISTER_NUMBER}
