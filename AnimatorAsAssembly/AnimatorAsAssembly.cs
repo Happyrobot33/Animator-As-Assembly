@@ -262,6 +262,8 @@ namespace AnimatorAsCodeFramework.Examples
                 PE[i] = Instantiate(pixelPrefab, screenRoot.transform);
                 PE[i].transform.parent = screenRoot.transform;
                 PE[i].transform.localPosition = new Vector3(x, -y, 0);
+                //set rotation to point negative z towards local negative z
+                PE[i].transform.localRotation = Quaternion.Euler(0, 0, 180);
                 PE[i].name = "Pixel " + x + "," + y;
             }
 
@@ -1075,6 +1077,35 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[] { movToSWAP, movToRegisters };
         }
 
+        //@param DECREASING: when 1, the first register will decrease, when 0, the first register will increase
+        private AacFlState[] GenerateCalculationBranch(int DECREASING, Register IN1, Register IN2, String OPCODENAME, AacFlState CalcBranch, AacFlLayer FX)
+        {
+            //assume that the max value of a register is 8 digits
+            //27 bits are needed to store the max value of a register
+            AacFlState[] calcStates = new AacFlState[27];
+            //AacFlState[] calcStates = new AacFlState[7];
+
+            //create the states
+            for (int i = calcStates.Length - 1; i > -1; i--)
+            {
+                int power = (int)Math.Pow(2, i);
+                //int power = (int)Math.Pow(10, i);
+                if(DECREASING == 0)
+                {
+                    calcStates[i] = FX.NewState("{" + OPCODENAME + "} CALC " + power + "x").DrivingIncreases(IN1.param, power).DrivingDecreases(IN2.param, power);
+                }
+                else
+                {
+                    calcStates[i] = FX.NewState("{" + OPCODENAME + "} CALC " + power + "x").DrivingDecreases(IN1.param, power).DrivingDecreases(IN2.param, power);
+                }
+                AacFlTransition transition = CalcBranch.TransitionsTo(calcStates[i]);
+                transition.When(IN2.param.IsGreaterThan(power - 1));
+                calcStates[i].AutomaticallyMovesTo(CalcBranch);
+            }
+
+            return calcStates;
+        }
+
         //uses registers AAC1 and AAC2 for calculation, then stores the result in register3
         public AacFlState[] ADD(Register register1, Register register2, Register register3, AacFlLayer FX)
         {
@@ -1084,14 +1115,8 @@ namespace AnimatorAsCodeFramework.Examples
 
             var movToAAC = FX.NewState("{ADD} MOV TO AAC").DrivingCopies(register1.param, AAC1.param).DrivingCopies(register2.param, AAC2.param);
             var CalculationBranch = FX.NewState("{ADD} CALC BRANCH");
-            var Calculation1x = FX.NewState("{ADD} CALC 1x").DrivingIncreases(AAC1.param, 1).DrivingDecreases(AAC2.param, 1);
-            var Calculation10x = FX.NewState("{ADD} CALC 10x").DrivingIncreases(AAC1.param, 10).DrivingDecreases(AAC2.param, 10);
-            var Calculation100x = FX.NewState("{ADD} CALC 100x").DrivingIncreases(AAC1.param, 100).DrivingDecreases(AAC2.param, 100);
-            var Calculation1000x = FX.NewState("{ADD} CALC 1000x").DrivingIncreases(AAC1.param, 1000).DrivingDecreases(AAC2.param, 1000);
-            var Calculation10000x = FX.NewState("{ADD} CALC 10000x").DrivingIncreases(AAC1.param, 10000).DrivingDecreases(AAC2.param, 10000);
-            var Calculation100000x = FX.NewState("{ADD} CALC 100000x").DrivingIncreases(AAC1.param, 100000).DrivingDecreases(AAC2.param, 100000);
-            var Calculation1000000x = FX.NewState("{ADD} CALC 1000000x").DrivingIncreases(AAC1.param, 1000000).DrivingDecreases(AAC2.param, 1000000);
-            var Calculation10000000x = FX.NewState("{ADD} CALC 10000000x").DrivingIncreases(AAC1.param, 10000000).DrivingDecreases(AAC2.param, 10000000);
+            
+            AacFlState[] calc = GenerateCalculationBranch(0, AAC1, AAC2, "ADD", CalculationBranch, FX);
 
             var movToRegister = FX.NewState("{ADD} MOV TO REGISTER").DrivingCopies(AAC1.param, register3.param);
 
@@ -1114,39 +1139,8 @@ namespace AnimatorAsCodeFramework.Examples
             AacFlTransition movToRegister1 = CalculationBranch.TransitionsTo(movToRegister);
             movToRegister1.When(AAC2.param.IsEqualTo(0));
 
-            //if AAC2 is greater than 100, then do 100x
-            //if AAC2 is greater than 10, then do 10x
-            //if AAC2 is greater than 1, then do 1x
-            //if AAC2 is 0, then move to movToRegister
-            AacFlTransition movToAAC10000000x = CalculationBranch.TransitionsTo(Calculation10000000x);
-            movToAAC10000000x.When(AAC2.param.IsGreaterThan(10000000));
-            AacFlTransition movToAAC1000000x = CalculationBranch.TransitionsTo(Calculation1000000x);
-            movToAAC1000000x.When(AAC2.param.IsGreaterThan(1000000));
-            AacFlTransition movToAAC100000x = CalculationBranch.TransitionsTo(Calculation100000x);
-            movToAAC100000x.When(AAC2.param.IsGreaterThan(100000));
-            AacFlTransition movToAAC10000x = CalculationBranch.TransitionsTo(Calculation10000x);
-            movToAAC10000x.When(AAC2.param.IsGreaterThan(10000));
-            AacFlTransition movToAAC1000x = CalculationBranch.TransitionsTo(Calculation1000x);
-            movToAAC1000x.When(AAC2.param.IsGreaterThan(1000));
-            AacFlTransition movToAAC100x = CalculationBranch.TransitionsTo(Calculation100x);
-            movToAAC100x.When(AAC2.param.IsGreaterThan(100));
-            AacFlTransition movToAAC10x = CalculationBranch.TransitionsTo(Calculation10x);
-            movToAAC10x.When(AAC2.param.IsGreaterThan(10));
-            AacFlTransition movToAAC1x = CalculationBranch.TransitionsTo(Calculation1x);
-            movToAAC1x.When(AAC2.param.IsGreaterThan(0));
-            
-            //loop back to CalculationBranch
-            Calculation1x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation100x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation1000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation100000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation1000000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10000000x.AutomaticallyMovesTo(CalculationBranch);
-
             //return ConcatFlStateArrays(new AacFlState[] { movToAAC }, ConcatFlStateArrays(JIGRCheck, ConcatFlStateArrays(swapAAC, new AacFlState[] { CalculationBranch, Calculation1x, Calculation10x, Calculation100x, Calculation1000x, Calculation10000x, movToRegister })));
-            return ConcatArrays(movToAAC, JIGRCheck, swapAAC, CalculationBranch, Calculation1x, Calculation10x, Calculation100x, Calculation1000x, Calculation10000x, Calculation100000x, Calculation1000000x, Calculation10000000x, movToRegister);
+            return ConcatArrays(movToAAC, JIGRCheck, swapAAC, CalculationBranch, calc, movToRegister);
         }
 
         public AacFlState[] SUB(Register register1, Register register2, Register register3, AacFlLayer FX)
@@ -1156,57 +1150,22 @@ namespace AnimatorAsCodeFramework.Examples
 
             var movToSAC = FX.NewState("{SUB} MOV TO SAC").DrivingCopies(register1.param, SAC1.param).DrivingCopies(register2.param, SAC2.param);
             var CalculationBranch = FX.NewState("{SUB} CALC BRANCH");
-            var Calculation1x = FX.NewState("{SUB} CALC 1x").DrivingDecreases(SAC1.param, 1).DrivingDecreases(SAC2.param, 1);
-            var Calculation10x = FX.NewState("{SUB} CALC 10x").DrivingDecreases(SAC1.param, 10).DrivingDecreases(SAC2.param, 10);
-            var Calculation100x = FX.NewState("{SUB} CALC 100x").DrivingDecreases(SAC1.param, 100).DrivingDecreases(SAC2.param, 100);
-            var Calculation1000x = FX.NewState("{SUB} CALC 1000x").DrivingDecreases(SAC1.param, 1000).DrivingDecreases(SAC2.param, 1000);
-            var Calculation10000x = FX.NewState("{SUB} CALC 10000x").DrivingDecreases(SAC1.param, 10000).DrivingDecreases(SAC2.param, 10000);
-            var Calculation100000x = FX.NewState("{SUB} CALC 100000x").DrivingDecreases(SAC1.param, 100000).DrivingDecreases(SAC2.param, 100000);
-            var Calculation1000000x = FX.NewState("{SUB} CALC 1000000x").DrivingDecreases(SAC1.param, 1000000).DrivingDecreases(SAC2.param, 1000000);
-            var Calculation10000000x = FX.NewState("{SUB} CALC 10000000x").DrivingDecreases(SAC1.param, 10000000).DrivingDecreases(SAC2.param, 10000000);
+
+            AacFlState[] calc = GenerateCalculationBranch(1, SAC1, SAC2, "SUB", CalculationBranch, FX);
 
             var movToRegister = FX.NewState("{SUB} MOV TO REGISTER").DrivingCopies(SAC1.param, register3.param);
 
             //transitions
             movToSAC.AutomaticallyMovesTo(CalculationBranch);
 
-            //if SAC2 is greater than 100, then do 100x
-            //if SAC2 is greater than 10, then do 10x
-            //if SAC2 is greater than 1, then do 1x
-            //if SAC2 is 0, then move to movToRegister
-            AacFlTransition movToSAC10000000x = CalculationBranch.TransitionsTo(Calculation10000000x);
-            movToSAC10000000x.When(SAC2.param.IsGreaterThan(10000000));
-            AacFlTransition movToSAC1000000x = CalculationBranch.TransitionsTo(Calculation1000000x);
-            movToSAC1000000x.When(SAC2.param.IsGreaterThan(1000000));
-            AacFlTransition movToSAC100000x = CalculationBranch.TransitionsTo(Calculation100000x);
-            movToSAC100000x.When(SAC2.param.IsGreaterThan(100000));
-            AacFlTransition movToSAC10000x = CalculationBranch.TransitionsTo(Calculation10000x);
-            movToSAC10000x.When(SAC2.param.IsGreaterThan(10000));
-            AacFlTransition movToSAC1000x = CalculationBranch.TransitionsTo(Calculation1000x);
-            movToSAC1000x.When(SAC2.param.IsGreaterThan(1000));
-            AacFlTransition movToSAC100x = CalculationBranch.TransitionsTo(Calculation100x);
-            movToSAC100x.When(SAC2.param.IsGreaterThan(100));
-            AacFlTransition movToSAC10x = CalculationBranch.TransitionsTo(Calculation10x);
-            movToSAC10x.When(SAC2.param.IsGreaterThan(10));
-            AacFlTransition movToSAC1x = CalculationBranch.TransitionsTo(Calculation1x);
-            movToSAC1x.When(SAC2.param.IsGreaterThan(0));
-
             //check if 0
             //if SAC2 is 0, then move to movToRegister
             AacFlTransition movToRegister1 = CalculationBranch.TransitionsTo(movToRegister);
             movToRegister1.When(SAC2.param.IsEqualTo(0));
-            
-            //loop back to CalculationBranch
-            Calculation1x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation100x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation1000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation100000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation1000000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10000000x.AutomaticallyMovesTo(CalculationBranch);
+
+
             //return new AacFlState[] { movToSAC, CalculationBranch, Calculation1x, Calculation10x, Calculation100x, Calculation1000x, Calculation10000x, movToRegister };
-            return ConcatArrays(movToSAC, CalculationBranch, Calculation1x, Calculation10x, Calculation100x, Calculation1000x, Calculation10000x, Calculation100000x, Calculation1000000x, Calculation10000000x, movToRegister);
+            return ConcatArrays(movToSAC, CalculationBranch, calc, movToRegister);
         }
 
         //uses registers JEQ1 and JEQ2 for calculation, then sets the flag JEQR to 1 if they are equal, and 0 if they are not

@@ -34,6 +34,24 @@ public class CodeAreaAttribute : PropertyAttribute
         codeStyleWrite.wordWrap = false;
         codeStyleWrite.alignment = TextAnchor.UpperLeft;
         lineStyleWrite.alignment = TextAnchor.UpperRight;
+
+        //font set
+        //find FiraCode-Regular.ttf
+        Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
+        Font font = null;
+        foreach (Font f in fonts)
+        {
+            if (f.name == "FiraCode-Regular")
+            {
+                font = f;
+                break;
+            }
+        }
+        codeStyleRead.font = font;
+        codeStyleWrite.font = font;
+        lineStyleRead.font = font;
+        lineStyleWrite.font = font;
+        Debug.Log(font);
     }
 }
 //create a property drawer that is like TextArea but has line numbers to the left of the text
