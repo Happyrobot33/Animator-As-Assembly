@@ -1855,43 +1855,27 @@ namespace AnimatorAsCodeFramework.Examples
         public AacFlState[] GETDIGIT(Register rIN, Register rOUT, int digit_place, AacFlLayer FX)
         {
             Register GETD = Register.CreateRegister("&GETD", FX);
-            AacFlState movToRegister = FX.NewState("{GETDIGIT} MOV TO REGISTER").DrivingRemaps(rIN.param, 0, int.MaxValue, GETD.param, 0, int.MaxValue / (int)Math.Pow(10, digit_place));
-            AacFlState CalculationBranch = FX.NewState("{GETDIGIT} CALCULATION BRANCH");
-            AacFlState Calculation10x = FX.NewState("{GETDIGIT} CALCULATION 10x").DrivingDecreases(GETD.param, 10);
-            AacFlState Calculation100x = FX.NewState("{GETDIGIT} CALCULATION 100x").DrivingDecreases(GETD.param, 100);
-            AacFlState Calculation1000x = FX.NewState("{GETDIGIT} CALCULATION 1000x").DrivingDecreases(GETD.param, 1000);
-            AacFlState Calculation10000x = FX.NewState("{GETDIGIT} CALCULATION 10000x").DrivingDecreases(GETD.param, 10000);
-            AacFlState Calculation100000x = FX.NewState("{GETDIGIT} CALCULATION 100000x").DrivingDecreases(GETD.param, 100000);
-            AacFlState Calculation1000000x = FX.NewState("{GETDIGIT} CALCULATION 1000000x").DrivingDecreases(GETD.param, 1000000);
-            AacFlState Calculation10000000x = FX.NewState("{GETDIGIT} CALCULATION 10000000x").DrivingDecreases(GETD.param, 10000000);
+            Register SUBR = Register.CreateRegister("&SUB", FX);
+            AacFlState movToRegister = FX.NewState("{GETDIGIT} MOV TO REGISTER").DrivingRemaps(rIN.param, 0, int.MaxValue, GETD.param, 0, int.MaxValue / (int)Math.Pow(10, digit_place)).DrivingRemaps(rIN.param, 0, int.MaxValue, SUBR.param, 0, int.MaxValue / (int)Math.Pow(10, digit_place));
+
+            AacFlState checkDigitGreaterThan9 = FX.NewState("{GETDIGIT} CHECK DIGIT > 9");
+
+            //this removes the digit we want from SUB, allowing us to find the digit we want by removing it by the inputed number
+            AacFlState[] shr = SHR(SUBR, FX);
+            AacFlState[] shl = SHL(SUBR, FX);
+            AacFlState[] subCalc = SUB(GETD, SUBR, GETD, FX);
 
             AacFlState movToOutput = FX.NewState("{GETDIGIT} MOV TO OUTPUT").DrivingCopies(GETD.param, rOUT.param);
 
-            movToRegister.AutomaticallyMovesTo(CalculationBranch);
-            //check if the number is less than the minimum number that can be displayed at this digit place
-            AacFlTransition CalcDone = CalculationBranch.TransitionsTo(movToOutput);
-            CalcDone.When(GETD.param.IsLessThan(10));
-            AacFlTransition Calc10x = CalculationBranch.TransitionsTo(Calculation10x);
-            Calc10x.When(GETD.param.IsLessThan(100));
-            AacFlTransition Calc100x = CalculationBranch.TransitionsTo(Calculation100x);
-            Calc100x.When(GETD.param.IsLessThan(1000));
-            AacFlTransition Calc1000x = CalculationBranch.TransitionsTo(Calculation1000x);
-            Calc1000x.When(GETD.param.IsLessThan(10000));
-            AacFlTransition Calc10000x = CalculationBranch.TransitionsTo(Calculation10000x);
-            Calc10000x.When(GETD.param.IsLessThan(100000));
-            AacFlTransition Calc100000x = CalculationBranch.TransitionsTo(Calculation100000x);
-            Calc100000x.When(GETD.param.IsLessThan(1000000));
-            AacFlTransition Calc1000000x = CalculationBranch.TransitionsTo(Calculation1000000x);
-            Calc1000000x.When(GETD.param.IsLessThan(10000000));
-            CalculationBranch.AutomaticallyMovesTo(Calculation10000000x);
-            Calculation10x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation100x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation1000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation100000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation1000000x.AutomaticallyMovesTo(CalculationBranch);
-            Calculation10000000x.AutomaticallyMovesTo(CalculationBranch);
-            return ConcatArrays(movToRegister, CalculationBranch, Calculation10x, Calculation100x, Calculation1000x, Calculation10000x, Calculation100000x, Calculation1000000x, Calculation10000000x, movToOutput);
+            movToRegister.AutomaticallyMovesTo(checkDigitGreaterThan9);
+            AacFlTransition greaterThan9 = checkDigitGreaterThan9.TransitionsTo(movToOutput);
+            greaterThan9.When(GETD.param.IsLessThan(10));
+            checkDigitGreaterThan9.AutomaticallyMovesTo(shr[0]);
+            shr[shr.Length - 1].AutomaticallyMovesTo(shl[0]);
+            shl[shl.Length - 1].AutomaticallyMovesTo(subCalc[0]);
+            subCalc[subCalc.Length - 1].AutomaticallyMovesTo(movToOutput);
+
+            return ConcatArrays(movToRegister, checkDigitGreaterThan9, shr, shl, subCalc, movToOutput);
         }
 
         //displays a register on the screen
