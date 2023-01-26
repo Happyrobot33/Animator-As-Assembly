@@ -1923,15 +1923,21 @@ namespace AnimatorAsCodeFramework.Examples
             //repeat for each digit
 
             Register DCRDIG = Register.CreateRegister("&DCRDIG", FX); //stores the current working digit
+            Register CURDIG = Register.CreateRegister("&CURDIG", FX); //stores the current digit place
 
-            AacFlState[] ShiftState1 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState2 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState3 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState4 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState5 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState6 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState7 = SHIFTLINERIGHT(4, FX);
-            AacFlState[] ShiftState8 = SHIFTLINERIGHT(4, FX);
+            AacFlState RESETREG = FX.NewState("{DRAWCOMPLETEREGISTER} RESETREG").Drives(CURDIG.param, 0); //reset CURDIG to 0
+            AacFlState ENTRY = FX.NewState("{DRAWCOMPLETEREGISTER} ENTRY");
+            AacFlState EXIT = FX.NewState("{DRAWCOMPLETEREGISTER} EXIT");
+            //transition to exit if CURDIG is 8
+            AacFlTransition exitTransition = ENTRY.TransitionsTo(EXIT);
+            exitTransition.When(CURDIG.param.IsEqualTo(8));
+            RESETREG.AutomaticallyMovesTo(ENTRY);
+
+            AacFlState[] ShiftLine = SHIFTLINERIGHT(4, FX);
+            ShiftLine[ShiftLine.Length - 1].DrivingIncreases(CURDIG.param, 1); //increase CURDIG by 1 at the end of the loop
+            AacFlState[] DrawDigit = DRAWREGISTER(DCRDIG, FX);
+            ShiftLine[ShiftLine.Length - 1].AutomaticallyMovesTo(DrawDigit[0]);
+            DrawDigit[DrawDigit.Length - 1].AutomaticallyMovesTo(ENTRY);
 
             AacFlState[] GetDigit0 = GETDIGIT(r, DCRDIG, 0, FX);
             AacFlState[] GetDigit1 = GETDIGIT(r, DCRDIG, 1, FX);
@@ -1942,48 +1948,40 @@ namespace AnimatorAsCodeFramework.Examples
             AacFlState[] GetDigit6 = GETDIGIT(r, DCRDIG, 6, FX);
             AacFlState[] GetDigit7 = GETDIGIT(r, DCRDIG, 7, FX);
 
-            AacFlState[] DrawDigit0 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit1 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit2 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit3 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit4 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit5 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit6 = DRAWREGISTER(DCRDIG, FX);
-            AacFlState[] DrawDigit7 = DRAWREGISTER(DCRDIG, FX);
+            //entry to each digit retrieval, based on the current digit place
+            AacFlTransition GetDigit0Entry = ENTRY.TransitionsTo(GetDigit0[0]);
+            GetDigit0Entry.When(CURDIG.param.IsEqualTo(0));
+            GetDigit0[GetDigit0.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            //link everything together
-            ShiftState1[ShiftState1.Length - 1].AutomaticallyMovesTo(GetDigit0[0]);
-            GetDigit0[GetDigit0.Length - 1].AutomaticallyMovesTo(DrawDigit0[0]);
-            DrawDigit0[DrawDigit0.Length - 1].AutomaticallyMovesTo(ShiftState2[0]);
+            AacFlTransition GetDigit1Entry = ENTRY.TransitionsTo(GetDigit1[0]);
+            GetDigit1Entry.When(CURDIG.param.IsEqualTo(1));
+            GetDigit1[GetDigit1.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState2[ShiftState2.Length - 1].AutomaticallyMovesTo(GetDigit1[0]);
-            GetDigit1[GetDigit1.Length - 1].AutomaticallyMovesTo(DrawDigit1[0]);
-            DrawDigit1[DrawDigit1.Length - 1].AutomaticallyMovesTo(ShiftState3[0]);
+            AacFlTransition GetDigit2Entry = ENTRY.TransitionsTo(GetDigit2[0]);
+            GetDigit2Entry.When(CURDIG.param.IsEqualTo(2));
+            GetDigit2[GetDigit2.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState3[ShiftState3.Length - 1].AutomaticallyMovesTo(GetDigit2[0]);
-            GetDigit2[GetDigit2.Length - 1].AutomaticallyMovesTo(DrawDigit2[0]);
-            DrawDigit2[DrawDigit2.Length - 1].AutomaticallyMovesTo(ShiftState4[0]);
+            AacFlTransition GetDigit3Entry = ENTRY.TransitionsTo(GetDigit3[0]);
+            GetDigit3Entry.When(CURDIG.param.IsEqualTo(3));
+            GetDigit3[GetDigit3.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState4[ShiftState4.Length - 1].AutomaticallyMovesTo(GetDigit3[0]);
-            GetDigit3[GetDigit3.Length - 1].AutomaticallyMovesTo(DrawDigit3[0]);
-            DrawDigit3[DrawDigit3.Length - 1].AutomaticallyMovesTo(ShiftState5[0]);
+            AacFlTransition GetDigit4Entry = ENTRY.TransitionsTo(GetDigit4[0]);
+            GetDigit4Entry.When(CURDIG.param.IsEqualTo(4));
+            GetDigit4[GetDigit4.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState5[ShiftState5.Length - 1].AutomaticallyMovesTo(GetDigit4[0]);
-            GetDigit4[GetDigit4.Length - 1].AutomaticallyMovesTo(DrawDigit4[0]);
-            DrawDigit4[DrawDigit4.Length - 1].AutomaticallyMovesTo(ShiftState6[0]);
+            AacFlTransition GetDigit5Entry = ENTRY.TransitionsTo(GetDigit5[0]);
+            GetDigit5Entry.When(CURDIG.param.IsEqualTo(5));
+            GetDigit5[GetDigit5.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState6[ShiftState6.Length - 1].AutomaticallyMovesTo(GetDigit5[0]);
-            GetDigit5[GetDigit5.Length - 1].AutomaticallyMovesTo(DrawDigit5[0]);
-            DrawDigit5[DrawDigit5.Length - 1].AutomaticallyMovesTo(ShiftState7[0]);
+            AacFlTransition GetDigit6Entry = ENTRY.TransitionsTo(GetDigit6[0]);
+            GetDigit6Entry.When(CURDIG.param.IsEqualTo(6));
+            GetDigit6[GetDigit6.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState7[ShiftState7.Length - 1].AutomaticallyMovesTo(GetDigit6[0]);
-            GetDigit6[GetDigit6.Length - 1].AutomaticallyMovesTo(DrawDigit6[0]);
-            DrawDigit6[DrawDigit6.Length - 1].AutomaticallyMovesTo(ShiftState8[0]);
+            AacFlTransition GetDigit7Entry = ENTRY.TransitionsTo(GetDigit7[0]);
+            GetDigit7Entry.When(CURDIG.param.IsEqualTo(7));
+            GetDigit7[GetDigit7.Length - 1].AutomaticallyMovesTo(ShiftLine[0]);
 
-            ShiftState8[ShiftState8.Length - 1].AutomaticallyMovesTo(GetDigit7[0]);
-            GetDigit7[GetDigit7.Length - 1].AutomaticallyMovesTo(DrawDigit7[0]);
-
-            return ConcatArrays(ShiftState1, ShiftState2, ShiftState3, ShiftState4, ShiftState5, ShiftState6, ShiftState7, ShiftState8, GetDigit0, GetDigit1, GetDigit2, GetDigit3, GetDigit4, GetDigit5, GetDigit6, GetDigit7, DrawDigit0, DrawDigit1, DrawDigit2, DrawDigit3, DrawDigit4, DrawDigit5, DrawDigit6, DrawDigit7);
+            return ConcatArrays(RESETREG, ENTRY, GetDigit0, GetDigit1, GetDigit2, GetDigit3, GetDigit4, GetDigit5, GetDigit6, GetDigit7, DrawDigit, ShiftLine, EXIT);
         }
 
         public AacFlState[] CLEARSCREEN(AacFlLayer FX)
@@ -2157,41 +2155,49 @@ namespace AnimatorAsCodeFramework.Examples
             //create a exit state
             AacFlState EXIT = FX.NewState("{DRAWCHARCODE} EXIT");
 
-            //create a state for every single character in the font
-            AacFlState[] CHARACTERS = new AacFlState[font.Count];
-            AacFlState UNKOWN_CHARACTER = null;
-            for (int i = 0; i < font.Count; i++)
+            //create a state for every single pixel in the character
+            AacFlState[] PIXELS = new AacFlState[3 * 5];
+            AacFlState[] DECISIONS = new AacFlState[PIXELS.Length];
+            for (int y = 0; y < 5; y++)
             {
-                char character = font.Keys.ElementAt(i);
-                CHARACTERS[i] = FX.NewState("{DRAWCHARCODE} " + character);
-                for (int j = 0; j < 15; j++)
+                for (int x = 0; x < 3; x++)
                 {
-                    bool value = font[character][j];
-                    int VRAMx = j % 3;
-                    int VRAMy = j / 3;
-                    string VRAMAddress = "*VRAM_" + VRAMx + "," + VRAMy;
+                    //convert the x and y to a linear index of a 3x5 array
+                    int index = (y * 3) + x;
+                    //relevant VRAM address we need to drive
+                    string VRAMAddress = "*VRAM_" + x + "," + y;
                     AacFlFloatParameter ADDRESS = FX.FloatParameter(VRAMAddress);
-                    CHARACTERS[i].Drives(ADDRESS, System.Convert.ToSingle(value));
-                }
 
-                //make a transition from entry to this state if the code is equal to the character code
-                AacFlTransition entryToCharacter = ENTRY.TransitionsTo(CHARACTERS[i]);
-                entryToCharacter.When(code.param.IsEqualTo(AnimatorAsAssemblyFont.CharToInt(character)));
+                    PIXELS[index] = FX.NewState("{DRAWCHARCODE} " + x + "," + y).Drives(ADDRESS, 1); //set to on
+                    DECISIONS[index] = FX.NewState("{DRAWCHARCODE} " + x + "," + y + " DECISION").Drives(ADDRESS, 0); //default to 0
 
-                //automatically move to exit
-                CHARACTERS[i].AutomaticallyMovesTo(EXIT);
-
-                //if the character is a question mark, save it for later
-                if (character == '?')
-                {
-                    UNKOWN_CHARACTER = CHARACTERS[i];
+                    //loop through every character in the font
+                    for (int i = 0; i < 255; i++)
+                    {
+                        char character = AnimatorAsAssemblyFont.IntToChar(i);
+                        //create a condition from the decision to the pixel state for each character
+                        bool shouldDraw = font[character][index];
+                        if (shouldDraw)
+                        {
+                            AacFlTransition PixelShouldBeOn = DECISIONS[index].TransitionsTo(PIXELS[index]);
+                            PixelShouldBeOn.When(code.param.IsEqualTo(i));
+                        }
+                    }
                 }
             }
 
-            //if the character is not in the font, draw a question mark
-            ENTRY.AutomaticallyMovesTo(UNKOWN_CHARACTER);
+            //make all the automatic transitions
+            ENTRY.AutomaticallyMovesTo(DECISIONS[0]);
+            DECISIONS[DECISIONS.Length - 1].AutomaticallyMovesTo(EXIT);
+            PIXELS[PIXELS.Length - 1].AutomaticallyMovesTo(EXIT);
 
-            return ConcatArrays(ENTRY, CHARACTERS, EXIT);
+            for (int i = 0; i < DECISIONS.Length - 1; i++)
+            {
+                DECISIONS[i].AutomaticallyMovesTo(DECISIONS[i + 1]);
+                PIXELS[i].AutomaticallyMovesTo(DECISIONS[i + 1]);
+            }
+
+            return ConcatArrays(ENTRY, PIXELS, DECISIONS, EXIT);
         }
 
         public AacFlState[] PIXEL(Register X, Register Y, AacFlLayer FX)
