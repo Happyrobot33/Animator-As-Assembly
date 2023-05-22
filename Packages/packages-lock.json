@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.happyrobot33.animatorasassembly": {
+      "version": "file:com.happyrobot33.animatorasassembly",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.happyrobot33.animatorascode": {
       "version": "file:com.happyrobot33.animatorascode",
       "depth": 0,
