@@ -1,0 +1,16 @@
+{
+    "name": "com.happyrobot33.animatorasassembly",
+    "references": [
+        "GUID:bf0ba3819ee10bf43ad38d1834ba2bbe",
+        "GUID:106e830cd63cdab40bb17e2f99416836"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

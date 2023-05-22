@@ -1,0 +1,16 @@
+{
+    "name": "com.happyrobot33.animatorasassembly",
+    "displayName": "Animator As Assembly",
+    "version": "0.0.0",
+    "description": "Write assembly code to run in animator contollers!",
+    "license": "MIT",
+    "dependencies": {},
+    "gitDependencies": {},
+    "vpmDependencies": {
+      "com.vrchat.avatars" : "^3.2.x",
+      "com.happyrobot33.animatorascode" : "^1.0.x"
+    },
+    "legacyFolders": {},
+    "legacyFiles": {}
+  }
+  
