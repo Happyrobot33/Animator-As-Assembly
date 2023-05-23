@@ -1,12 +1,12 @@
 {
     "name":"Animator As Assembly",
     "id":"com.happyrobot33.animatorasassembly.repo",
-    "url":"https://www.matthewherber.com/animator-as-assembly/index.json",
+    "url":"https://www.matthewherber.com/Animator-As-Assembly/index.json",
     "author": {
         "name": "Happyrobot33"
     },
     "description":"The main level repository for Animator As Assembly",
     "githubRepos": [
-        "happyrobot33/animator-as-assembly"
+        "happyrobot33/Animator-As-Assembly"
     ]
 }
