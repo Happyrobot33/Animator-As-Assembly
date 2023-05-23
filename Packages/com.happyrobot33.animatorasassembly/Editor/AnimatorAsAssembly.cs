@@ -636,7 +636,7 @@ namespace AnimatorAsAssembly
             if (organizeGraph)
             {
                 EditorUtility.DisplayProgressBar("Correlating Paths", "Organizing Graph", 0f);
-                Vector3 zero = new Vector3(0, 1000, 0);
+                Vector2 zero = new Vector2(0, 1000);
                 for (int x = 0; x < Instructions.GetLength(0); x++)
                 {
                     //the Y may not be the same for every X, so we need to check for null

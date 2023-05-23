@@ -8,7 +8,7 @@
     "gitDependencies": {},
     "vpmDependencies": {
       "com.vrchat.avatars" : "^3.2.x",
-      "com.happyrobot33.animatorascode" : "^1.0.x"
+      "com.happyrobot33.animatorascode" : "^1.1.x"
     },
     "legacyFolders": {},
     "legacyFiles": {}
