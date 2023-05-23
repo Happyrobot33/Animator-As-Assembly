@@ -3,7 +3,7 @@ name: Update Website
 env:
   listPublishDirectory: Website
   pathToCi: ci
-  indexLocation: "https://www.matthewherber.com/animator-as-assembly/index.json"
+  indexLocation: "https://www.matthewherber.com/Animator-As-Assembly/index.json"
   
 on: 
   workflow_dispatch:
