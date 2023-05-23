@@ -1,7 +1,7 @@
 {
     "name": "com.happyrobot33.animatorasassembly",
     "displayName": "Animator As Assembly",
-    "version": "0.0.0",
+    "version": "0.1.0",
     "description": "Write assembly code to run in animator contollers!",
     "license": "MIT",
     "dependencies": {},
