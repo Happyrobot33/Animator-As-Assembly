@@ -74,7 +74,7 @@ RAND8: generates a random number between 0 and 255 {RAND8 REGISTER_NUMBER}
 RANDOM: generates a random number between a min and max {RANDOM MIN MAX REGISTER_NUMBER}
 */
 
-namespace AnimatorAsCodeFramework.Examples
+namespace AnimatorAsAssembly
 {
     //this file converts assembly based commands into AAC commands to generate an avatar that can run CPU level instructions
     public class AnimatorAsAssembly : MonoBehaviour
@@ -244,9 +244,14 @@ namespace AnimatorAsCodeFramework.Examples
             }
         }
 
-        //this function generates a display for the CPU to interface with
-        //the display is a 2d array of boolean values
-        //all GPU registers use a * prefix to differentiate them from the CPU registers
+        /// <summary> Generates a display on the avatar for the CPU to interface with </summary>
+        /// <remarks> This function is called by the Create() function.
+        /// The display is a 2d array of boolean values.
+        /// All GPU registers use a * prefix to differentiate them from the CPU registers.</remarks>
+        /// <param name="FX"> The main FX layer </param>
+        /// <param name="registers"> The registers that are used by the CPU </param>
+        /// <param name="width"> The width of the display </param>
+        /// <param name="height"> The height of the display </param>
         public void GenerateDisplay(AacFlLayer FX, Register[] registers, int width, int height)
         {
             //progress bar
@@ -338,7 +343,10 @@ namespace AnimatorAsCodeFramework.Examples
             EditorUtility.ClearProgressBar();
         }
 
-        //this function generates a layer per contact sender, which will turn the contact sender gameobject on and off depending on a boolean with the same name as the contact sender itself
+        /// <summary> Generates a contact sender layer for each contact sender </summary>
+        /// <remarks> This function is called by the Create() function.
+        /// The contact sender layer is a layer that will turn the contact sender gameobject on and off depending on a boolean with the same name as the contact sender itself.</remarks>
+        /// <param name="FX"> The main FX layer </param>
         public void GenerateContactSenderSystem(AacFlLayer FX)
         {
             //progress bar
@@ -384,11 +392,12 @@ namespace AnimatorAsCodeFramework.Examples
             EditorUtility.ClearProgressBar();
         }
 
-        //Cleanup removes all comments from the raw instructions
-        //Cleanup also removes all new lines from the raw instructions, unless a ; is present
-        //Comment: #This is a comment
-        //Forced New Line: ;This is a forced new line
-        //Forced new lines can be used to denote subroutines, as the first instruction after a forced new line will not be connected to the previous instruction
+        /// <summary> Cleans up the raw instructions </summary>
+        /// <remarks> This function is called by the Create() function.
+        /// Cleanup removes all comments from the raw instructions.
+        /// Cleanup also removes all new lines from the raw instructions, unless a ; is present. </remarks>
+        /// <param name="raw"> The raw instructions </param>
+        /// <returns> The cleaned up instruction string</returns>
         public string Cleanup(string raw)
         {
             //progress bar
@@ -600,6 +609,13 @@ namespace AnimatorAsCodeFramework.Examples
             return output;
         }
 
+        /// <summary> Correlates the paths in the graph to the instructions in the program </summary>
+        /// <remarks> This organizes the graph if enabled, adding a dummy state above each instruction to show what line it is on
+        /// this also handles connecting each instruction to the next instruction </remarks>
+        /// <param name="Instructions"> The instructions to correlate. X in the 2D array is the instruction number, Y is the individual states that make up that instruction</param>
+        /// <param name="FX"> The FX layer to correlate </param>
+        /// <param name="raw"> The raw program </param>
+        /// <param name="registers"> The registers to correlate </param>
         public void CorrelatePaths(
             AacFlState[,] Instructions,
             AacFlLayer FX,
@@ -847,6 +863,11 @@ namespace AnimatorAsCodeFramework.Examples
             Profiler.EndSample();
         }
 
+        /// <summary> Parses the instructions. </summary>
+        /// <param name="raw"> The raw instructions to parse. </param>
+        /// <param name="FX"> The FX layer. </param>
+        /// <param name="registers"> [out] The registers that were found in the instructions. </param>
+        /// <returns> The parsed instructions. </returns>
         public AacFlState[,] ParseInstructions(string raw, AacFlLayer FX, out Register[] registers)
         {
             Profiler.BeginSample("ParseInstructions");
@@ -1281,7 +1302,6 @@ namespace AnimatorAsCodeFramework.Examples
                     default:
                         //throw an exception if the instruction is not valid
                         throw new Exception("Invalid instruction: " + instruction);
-                        break;
                 }
             }
 
@@ -1292,12 +1312,12 @@ namespace AnimatorAsCodeFramework.Examples
             return Instructions;
         }
 
-        public string AddInstruction(string RAWINSTRUCTIONS, string instruction)
-        {
-            return RAWINSTRUCTIONS + instruction + "\n";
-        }
-
         //set the second dimension of the array to the array
+        /// <summary> Copies an array into a 2D array </summary>
+        /// <param name="array">The 2D array to copy into</param>
+        /// <param name="array2">The array to copy from</param>
+        /// <param name="index">The index to copy into</param>
+        /// <returns>The 2D array with the array copied into it</returns>
         public AacFlState[,] CopyIntoArray(AacFlState[,] array, AacFlState[] array2, int index)
         {
             Profiler.BeginSample("CopyIntoArray [AacFlState]");
@@ -1326,6 +1346,10 @@ namespace AnimatorAsCodeFramework.Examples
             return array;
         }
 
+        /// <summary> Copies an value into an array </summary>
+        /// <param name="array">The array to copy into</param>
+        /// <param name="value">The value to copy</param>
+        /// <returns>The array with the value copied into it</returns>
         public Register[] CopyIntoArray(Register[] array, Register value)
         {
             Profiler.BeginSample("CopyIntoArray [Register]");
@@ -1345,6 +1369,7 @@ namespace AnimatorAsCodeFramework.Examples
             return newArray;
         }
 
+        /// <inheritdoc cref="CopyIntoArray(Register[], Register)"/>
         public LBL[] CopyIntoArray(LBL[] array, LBL value)
         {
             Profiler.BeginSample("CopyIntoArray [LBL]");
@@ -1365,6 +1390,9 @@ namespace AnimatorAsCodeFramework.Examples
         }
 
         //thank god for chatGPT for this one
+        /// <summary> Concatenates multiple arrays into one </summary>
+        /// <param name="objects">The arrays to concatenate</param>
+        /// <returns>The concatenated array</returns>
         public static AacFlState[] ConcatArrays(params object[] objects)
         {
             object[][] arrays = objects
@@ -1373,24 +1401,38 @@ namespace AnimatorAsCodeFramework.Examples
             return arrays.Aggregate((a, b) => a.Concat(b).ToArray()).Cast<AacFlState>().ToArray();
         }
 
+        /// <summary> Increments a register </summary>
+        /// <param name="register">The register to increment</param>
+        /// <param name="FX">The layer to increment the register in</param>
+        /// <returns>The state set to increment the register</returns>
         public AacFlState[] INC(Register register, AacFlLayer FX)
         {
             var state = FX.NewState("INC").DrivingIncreases(register.param, 1);
             return new AacFlState[] { state };
         }
 
+        /// <summary> Decrements a register </summary>
+        /// <param name="register">The register to decrement</param>
+        /// <param name="FX">The layer to decrement the register in</param>
+        /// <returns>The state set to decrement the register</returns>
         public AacFlState[] DEC(Register register, AacFlLayer FX)
         {
             var state = FX.NewState("DEC").DrivingDecreases(register.param, 1);
             return new AacFlState[] { state };
         }
 
+        /// <summary> Jumps to a label </summary>
+        /// <param name="FX">The layer to jump in</param>
+        /// <returns>The state set to jump to the label</returns>
         public AacFlState[] JMP(AacFlLayer FX)
         {
             var state = FX.NewState("JMP");
             return new AacFlState[] { state };
         }
 
+        /// <summary> Jumps to a label if a register is equal to a number </summary>
+        /// <param name="FX">The layer to jump in</param>
+        /// <returns>The state set to jump to the label if the register is equal to the number</returns>
         public AacFlState[] JEN(AacFlLayer FX)
         {
             var state = FX.NewState("JEN");
@@ -1421,6 +1463,11 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[] { state };
         }
 
+        /// <summary> Swaps the values of two registers </summary>
+        /// <param name="register1">The first register to swap</param>
+        /// <param name="register2">The second register to swap</param>
+        /// <param name="FX">The layer to swap the registers in</param>
+        /// <returns>The states set to swap the registers</returns>
         public AacFlState[] SWAP(Register register1, Register register2, AacFlLayer FX)
         {
             var SWAP1 = Register.CreateRegister("&SWAP1", FX);
@@ -1440,6 +1487,14 @@ namespace AnimatorAsCodeFramework.Examples
         }
 
         //@param DECREASING: when 1, the first register will decrease, when 0, the first register will increase
+        /// <summary> Generates the states for a calculation branch. This allows code reuse and optimization </summary>
+        /// <param name="DECREASING">When 1, the first register will decrease, when 0, the first register will increase</param>
+        /// <param name="IN1">The first register to calculate with</param>
+        /// <param name="IN2">The second register to calculate with</param>
+        /// <param name="OPCODENAME">The name of the opcode</param>
+        /// <param name="CalcBranch">The state to branch to after the calculation</param>
+        /// <param name="FX">The layer to calculate in</param>
+        /// <returns>The states for the calculation branch</returns>
         private AacFlState[] GenerateCalculationBranch(
             int DECREASING,
             Register IN1,
@@ -1480,6 +1535,12 @@ namespace AnimatorAsCodeFramework.Examples
         }
 
         //uses registers AAC1 and AAC2 for calculation, then stores the result in register3
+        /// <summary> Adds two registers and stores the result in a third register </summary>
+        /// <param name="register1">The first register to add</param>
+        /// <param name="register2">The second register to add</param>
+        /// <param name="register3">The register to store the result in</param>
+        /// <param name="FX">The layer to add the registers in</param>
+        /// <returns>The states set to add the registers</returns>
         public AacFlState[] ADD(
             Register register1,
             Register register2,
@@ -1545,6 +1606,12 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
+        /// <summary> Subtracts two registers and stores the result in a third register </summary>
+        /// <param name="register1">The first register to subtract</param>
+        /// <param name="register2">The second register to subtract</param>
+        /// <param name="register3">The register to store the result in</param>
+        /// <param name="FX">The layer to subtract the registers in</param>
+        /// <returns>The states set to subtract the registers</returns>
         public AacFlState[] SUB(
             Register register1,
             Register register2,
@@ -1584,8 +1651,11 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(movToSAC, CalculationBranch, calc, movToRegister);
         }
 
-        //uses registers JEQ1 and JEQ2 for calculation, then sets the flag JEQR to 1 if they are equal, and 0 if they are not
-        //JEQR is reset to 0 every time this instruction is called
+        /// <summary> Checks if two registers are equal. sets the flag JEQR to 1 if they are equal, and 0 if they are not</summary>
+        /// <param name="register1">The first register to check</param>
+        /// <param name="register2">The second register to check</param>
+        /// <param name="FX">The layer to check the registers in</param>
+        /// <returns>The states set to check if the registers are equal</returns>
         public AacFlState[] JEQ(Register register1, Register register2, AacFlLayer FX)
         {
             var JEQ1 = Register.CreateRegister("&JEQ1", FX);
@@ -1661,7 +1731,11 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
-        //uses registers JIG1 and JIG2 for calculation, then sets the flag JIGR to 1 if register1 is greater than register2, and 0 if it is not
+        /// <summary> Checks if a register is greater than another. uses registers JIG1 and JIG2 for calculation, then sets the flag JIGR to 1 if register1 is greater than register2, and 0 if it is not. </summary>
+        /// <param name="register1">The register to check if it is greater than register2</param>
+        /// <param name="register2">The register to check if it is less than register1</param>
+        /// <param name="FX">The layer to add the states to</param>
+        /// <returns>the states created</returns>
         public AacFlState[] JIG(Register register1, Register register2, AacFlLayer FX)
         {
             var JIG1 = Register.CreateRegister("&JIG1", FX);
@@ -1781,11 +1855,18 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
-        //uses registers MAC1-4 for calculation, then stores the result in register3
-        //MAC1 //used for storing the result between loops
-        //MAC2 //Initially loaded with input 2, is used as the addition number
-        //MAC3 //Is loaded with the initial MAC1 number (How many times we need to add MAC2 to MAC1)
-        //MAC4 //starts at 0 and counts up to MAC3 every calculation cycle (How many times we have added MAC3 into MAC1)
+        /// <summary> Multiplies two registers together. <br/>
+        /// uses registers MAC1-4 for calculation, then stores the result in register3<br/>
+        /// MAC1: used for storing the result between loops<br/>
+        /// MAC2: Initially loaded with input 2, is used as the addition number<br/>
+        /// MAC3: Is loaded with the initial MAC1 number (How many times we need to add MAC2 to MAC1)<br/>
+        /// MAC4: starts at 0 and counts up to MAC3 every calculation cycle (How many times we have added MAC3 into MAC1)<br/>
+        /// </summary>
+        /// <param name="register1">The first register to multiply</param>
+        /// <param name="register2">The second register to multiply</param>
+        /// <param name="register3">The register to store the result in</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the calculation </returns>
         public AacFlState[] MUL(
             Register register1,
             Register register2,
@@ -1855,6 +1936,12 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
+        /// <summary> Multiplies a register by a constant value. <see cref="MUL(Register, Register, Register, AacFlLayer)"/> </summary>
+        /// <param name="rin">The register to multiply</param>
+        /// <param name="value">The value to multiply by</param>
+        /// <param name="rout">The register to store the result in</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the calculation </returns>
         public AacFlState[] MULN(Register rin, int value, Register rout, AacFlLayer FX)
         {
             //create a state with a parameter driver
@@ -1870,10 +1957,17 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[] { staticMultiply };
         }
 
-        //uses registers DAC1-3 for calculation, then stores the result in register3
-        //DAC1 //Loaded with register 1, used during calculation
-        //DAC2 //Loaded with register 2, used during calculation and stores the remainder
-        //DAC3 //Stores the count of how many times we have divided, and is also the final result
+        /// <summary> Divides a register by a constant value.<br/>
+        /// uses registers DAC1-3 for calculation, then stores the result in register3<br/>
+        /// DAC1: Loaded with register 1, used during calculation<br/>
+        /// DAC2: Loaded with register 2, used during calculation and stores the remainder<br/>
+        /// DAC3: Stores the count of how many times we have divided, and is also the final result<br/>
+        /// </summary>
+        /// <param name="register1">The register to divide</param>
+        /// <param name="register2">The value to divide by</param>
+        /// <param name="register3">The register to store the result in</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the calculation </returns>
         public AacFlState[] DIV(
             Register register1,
             Register register2,
@@ -1938,9 +2032,14 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
-        //create X ammount of registers to use as the stack
-        //PUT opcode will push the value of the register onto the stack, moving the stack pointer up
-        //POP opcode will pop the value of the stack onto the register, moving the stack pointer down
+        /// <summary> Creates a stack of registers, and allows you to push and pop values from it. <br/>
+        /// create X ammount of registers to use as the stack<br/>
+        /// PUT opcode will push the value of the register onto the stack, moving the stack pointer up<br/>
+        /// POP opcode will pop the value of the stack onto the register, moving the stack pointer down<br/>
+        /// </summary>
+        /// <param name="stackSize">The size of the stack</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The register list for the stack </returns>
         public Register[] CreateStack(int stackSize, AacFlLayer FX)
         {
             Register[] stack = new Register[stackSize];
@@ -1951,7 +2050,10 @@ namespace AnimatorAsCodeFramework.Examples
             return stack;
         }
 
-        //pushes the value of the register onto the stack, moving the stack pointer up
+        /// <summary> Pushes the value of the register onto the stack, moving the stack pointer up </summary>
+        /// <param name="register">The register to push</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the push </returns>
         public AacFlState[] PUT(Register register, AacFlLayer FX)
         {
             var stackPointer = Register.CreateRegister("&StackPointer", FX);
@@ -1981,7 +2083,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(entranceState, stackEntrys, incrementStackPointer);
         }
 
-        //pops the value of the stack onto the register, moving the stack pointer down
+        /// <summary> Pops the value of the stack onto the register, moving the stack pointer down </summary>
+        /// <param name="register">The register to pop to</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the pop </returns>
         public AacFlState[] POP(Register register, AacFlLayer FX)
         {
             var stackPointer = Register.CreateRegister("&StackPointer", FX);
@@ -2011,7 +2116,9 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(entranceState, stackEntrys, branchMerge);
         }
 
-        //JSR opcode will push the value of the program counter onto the stack
+        /// <summary> Pushes the value of the program counter onto the stack </summary>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the push </returns>
         public AacFlState[] JSR(AacFlLayer FX)
         {
             Register programCounter = Register.CreateRegister("&PC", FX);
@@ -2019,7 +2126,9 @@ namespace AnimatorAsCodeFramework.Examples
             return PUT(programCounter, FX);
         }
 
-        //RTS opcode will pop the value of the stack onto the program counter
+        /// <summary> Pops the value of the stack onto the program counter </summary>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the pop </returns>
         public AacFlState[] RTS(AacFlLayer FX)
         {
             Register programCounter = Register.CreateRegister("&PC", FX);
@@ -2027,7 +2136,10 @@ namespace AnimatorAsCodeFramework.Examples
             return POP(programCounter, FX);
         }
 
-        //annoyedly, due to how emulators work, we need a sub register to move into then move out
+        /// <summary> Doubles the value of the register </summary>
+        /// <param name="register">The register to double</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the double </returns>
         public AacFlState[] DOUBLE(Register register, AacFlLayer FX)
         {
             var doubleRegister = Register.CreateRegister("&DOUB", FX);
@@ -2048,7 +2160,10 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[2] { doubleState, move };
         }
 
-        //properly calculates the remainder of a division
+        /// <summary> Halves the value of the register </summary>
+        /// <param name="register">The register to halve</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the halve </returns>
         public AacFlState[] HALF(Register register, AacFlLayer FX)
         {
             var halfRegister = Register.CreateRegister("&HALF", FX);
@@ -2074,7 +2189,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(halfState, mult, remainder, move);
         }
 
-        //Shift left by multiplying by 10
+        /// <summary> Shifts the value of the register left by multiplying by 10 </summary>
+        /// <param name="register">The register to shift</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the shift </returns>
         public AacFlState[] SHL(Register register, AacFlLayer FX)
         {
             var shlRegister = Register.CreateRegister("&SHL", FX);
@@ -2095,7 +2213,10 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[2] { shlState, move };
         }
 
-        //shift right by using a copy driver
+        /// <summary> Shifts the value of the register right by dividing by 10 </summary>
+        /// <param name="register">The register to shift</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the shift </returns>
         public AacFlState[] SHR(Register register, AacFlLayer FX)
         {
             var shrRegister = Register.CreateRegister("&SHR", FX);
@@ -2117,6 +2238,12 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[2] { shrState, move };
         }
 
+        /// <summary> Converts a boolean to an integer register </summary>
+        /// <param name="contact">The contact to check</param>
+        /// <param name="register">The register to drive</param>
+        /// <param name="value">The value to drive the register to when the contact is true</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the conversion </returns>
         public AacFlState[] BOOLTOINT(Register contact, Register register, int value, AacFlLayer FX)
         {
             var enter = FX.NewState("{BOOLTOINT} ENTER");
@@ -2132,7 +2259,12 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[3] { enter, driveIntIfContact, exit };
         }
 
-        //this takes in a up to 8 digit int and returns two 4 digit ints
+        /// <summary> Segments an integer into two 4 digit integers </summary>
+        /// <param name="rin">The register to segment</param>
+        /// <param name="out_1">The first 4 digit integer</param>
+        /// <param name="out_2">The second 4 digit integer</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the segmentation </returns>
         public AacFlState[] SEGINT(Register rin, Register out_1, Register out_2, AacFlLayer FX)
         {
             var SI1 = Register.CreateRegister("&SI1", FX);
@@ -2215,6 +2347,10 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
+        /// <summary> Delays the program for a certain number of frames </summary>
+        /// <param name="frames">The number of frames to delay</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the delay </returns>
         public AacFlState[] DELAY(int frames, AacFlLayer FX)
         {
             //convert frames to seconds
@@ -2229,7 +2365,12 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[2] { delay, exit };
         }
 
-        //GPU SPECIFIC COMMANDS
+        #region GPU Opcodes
+
+        /// <summary> Draws a character to the screen </summary>
+        /// <param name="character">The character to draw</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the draw </returns>
         public AacFlState[] DRAWCHAR(string character, AacFlLayer FX)
         {
             //create a font dictionary for a 3x5 font, left to right, top to bottom
@@ -2250,7 +2391,10 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[] { driveVRAM };
         }
 
-        //this shifts everything in vram right one address
+        /// <summary> Shifts the screen right by a certain number of pixels </summary>
+        /// <param name="pixels">The number of pixels to shift</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the shift </returns>
         public AacFlState[] SHIFTSCREENRIGHT(int pixels, AacFlLayer FX)
         {
             //create a state that drives the correct VRAM addresses
@@ -2293,7 +2437,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(shiftPixels, clearLeftmostPixels);
         }
 
-        //shifts just the topmost 6pxl rows of the screen right
+        /// <summary> Shifts the topmost 6 rows of the screen right by a certain number of pixels </summary>
+        /// <param name="pixels">The number of pixels to shift</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the shift </returns>
         public AacFlState[] SHIFTLINERIGHT(int pixels, AacFlLayer FX)
         {
             AacFlFloatParameter[] VRAMBUFFER = new AacFlFloatParameter[displayWidth * 6];
@@ -2331,6 +2478,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(copyToBuffer, copyFromBuffer);
         }
 
+        /// <summary> Shifts the screen down by a certain number of pixels </summary>
+        /// <param name="pixels">The number of pixels to shift</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the shift </returns>
         public AacFlState[] SHIFTSCREENDOWN(int pixels, AacFlLayer FX)
         {
             AacFlFloatParameter[] VRAMBUFFER = new AacFlFloatParameter[
@@ -2381,6 +2532,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(copyToBuffer, copyFromBuffer);
         }
 
+        /// <summary> Writes a character to the screen </summary>
+        /// <param name="character">The character to write</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the write </returns>
         public AacFlState[] WRITECHAR(string character, AacFlLayer FX)
         {
             //shift the first 5 rows right 4 pixels
@@ -2428,6 +2583,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(shiftRight, clearLeftmostPixels, drawChar);
         }
 
+        /// <summary> Draws a string to the screen </summary>
+        /// <param name="text">The string to draw</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the write </returns>
         public AacFlState[] DRAWSTRING(string text, AacFlLayer FX)
         {
             //create a font dictionary for a 3x5 font, left to right, top to bottom
@@ -2464,10 +2623,12 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[] { driveVRAM };
         }
 
-        //this takes in a register and a digit place and returns the digit
-        //@param {rIN} the register to get the digit from
-        //@param {rOUT} the register to put the digit in
-        //@param {digit_place} the digit place to get (0 is the ones place, 1 is the tens place, etc)
+        /// <summary> Gets a digit from a register </summary>
+        /// <param name="rIN">The register to get the digit from</param>
+        /// <param name="rOUT">The register to put the digit in</param>
+        /// <param name="digit_place">The digit place to get (0 is the ones place, 1 is the tens place, etc)</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the write </returns>
         public AacFlState[] GETDIGIT(Register rIN, Register rOUT, int digit_place, AacFlLayer FX)
         {
             Register GETD = Register.CreateRegister("&GETD", FX);
@@ -2518,7 +2679,10 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
-        //displays a register on the screen
+        /// <summary> Displays a single digit register on the screen </summary>
+        /// <param name="r">The register to display</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the write </returns>
         public AacFlState[] DRAWREGISTER(Register r, AacFlLayer FX)
         {
             AacFlState start = FX.NewState("{DRAWREGISTER} START");
@@ -2553,7 +2717,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(start, states, end);
         }
 
-        //draws an entire 8 digit register
+        /// <summary> Displays an entire register on the screen </summary>
+        /// <param name="r">The register to display</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the write </returns>
         public AacFlState[] DRAWCOMPLETEREGISTER(Register r, AacFlLayer FX)
         {
             //do this process for each digit
@@ -2639,6 +2806,9 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
+        /// <summary> Completely clears the screen </summary>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the write </returns>
         public AacFlState[] CLEARSCREEN(AacFlLayer FX)
         {
             AacFlState ClearState = FX.NewState("ClearScreen");
@@ -2656,10 +2826,15 @@ namespace AnimatorAsCodeFramework.Examples
             return new AacFlState[] { ClearState };
         }
 
-        //integer to binary is done by dividing the number by two, then using the remainder as the bit, and the quotient as the next number to divide by, till the quotient is 0
-        //remember, internally binary is stored as either 1 or 4, not 0 or 1 due to the way unity truncates 0 from the front of integers and floating point imprecision from the copy
-        //Due to how this calculation is done, the result is stored least significant bit first
-        //THIS STORES THE RESULT AS LITTLE ENDIAN, NOT BIG ENDIAN TODO: Find a way around this
+        /// <summary> Converts an integer to binary </summary>
+        /// <remarks> integer to binary is done by dividing the number by two, then using the remainder as the bit, and the quotient as the next number to divide by, till the quotient is 0.
+        /// internally binary is stored as either 1 or 4, not 0 or 1 due to the way unity truncates 0 from the front of integers and floating point imprecision from the copy<br/>
+        /// Due to how this calculation is done, the result is stored least significant bit first.
+        /// THIS STORES THE RESULT AS LITTLE ENDIAN, NOT BIG ENDIAN TODO: Find a way around this </remarks>
+        /// <param name="rin">The register to convert</param>
+        /// <param name="rout">The register to store the result in</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the conversion </returns>
         public AacFlState[] INTTOBINARY(Register rin, Register rout, AacFlLayer FX)
         {
             //create internal register
@@ -2721,6 +2896,13 @@ namespace AnimatorAsCodeFramework.Examples
 
         //binary to integer is done by multiplying the number by 2 to the power of the bit, then adding it to the result. 1 is 0 and 4 is 1
         //data comes in as big endian so we avoid as much data loss as possible due to floating point innacuracy
+        /// <summary> Converts binary to an integer </summary>
+        /// <remarks> binary to integer is done by multiplying the number by 2 to the power of the bit, then adding it to the result. 1 is 0 and 4 is 1.
+        /// data comes in as big endian so we avoid as much data loss as possible due to floating point innacuracy. <see cref="INTTOBINARY(Register, Register, AacFlLayer)"/> </remarks>
+        /// <param name="rin">The register to convert</param>
+        /// <param name="rout">The register to store the result in</param>
+        /// <param name="FX">The layer to use</param>
+        /// <returns> The states for the conversion </returns>
         public AacFlState[] BINARYTOINT(Register rin, Register rout, AacFlLayer FX)
         {
             Register BINARYTOINTAC1 = Register.CreateRegister("&BINARYTOINTAC1", FX); //result
@@ -2844,7 +3026,10 @@ namespace AnimatorAsCodeFramework.Examples
             );
         }
 
-        //generates a random number between 0 and 255
+        /// <summary> Generates a random number between 0 and 255 </summary>
+        /// <param name="rout"> The register to store the random number in </param>
+        /// <param name="FX"> The layer to add the states to </param>
+        /// <returns> The states that were generated </returns>
         public AacFlState[] RAND8(Register rout, AacFlLayer FX)
         {
             AacFlState randomize = FX.NewState("{RAND8} randomize")
@@ -2853,6 +3038,12 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(randomize);
         }
 
+        /// <summary> Generates a random number between min and max </summary>
+        /// <param name="min"> The minimum value of the random number </param>
+        /// <param name="max"> The maximum value of the random number </param>
+        /// <param name="rout"> The register to store the random number in </param>
+        /// <param name="FX"> The layer to add the states to </param>
+        /// <returns> The states that were generated </returns>
         public AacFlState[] RANDOM(int min, int max, Register rout, AacFlLayer FX)
         {
             AacFlState randomize = FX.NewState("{RANDOM} randomize")
@@ -2861,7 +3052,10 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(randomize);
         }
 
-        //takes in a ascii character code and draws the character to the screen
+        /// <summary> Draws a character to the screen </summary>
+        /// <param name="code"> The ascii character code from a register to draw </param>
+        /// <param name="FX"> The layer to add the states to </param>
+        /// <returns> The states that were generated </returns>
         public AacFlState[] DRAWCHARCODE(Register code, AacFlLayer FX)
         {
             var font = AnimatorAsAssemblyFont.GetFont();
@@ -2920,6 +3114,11 @@ namespace AnimatorAsCodeFramework.Examples
             return ConcatArrays(ENTRY, PIXELS, DECISIONS, EXIT);
         }
 
+        /// <summary> Draws a pixel to the screen at a specific x y positon </summary>
+        /// <param name="X"> The x position of the pixel </param>
+        /// <param name="Y"> The y position of the pixel </param>
+        /// <param name="FX"> The layer to add the states to </param>
+        /// <returns> The states that were generated </returns>
         public AacFlState[] PIXEL(Register X, Register Y, AacFlLayer FX)
         {
             AacFlState ENTRY = FX.NewState("{PIXEL} ENTRY");
@@ -2944,13 +3143,21 @@ namespace AnimatorAsCodeFramework.Examples
 
             return ConcatArrays(ENTRY, PIXELS, EXIT);
         }
+        #endregion
     }
 
+    /// <summary> A register is a named parameter that can be used to store a value </summary>
     public class Register
     {
+        /// <summary> The internal AAC parameter that this register is linked to </summary>
         public AacFlIntParameter param;
+
+        /// <summary> The name of this register </summary>
         public string name;
 
+        /// <summary> Create a new register </summary>
+        /// <param name="name"> The name of the register to create </param>
+        /// <param name="param"> The internal AAC parameter that this register is linked to </param>
         public Register(string name, AacFlIntParameter param)
         {
             this.name = name;
@@ -2962,6 +3169,10 @@ namespace AnimatorAsCodeFramework.Examples
             return new Register(name, FX.IntParameter(name));
         }
 
+        /// <summary> Find a register in an array of registers </summary>
+        /// <param name="name"> The name of the register to find </param>
+        /// <param name="registers"> The array of registers to search through </param>
+        /// <returns> The register with the given name, or null if no register with that name exists </returns>
         public static Register FindRegisterInArray(string name, Register[] registers)
         {
             Profiler.BeginSample("FindRegisterInArray");
@@ -2983,11 +3194,18 @@ namespace AnimatorAsCodeFramework.Examples
         }
     }
 
+    /// <summary> A label is a name and a line number </summary>
     public class LBL
     {
+        /// <summary> The name of the label </summary>
         public string Name;
+
+        /// <summary> The line number of the label </summary>
         public int Line;
 
+        /// <summary> Create a new label </summary>
+        /// <param name="name">The name of the label</param>
+        /// <param name="LineNumber">The line number of the label</param>
         public LBL(string name, int LineNumber)
         {
             this.Name = name;
