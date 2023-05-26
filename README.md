@@ -1,6 +1,9 @@
 # Animator-As-Assembly
 A Unity editor script to compile custom assembly into animator layers
 
+### VCC Install Page
+https://www.matthewherber.com/Animator-As-Assembly/
+
 ## Instructions
 ### Variables:
 - `$`: register
