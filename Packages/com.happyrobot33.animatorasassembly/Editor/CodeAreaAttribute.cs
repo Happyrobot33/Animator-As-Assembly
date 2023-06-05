@@ -67,6 +67,12 @@ namespace AnimatorAsAssembly
     public class CodeAreaDrawer : PropertyDrawer
     {
         int totalLines = 0;
+        int previousCursorIndex = 0;
+
+        SyntaxHighlighterSchemes.Themes.Enum currentSelectedTheme = SyntaxHighlighterSchemes
+            .Themes
+            .Enum
+            .Forest;
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -80,16 +86,23 @@ namespace AnimatorAsAssembly
                 0
             );
 
+            int lineNumberWidth = 30;
+
             //create some space on the left for the line numbers by making a text area rect
             Rect textAreaRect = new Rect(
-                position.x + 30,
+                position.x + lineNumberWidth,
                 position.y,
-                position.width - 30,
+                position.width - lineNumberWidth,
                 position.height
             );
 
             //create another rect for the line numbers
-            Rect lineNumbersRect = new Rect(position.x, position.y, 30, position.height);
+            Rect lineNumbersRect = new Rect(
+                textAreaRect.x - lineNumberWidth,
+                textAreaRect.y,
+                lineNumberWidth,
+                textAreaRect.height
+            );
             string lineNumbers = "";
 
             Profiler.BeginSample("Line Numbering");
@@ -116,9 +129,45 @@ namespace AnimatorAsAssembly
             //if the attribute is not read only, make it editable
             if (!codeAreaAttribute.readOnly)
             {
+                //check if the editorpref exists
+                if (!EditorPrefs.HasKey("CodeAreaTheme"))
+                {
+                    //if it doesnt, set it to the default theme
+                    EditorPrefs.SetInt(
+                        "CodeAreaTheme",
+                        (int)SyntaxHighlighterSchemes.Themes.Enum.Forest
+                    );
+                }
+
+                //set the current theme to the one saved in the editor prefs
+                currentSelectedTheme = (SyntaxHighlighterSchemes.Themes.Enum)
+                    EditorPrefs.GetInt("CodeAreaTheme", (int)currentSelectedTheme);
+
+                //create a dropdown menu for the code style
+                currentSelectedTheme = (SyntaxHighlighterSchemes.Themes.Enum)
+                    EditorGUILayout.EnumPopup(label: "Theme", selected: currentSelectedTheme);
+
+                //save the selected theme to the editor prefs
+                EditorPrefs.SetInt("CodeAreaTheme", (int)currentSelectedTheme);
+
+                //create a dummy fill texture2d with the background color of the text area
+                Texture2D fillTexture = new Texture2D(1, 1);
+                fillTexture.SetPixel(
+                    0,
+                    0,
+                    SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme).base00
+                );
+                fillTexture.Apply();
+
+                codeAreaAttribute.codeStyleWrite.normal.background = fillTexture;
+                codeAreaAttribute.lineStyleWrite.normal.background = fillTexture;
+
                 var text = EditorGUI.TextArea(
                     textAreaRect,
-                    syntaxHighlight(property.stringValue),
+                    syntaxHighlight(
+                        property.stringValue,
+                        SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme)
+                    ),
                     codeAreaAttribute.codeStyleWrite
                 );
 
@@ -168,6 +217,43 @@ namespace AnimatorAsAssembly
                                 }
                             }
 
+                            //determine the cursor index in the current line
+                            int cursorIndexInLine = 0;
+                            for (int i = cursorIndex - 1; i >= 0; i--)
+                            {
+                                if (text[i] == '\n')
+                                {
+                                    break;
+                                }
+                                else
+                                {
+                                    cursorIndexInLine++;
+                                }
+                            }
+
+                            //check if the line the cursor is on is the same as the line the cursor was on before
+                            bool inSameLine = false;
+                            int currentLine = 0;
+                            int previousLine = 0;
+                            for (int i = 0; i < cursorIndex; i++)
+                            {
+                                if (text[i] == '\n')
+                                {
+                                    currentLine++;
+                                }
+                            }
+                            for (int i = 0; i < previousCursorIndex; i++)
+                            {
+                                if (text[i] == '\n')
+                                {
+                                    previousLine++;
+                                }
+                            }
+                            if (currentLine == previousLine)
+                            {
+                                inSameLine = true;
+                            }
+
                             //if in a rich text tag, move the cursor to the closest end of the tag
                             if (inRichTextTag)
                             {
@@ -177,7 +263,7 @@ namespace AnimatorAsAssembly
                                     tEditor.cursorIndex = tagStartIndex;
                                     tEditor.selectIndex = tagStartIndex;
                                     //if the cursor was at the end of the tag, move it left one
-                                    if (cursorIndex + 1 == tagEndIndex)
+                                    if (cursorIndex + 1 == tagEndIndex && inSameLine)
                                     {
                                         tEditor.cursorIndex--;
                                         tEditor.selectIndex--;
@@ -191,7 +277,7 @@ namespace AnimatorAsAssembly
                                     tEditor.cursorIndex = tagEndIndex;
                                     tEditor.selectIndex = tagEndIndex;
                                     //if the cursor was at the start of the tag, move it right one
-                                    if (tempCursor - 1 == tagStartIndex)
+                                    if (tempCursor - 1 == tagStartIndex && inSameLine)
                                     {
                                         tEditor.cursorIndex++;
                                         tEditor.selectIndex++;
@@ -207,6 +293,8 @@ namespace AnimatorAsAssembly
                                         + closerIndex
                                 ); */
                             }
+
+                            previousCursorIndex = tEditor.cursorIndex;
                         }
                     }
                 }
@@ -227,34 +315,18 @@ namespace AnimatorAsAssembly
             }
             else
             {
-                EditorGUI.SelectableLabel(
+                EditorGUI.LabelField(
                     textAreaRect,
                     property.stringValue,
                     codeAreaAttribute.codeStyleRead
                 );
-                EditorGUI.SelectableLabel(
-                    lineNumbersRect,
-                    lineNumbers,
-                    codeAreaAttribute.lineStyleRead
-                );
+                EditorGUI.LabelField(lineNumbersRect, lineNumbers, codeAreaAttribute.lineStyleRead);
             }
             EditorGUI.EndChangeCheck();
             Profiler.EndSample();
         }
 
-        string col_comment = "#9C9491";
-        string col_opcode = "#569CD6";
-        string col_operand = "#D69D85";
-        string col_label = "#4EC9B0";
-        string col_register = "#B5CEA8";
-        string col_GPUregister = "#D7BA7D";
-        string col_input_register = "#D7BA7D";
-        string col_internal_register = "#6666EA";
-        string col_number = "#7B9726";
-        string col_subroutine = "#C586C0";
-        string col_string = "#159393";
-
-        internal string syntaxHighlight(string text)
+        internal string syntaxHighlight(string text, SyntaxHighlighterSchemes.ColorTheme Theme)
         {
             //loop through each line
             string[] lines = text.Split('\n');
@@ -275,45 +347,44 @@ namespace AnimatorAsAssembly
                         if (codeSplit.Length > 0)
                         {
                             //color the opcode part
-                            codeSplit[0] = colorize(codeSplit[0], col_opcode);
+                            codeSplit[0] = colorize(codeSplit[0], Theme.base0C);
                             //if there is operands, color them
                             if (codeSplit.Length > 1)
                             {
                                 for (int j = 1; j <= codeSplit.Length - 1; j++)
                                 {
+                                    //check to see if the string has any length
+                                    if (codeSplit[j].Length == 0)
+                                    {
+                                        continue;
+                                    }
                                     //switch based on the first character of the operand
                                     switch (codeSplit[j][0])
                                     {
                                         //if the first character is a number, color it as a number
                                         case '$':
-                                            codeSplit[j] = colorize(codeSplit[j], col_register);
+                                            codeSplit[j] = colorize(codeSplit[j], Theme.base08);
                                             break;
                                         case '%':
-                                            codeSplit[j] = colorize(codeSplit[j], col_label);
+                                            codeSplit[j] = colorize(codeSplit[j], Theme.base09);
                                             break;
                                         case '&':
-                                            codeSplit[j] = colorize(
-                                                codeSplit[j],
-                                                col_internal_register
-                                            );
+                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0A);
                                             break;
                                         case '!':
-                                            codeSplit[j] = colorize(
-                                                codeSplit[j],
-                                                col_input_register
-                                            );
+                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0B);
                                             break;
                                         case '*':
-                                            codeSplit[j] = colorize(codeSplit[j], col_GPUregister);
+                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0D);
                                             break;
                                         case ';':
-                                            codeSplit[j] = colorize(codeSplit[j], col_subroutine);
+                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0E);
                                             break;
                                         default:
                                             // check if it is a number
                                             if (codeSplit[j][0] >= '0' && codeSplit[j][0] <= '9')
                                             {
-                                                codeSplit[j] = colorize(codeSplit[j], col_number);
+                                                codeSplit[j] = colorize(codeSplit[j], Theme.base06);
                                             }
                                             else
                                             {
@@ -322,7 +393,7 @@ namespace AnimatorAsAssembly
                                                 {
                                                     codeSplit[j] = colorize(
                                                         codeSplit[j],
-                                                        col_string
+                                                        Theme.base0F
                                                     );
                                                 }
                                                 else
@@ -330,7 +401,7 @@ namespace AnimatorAsAssembly
                                                     //color it as an operand
                                                     codeSplit[j] = colorize(
                                                         codeSplit[j],
-                                                        col_operand
+                                                        Theme.base07
                                                     );
                                                 }
                                             }
@@ -352,7 +423,7 @@ namespace AnimatorAsAssembly
                     if (commentSplit.Length > 1)
                     {
                         //color the comment part
-                        commentSplit[1] = colorize("#" + commentSplit[1], col_comment);
+                        commentSplit[1] = colorize("#" + commentSplit[1], Theme.base03);
                     }
 
                     //recombine the comment parts
@@ -384,6 +455,12 @@ namespace AnimatorAsAssembly
                 return "<color=" + color + ">" + text + "</color>";
             }
             return text;
+        }
+
+        internal string colorize(string text, Color color)
+        {
+            string colorstring = colorize(text, "#" + ColorUtility.ToHtmlStringRGB(color));
+            return colorstring;
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
