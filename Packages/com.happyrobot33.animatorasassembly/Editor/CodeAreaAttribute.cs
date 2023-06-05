@@ -41,6 +41,9 @@ namespace AnimatorAsAssembly
             lineStyleWrite.alignment = TextAnchor.UpperRight;
 
             //font set
+            //first load all resources in the resources folder
+            //this is needed because unity just doesn't load them otherwise
+            Resources.LoadAll("Fonts");
             //find FiraCode-Regular.ttf
             Font[] fonts = Resources.FindObjectsOfTypeAll<Font>();
             Font font = null;
