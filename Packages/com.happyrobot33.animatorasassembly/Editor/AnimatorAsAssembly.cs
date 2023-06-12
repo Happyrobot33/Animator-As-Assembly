@@ -909,8 +909,8 @@ namespace AnimatorAsAssembly
                     string part = instructionParts[j];
 
                     //check to see if the part is not just a number using int.TryParse
-                    bool number;
-                    if (!bool.TryParse(part, out number) && !part.Contains("%"))
+                    int number;
+                    if (!int.TryParse(part, out number) && !part.Contains("%"))
                     {
                         //if the part is not just a number, then it must be a register
                         //check to see if the register already exists
@@ -958,8 +958,8 @@ namespace AnimatorAsAssembly
                         Instructions = Util.CopyIntoArray(
                             Instructions,
                             new Commands.LD(
-                                FX.BoolParameter(instructionParts[1]),
-                                Convert.ToBoolean(instructionParts[2]),
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                int.Parse(instructionParts[2]),
                                 FX
                             ).states,
                             i
@@ -968,7 +968,7 @@ namespace AnimatorAsAssembly
                     case "ADD":
                         Instructions = Util.CopyIntoArray(
                             Instructions,
-                            new Commands.EIGHTBITADDER(
+                            new Commands.ADD(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
                                 Register.FindRegisterInArray(instructionParts[2], Registers),
                                 FX

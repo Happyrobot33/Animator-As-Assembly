@@ -1,4 +1,5 @@
-﻿#if UNITY_EDITOR
+﻿//#define RICHTEXT
+#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -57,7 +58,9 @@ namespace AnimatorAsAssembly
             }
             codeStyleRead.font = font;
             codeStyleWrite.font = font;
+#if RICHTEXT
             codeStyleWrite.richText = true;
+#endif
             lineStyleRead.font = font;
             lineStyleWrite.font = font;
             //Debug.Log(font);
@@ -174,6 +177,7 @@ namespace AnimatorAsAssembly
                     codeAreaAttribute.codeStyleWrite
                 );
 
+#if RICHTEXT
                 //get the active text editor
                 TextEditor tEditor =
                     typeof(EditorGUI)
@@ -304,6 +308,8 @@ namespace AnimatorAsAssembly
                 //remove all rich color tags
                 //use this regex \<[^\>]+\>
                 text = System.Text.RegularExpressions.Regex.Replace(text, @"\<[^\>]+\>", "");
+#endif
+
                 //remove any zero width spaces
                 text = text.Replace("\u200B", "");
                 //remove any carriage returns
@@ -333,6 +339,7 @@ namespace AnimatorAsAssembly
         {
             //loop through each line
             string[] lines = text.Split('\n');
+#if RICHTEXT
             for (int i = 0; i <= lines.Length - 1; i++)
             {
                 string line = lines[i];
@@ -439,6 +446,8 @@ namespace AnimatorAsAssembly
                 //replace the line with the colored line
                 lines[i] = line;
             }
+
+#endif
 
             //recombine the lines
             text = "";

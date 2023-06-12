@@ -17,7 +17,7 @@ namespace AnimatorAsAssembly
         public string name;
 
         /// <summary> The bit count per register </summary>
-        public static int bits = 4;
+        public static int bits = 16;
 
         /// <summary> The FX controller that this register is linked to </summary>
         public AacFlLayer FX;
@@ -38,6 +38,13 @@ namespace AnimatorAsAssembly
         public AacFlBoolParameter this[int i]
         {
             get { return boolParams[i]; }
+        }
+
+        /// <summary> Create a Enumerater for this register </summary>
+        /// <returns> An Enumerator for this register </returns>
+        public IEnumerator<AacFlBoolParameter> GetEnumerator()
+        {
+            return ((IEnumerable<AacFlBoolParameter>)boolParams).GetEnumerator();
         }
 
         /// <summary> Set the value of this register upon bootup </summary>

@@ -13,37 +13,41 @@ namespace AnimatorAsAssembly.Commands
         AacFlLayer FX;
         public AacFlBoolParameter SUM;
         public AacFlBoolParameter CARRY;
+        public AacFlState entry;
+        public AacFlState exit;
+        public AacFlState carryCalc;
+        public AacFlState sumCalc;
 
         /// <summary> Adds two bits together </summary>
         /// <param name="A"> The first bit to add </param>
         /// <param name="B"> The second bit to add </param>
         /// <param name="FX"> The FX controller that this command is linked to </param>
         /// <param name="i"> The identifier of this command (avoids command overlap) </param>
-        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer FX, int i = 0)
+        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer FX)
         {
             this.A = A;
             this.B = B;
             this.FX = FX;
-            SUM = FX.BoolParameter("HALFADDER/SUM" + i);
-            CARRY = FX.BoolParameter("HALFADDER/CARRY" + i);
-            states = STATES(i);
+            SUM = FX.BoolParameter("HALFADDER/SUM" + this.GetHashCode());
+            CARRY = FX.BoolParameter("HALFADDER/CARRY" + this.GetHashCode());
+            states = STATES();
         }
 
-        AacFlState[] STATES(int i = 0)
+        AacFlState[] STATES()
         {
             //entry state
-            AacFlState entry = FX.NewState("HALFADDER");
+            entry = FX.NewState("HALFADDER");
 
             //sum calc
-            AacFlState sumCalc = FX.NewState("HALFADDER SUM");
+            sumCalc = FX.NewState("HALFADDER SUM");
             sumCalc.Drives(SUM, true);
 
             //carry calc
-            AacFlState carryCalc = FX.NewState("HALFADDER CARRY");
+            carryCalc = FX.NewState("HALFADDER CARRY");
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            AacFlState exit = FX.NewState("HALFADDER EXIT");
+            exit = FX.NewState("HALFADDER EXIT");
 
             //entry state
             //XOR A and B to get the sum
