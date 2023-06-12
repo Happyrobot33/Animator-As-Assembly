@@ -976,6 +976,26 @@ namespace AnimatorAsAssembly
                             i
                         );
                         break;
+                    case "FLIP":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.FLIP(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
+                    case "COMPLEMENT":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.COMPLEMENT(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
                     default:
                         //throw an exception if the instruction is not valid
                         throw new Exception("Invalid instruction: " + instruction);

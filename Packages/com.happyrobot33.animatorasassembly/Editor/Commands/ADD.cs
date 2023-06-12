@@ -15,6 +15,9 @@ namespace AnimatorAsAssembly.Commands
         public Register SUM;
         AacFlLayer FX;
 
+        public AacFlState entry;
+        public AacFlState exit;
+
         /// <summary> Adds two registers </summary>
         /// <param name="A"> The first register to add </param>
         /// <param name="B"> The second register to add </param>
@@ -35,10 +38,13 @@ namespace AnimatorAsAssembly.Commands
             Globals globals = new Globals(FX);
 
             //entry state
-            AacFlState entry = FX.NewState("EIGHTBITADDER");
+            entry = FX.NewState("EIGHTBITADDER");
+            //clear sum and carry registers
+            entry.Drives(CARRY, false);
+            SUM.Set(entry, 0);
 
             //exit state
-            AacFlState exit = FX.NewState("EIGHTBITADDER EXIT");
+            exit = FX.NewState("EIGHTBITADDER EXIT");
 
             FULLADDER[] FullAdders = new FULLADDER[Register.bits];
 

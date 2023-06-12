@@ -28,8 +28,8 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.FX = FX;
-            SUM = FX.BoolParameter("HALFADDER/SUM" + this.GetHashCode());
-            CARRY = FX.BoolParameter("HALFADDER/CARRY" + this.GetHashCode());
+            SUM = FX.BoolParameter("HALFADDER/SUM" + this.GetHashCode()); //TODO: Use something slightly more stable than GetHashCode()
+            CARRY = FX.BoolParameter("HALFADDER/CARRY" + this.GetHashCode()); //TODO: Use something slightly more stable than GetHashCode()
             states = STATES();
         }
 

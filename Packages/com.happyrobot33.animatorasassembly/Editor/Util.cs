@@ -111,6 +111,8 @@ namespace AnimatorAsAssembly
         /// <summary> A permanent reference to a true boolean value </summary>
         public AacFlBoolParameter TRUE;
 
+        public Register ONE;
+
         /// <summary> Create a new Globals object </summary>
         /// <param name="FX">The AacFlLayer to use</param>
         public Globals(AacFlLayer FX)
@@ -118,6 +120,8 @@ namespace AnimatorAsAssembly
             this.FX = FX;
             FALSE = FX.BoolParameter("GLOBALS/FALSE");
             TRUE = FX.BoolParameter("GLOBALS/TRUE");
+            ONE = new Register("GLOBALS/ONE", FX);
+            ONE.initialize(1);
         }
     }
 }

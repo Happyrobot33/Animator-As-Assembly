@@ -47,6 +47,22 @@ namespace AnimatorAsAssembly
             return ((IEnumerable<AacFlBoolParameter>)boolParams).GetEnumerator();
         }
 
+        /// <summary> Provide a quick way to get a parameter driver set to a specific value </summary>
+        public void Set(AacFlState state, int value)
+        {
+            for (int i = 0; i < bits; i++)
+            {
+                if ((value & (1 << i)) != 0)
+                {
+                    state.Drives(boolParams[i], true);
+                }
+                else
+                {
+                    state.Drives(boolParams[i], false);
+                }
+            }
+        }
+
         /// <summary> Set the value of this register upon bootup </summary>
         public void initialize(int value)
         {
