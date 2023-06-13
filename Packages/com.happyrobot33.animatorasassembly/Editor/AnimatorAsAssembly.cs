@@ -996,6 +996,17 @@ namespace AnimatorAsAssembly
                             i
                         );
                         break;
+                    case "MOV":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.MOV(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                Register.FindRegisterInArray(instructionParts[2], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
                     default:
                         //throw an exception if the instruction is not valid
                         throw new Exception("Invalid instruction: " + instruction);

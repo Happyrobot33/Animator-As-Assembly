@@ -26,8 +26,10 @@ namespace AnimatorAsAssembly.Commands
 
             FLIP flip = new FLIP(A, FX);
             ADD one = new ADD(A, globals.ONE, FX);
+            MOV mov = new MOV(one.SUM, A, FX);
             flip.entry.AutomaticallyMovesTo(one.entry);
-            return Util.ConcatArrays(flip.states, one.states);
+            one.exit.AutomaticallyMovesTo(mov.states[0]);
+            return Util.ConcatArrays(flip.states, one.states, mov.states);
         }
     }
 }
