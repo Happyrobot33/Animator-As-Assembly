@@ -23,13 +23,13 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="B"> The second bit to add </param>
         /// <param name="FX"> The FX controller that this command is linked to </param>
         /// <param name="i"> The identifier of this command (avoids command overlap) </param>
-        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer FX)
+        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer FX, int i = 0)
         {
             this.A = A;
             this.B = B;
             this.FX = FX;
-            SUM = FX.BoolParameter("HALFADDER/SUM" + this.GetHashCode()); //TODO: Use something slightly more stable than GetHashCode()
-            CARRY = FX.BoolParameter("HALFADDER/CARRY" + this.GetHashCode()); //TODO: Use something slightly more stable than GetHashCode()
+            SUM = FX.BoolParameter("HALFADDER/SUM" + i);
+            CARRY = FX.BoolParameter("HALFADDER/CARRY" + i);
             states = STATES();
         }
 
@@ -37,6 +37,8 @@ namespace AnimatorAsAssembly.Commands
         {
             //entry state
             entry = FX.NewState("HALFADDER");
+            entry.Drives(SUM, false);
+            entry.Drives(CARRY, false);
 
             //sum calc
             sumCalc = FX.NewState("HALFADDER SUM");

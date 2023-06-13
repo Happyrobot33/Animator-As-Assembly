@@ -54,7 +54,9 @@ namespace AnimatorAsAssembly.Commands
                 AacFlBoolParameter prevcarry = globals.FALSE;
                 if (j > 0)
                 {
-                    prevcarry = FullAdders[j - 1].CARRY;
+                    //copy prevcarry into our own register so it isnt cleared
+                    prevcarry = FX.BoolParameter("ADD/PREV_CARRY");
+                    FullAdders[j - 1].exit.DrivingCopies(FullAdders[j - 1].CARRY, prevcarry);
                 }
                 // create a FullAdder for each bit
                 FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, FX);

@@ -120,6 +120,7 @@ namespace AnimatorAsAssembly
             this.FX = FX;
             FALSE = FX.BoolParameter("GLOBALS/FALSE");
             TRUE = FX.BoolParameter("GLOBALS/TRUE");
+            FX.OverrideValue(TRUE, true);
             ONE = new Register("GLOBALS/ONE", FX);
             ONE.initialize(1);
         }

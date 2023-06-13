@@ -24,7 +24,6 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="B"> The second bit to add </param>
         /// <param name="C"> The carry bit to add </param>
         /// <param name="FX"> The FX controller that this command is linked to </param>
-        /// <param name="i"> The identifier of this command (avoids command overlap) </param>
         public FULLADDER(
             AacFlBoolParameter A,
             AacFlBoolParameter B,
@@ -36,8 +35,8 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.C = C;
             this.FX = FX;
-            SUM = FX.BoolParameter("FULLADDER/SUM" + this.GetHashCode()); //TODO: Use something slightly more stable than GetHashCode()
-            CARRY = FX.BoolParameter("FULLADDER/CARRY" + this.GetHashCode()); //TODO: Use something slightly more stable than GetHashCode()
+            SUM = FX.BoolParameter("FULLADDER/SUM");
+            CARRY = FX.BoolParameter("FULLADDER/CARRY");
             states = STATES();
         }
 
@@ -45,12 +44,14 @@ namespace AnimatorAsAssembly.Commands
         {
             //entry state
             entry = FX.NewState("FULLADDER");
+            entry.Drives(SUM, false);
+            entry.Drives(CARRY, false);
 
             //first half adder
-            HALFADDER firstHalfAdder = new Commands.HALFADDER(A, B, FX);
+            HALFADDER firstHalfAdder = new Commands.HALFADDER(A, B, FX, 0);
 
             //second half adder
-            HALFADDER secondHalfAdder = new Commands.HALFADDER(firstHalfAdder.SUM, C, FX);
+            HALFADDER secondHalfAdder = new Commands.HALFADDER(firstHalfAdder.SUM, C, FX, 1);
 
             //set carry based on either half adders carry flag
             carryCalc = FX.NewState("FULLADDER CARRY");
