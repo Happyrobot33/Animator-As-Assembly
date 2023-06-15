@@ -86,6 +86,8 @@ namespace AnimatorAsAssembly
         [HideInInspector]
         public int RegistersUsed = 0;
 
+        //[HideInInspector]
+
         //[ReadOnly]
         public LBL[] Labels = new LBL[0];
 
@@ -116,6 +118,10 @@ namespace AnimatorAsAssembly
 
         [CodeArea(true)]
         public string CompiledCode;
+
+        /// <summary> This is a string list of all the instructions in the compiled code. index it with the program counter to get the current instruction </summary>
+        [SerializeField]
+        public List<string> instructionStringList = new List<string>();
 
         private AacFlBase aac;
 
@@ -191,6 +197,7 @@ namespace AnimatorAsAssembly
                 Profiler.BeginSample("Compile");
                 RegistersUsed = 0;
                 Labels = new LBL[0];
+                instructionStringList = new List<string>();
 
                 aac = AacExample.AnimatorAsCode(
                     "COMPUTER",
@@ -233,7 +240,14 @@ namespace AnimatorAsAssembly
             }
             catch (Exception e)
             {
+                EditorUtility.ClearProgressBar();
                 Debug.LogError(e);
+                //show a dialog box with the error
+                EditorUtility.DisplayDialog(
+                    "Error",
+                    "An internal error occured while compiling the code. Please check the console for more information.",
+                    "OK"
+                );
             }
             finally
             {
@@ -851,7 +865,8 @@ namespace AnimatorAsAssembly
                         try
                         {
                             //always make the program counter increment on the current instruction
-                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
+                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("INTERNAL/PC"), 1);
+                            instructionStringList.Add(instruction);
                         }
                         catch { }
                         break;
@@ -991,6 +1006,26 @@ namespace AnimatorAsAssembly
                         Instructions = Util.CopyIntoArray(
                             Instructions,
                             new Commands.INC(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
+                    case "DEC":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.DEC(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
+                    case "SHL":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.SHL(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
                                 FX
                             ).states,

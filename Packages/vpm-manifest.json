@@ -14,17 +14,20 @@
     },
     "vrchat.blackstartx.gesture-manager": {
       "version": "3.8.4"
+    },
+    "lyuma.av3emulator": {
+      "version": "3.2.0"
     }
   },
   "locked": {
     "com.vrchat.avatars": {
-      "version": "3.2.0",
+      "version": "3.2.1",
       "dependencies": {
-        "com.vrchat.base": "3.2.0"
+        "com.vrchat.base": "^3.2.1"
       }
     },
     "com.vrchat.base": {
-      "version": "3.2.0",
+      "version": "3.2.1",
       "dependencies": {}
     },
     "com.vrchat.core.vpm-resolver": {
@@ -47,6 +50,12 @@
       "version": "3.8.4",
       "dependencies": {
         "com.vrchat.avatars": "3.2.x"
+      }
+    },
+    "lyuma.av3emulator": {
+      "version": "3.2.0",
+      "dependencies": {
+        "com.vrchat.avatars": ">=3.1.0 <3.3.0"
       }
     }
   }

@@ -19,8 +19,8 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.FX = FX;
-            CARRY = FX.BoolParameter("EIGHTBITADDER/CARRY");
-            SUM = new Register("EIGHTBITADDER/SUM", FX);
+            CARRY = FX.BoolParameter("INTERNAL/ADD/CARRY");
+            SUM = new Register("INTERNAL/ADD/SUM", FX);
             states = STATES();
         }
 

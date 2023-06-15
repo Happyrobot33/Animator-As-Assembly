@@ -31,8 +31,8 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.C = C;
             this.FX = FX;
-            SUM = FX.BoolParameter("FULLADDER/SUM");
-            CARRY = FX.BoolParameter("FULLADDER/CARRY");
+            SUM = FX.BoolParameter("INTERNAL/FULLADDER/SUM");
+            CARRY = FX.BoolParameter("INTERNAL/FULLADDER/CARRY");
             states = STATES();
         }
 

@@ -2,7 +2,8 @@
     "name": "com.happyrobot33.animatorasassembly",
     "references": [
         "GUID:bf0ba3819ee10bf43ad38d1834ba2bbe",
-        "GUID:106e830cd63cdab40bb17e2f99416836"
+        "GUID:106e830cd63cdab40bb17e2f99416836",
+        "GUID:ad78a2bc77b7491eb34cece69bb8f0e6"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

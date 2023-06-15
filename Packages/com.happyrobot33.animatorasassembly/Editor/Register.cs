@@ -20,7 +20,7 @@ namespace AnimatorAsAssembly
 
         /// <summary> Create a new register </summary>
         /// <param name="name"> The name of the register to create </param>
-        /// <param name="param"> The internal AAC parameter that this register is linked to </param>
+        /// <param name="FX"> The layer that this register is linked to </param>
         public Register(string name, AacFlLayer FX)
         {
             this.name = name;

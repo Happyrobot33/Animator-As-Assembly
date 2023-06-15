@@ -24,8 +24,8 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.FX = FX;
-            SUM = FX.BoolParameter("HALFADDER/SUM" + i);
-            CARRY = FX.BoolParameter("HALFADDER/CARRY" + i);
+            SUM = FX.BoolParameter("INTERNAL/HALFADDER/SUM" + i);
+            CARRY = FX.BoolParameter("INTERNAL/HALFADDER/CARRY" + i);
             states = STATES();
         }
 
