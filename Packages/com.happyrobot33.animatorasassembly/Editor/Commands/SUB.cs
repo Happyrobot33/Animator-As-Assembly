@@ -4,13 +4,10 @@ using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class SUB
+    public class SUB : OPCODE
     {
-        public AacFlState[] states;
         public Register A;
         public Register B;
-        public AacFlState entry;
-        public AacFlState exit;
 
         /// <summary> Subtracts two registers </summary>
         /// <remarks> The result is stored in the second register </remarks>
@@ -34,10 +31,6 @@ namespace AnimatorAsAssembly.Commands
 
             //do the subtraction
             ADD add = new ADD(A, complement.A, FX);
-
-            //set our entry and exit
-            entry = complement.entry;
-            exit = add.exit;
 
             complement.exit.AutomaticallyMovesTo(add.entry);
 

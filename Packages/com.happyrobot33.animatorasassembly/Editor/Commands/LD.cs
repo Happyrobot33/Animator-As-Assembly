@@ -4,9 +4,8 @@ using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class LD
+    public class LD : OPCODE
     {
-        public AacFlState[] states;
         public Register A;
         public int value;
 

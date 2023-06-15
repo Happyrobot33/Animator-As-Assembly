@@ -5,17 +5,13 @@ using AnimatorAsAssembly;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class FULLADDER
+    public class FULLADDER : OPCODE
     {
-        public AacFlState[] states;
         public AacFlBoolParameter A;
         public AacFlBoolParameter B;
         public AacFlBoolParameter C;
-        AacFlLayer FX;
         public AacFlBoolParameter SUM;
         public AacFlBoolParameter CARRY;
-        public AacFlState entry;
-        public AacFlState exit;
         public AacFlState carryCalc;
         public AacFlState sumCalc;
 
@@ -43,7 +39,7 @@ namespace AnimatorAsAssembly.Commands
         AacFlState[] STATES()
         {
             //entry state
-            entry = FX.NewState("FULLADDER");
+            AacFlState entry = FX.NewState("FULLADDER");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
@@ -58,7 +54,7 @@ namespace AnimatorAsAssembly.Commands
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            exit = FX.NewState("FULLADDER EXIT");
+            AacFlState exit = FX.NewState("FULLADDER EXIT");
             exit.DrivingCopies(secondHalfAdder.SUM, SUM);
 
             //entry state

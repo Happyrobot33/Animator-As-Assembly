@@ -6,17 +6,12 @@ using static AnimatorAsAssembly.Globals;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class ADD
+    public class ADD : OPCODE
     {
-        public AacFlState[] states;
         public Register A;
         public Register B;
         public AacFlBoolParameter CARRY;
         public Register SUM;
-        AacFlLayer FX;
-
-        public AacFlState entry;
-        public AacFlState exit;
 
         /// <summary> Adds two registers </summary>
         /// <remarks> The result is stored in the second register </remarks>
@@ -39,13 +34,13 @@ namespace AnimatorAsAssembly.Commands
             Globals globals = new Globals(FX);
 
             //entry state
-            entry = FX.NewState("EIGHTBITADDER");
+            AacFlState entry = FX.NewState("EIGHTBITADDER");
             //clear sum and carry registers
             entry.Drives(CARRY, false);
             SUM.Set(entry, 0);
 
             //exit state
-            exit = FX.NewState("EIGHTBITADDER EXIT");
+            AacFlState exit = FX.NewState("EIGHTBITADDER EXIT");
 
             FULLADDER[] FullAdders = new FULLADDER[Register.bits];
 

@@ -5,16 +5,12 @@ using AnimatorAsAssembly;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class HALFADDER
+    public class HALFADDER : OPCODE
     {
-        public AacFlState[] states;
         public AacFlBoolParameter A;
         public AacFlBoolParameter B;
-        AacFlLayer FX;
         public AacFlBoolParameter SUM;
         public AacFlBoolParameter CARRY;
-        public AacFlState entry;
-        public AacFlState exit;
         public AacFlState carryCalc;
         public AacFlState sumCalc;
 
@@ -36,7 +32,7 @@ namespace AnimatorAsAssembly.Commands
         AacFlState[] STATES()
         {
             //entry state
-            entry = FX.NewState("HALFADDER");
+            AacFlState entry = FX.NewState("HALFADDER");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
@@ -49,7 +45,7 @@ namespace AnimatorAsAssembly.Commands
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            exit = FX.NewState("HALFADDER EXIT");
+            AacFlState exit = FX.NewState("HALFADDER EXIT");
 
             //entry state
             //XOR A and B to get the sum
