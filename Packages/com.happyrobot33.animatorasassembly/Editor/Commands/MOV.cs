@@ -1,7 +1,4 @@
-using AnimatorAsCode;
 using AnimatorAsCode.Framework;
-using UnityEngine;
-using static AnimatorAsAssembly.Globals;
 
 namespace AnimatorAsAssembly.Commands
 {
