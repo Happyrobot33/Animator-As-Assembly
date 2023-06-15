@@ -105,6 +105,11 @@ namespace AnimatorAsAssembly
             //detect if in play mode
             if (Application.isPlaying)
             {
+                //repaint if not paused
+                if (!EditorApplication.isPaused)
+                {
+                    Repaint();
+                }
                 #region current executing instruction
                 //get the program counter
                 LyumaAv3Runtime.Av3EmuParameterAccess PCparam =
@@ -113,9 +118,16 @@ namespace AnimatorAsAssembly
                 PCparam.paramName = Globals.PROGRAMCOUNTERSTRING;
                 int PC = PCparam.intVal;
                 EditorGUILayout.LabelField("PC: " + PC);
-                EditorGUILayout.LabelField(
-                    "Current instruction: " + debugger.aaa.instructionStringList[PC - 1]
-                );
+                if (PC == 0)
+                {
+                    EditorGUILayout.LabelField("At entry vector");
+                }
+                else
+                {
+                    EditorGUILayout.LabelField(
+                        "Current instruction: " + debugger.aaa.instructionStringList[PC - 1]
+                    );
+                }
                 #endregion
 
                 #region time stepping
@@ -129,13 +141,14 @@ namespace AnimatorAsAssembly
                 if (GUILayout.Button("Step forward"))
                 {
                     //we need to step forward till the program counter changes
-                    //timeout after 1000 steps
+                    //timeout after a set ammount of steps
                     int oldPC = PC;
                     int timeout = 1000;
-                    while (oldPC == PC && timeout > 0)
+                    while (oldPC == PCparam.intVal && timeout > 0)
                     {
                         EditorApplication.Step();
-                        oldPC = PC;
+                        //repaint
+                        //Repaint();
                         timeout--;
                     }
                 }
