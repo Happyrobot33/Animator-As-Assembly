@@ -4,12 +4,9 @@ using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class INC
+    public class INC : OPCODE
     {
-        public AacFlState[] states;
         public Register A;
-        public AacFlState entry;
-        public AacFlState exit;
 
         /// <summary> Increments a register by 1</summary>
         /// <param name="A"> The register to increment </param>
@@ -27,10 +24,6 @@ namespace AnimatorAsAssembly.Commands
 
             //add 1 to the register
             ADD add = new ADD(globals.ONE, A, FX);
-
-            //set our entry and exit
-            entry = add.entry;
-            exit = add.exit;
 
             return add.states;
         }
