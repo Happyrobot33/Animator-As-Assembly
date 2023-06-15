@@ -110,12 +110,41 @@ namespace AnimatorAsAssembly
                 LyumaAv3Runtime.Av3EmuParameterAccess PCparam =
                     new LyumaAv3Runtime.Av3EmuParameterAccess();
                 PCparam.runtime = debugger.runtime;
-                PCparam.paramName = "INTERNAL/PC";
+                PCparam.paramName = Globals.PROGRAMCOUNTERSTRING;
                 int PC = PCparam.intVal;
                 EditorGUILayout.LabelField("PC: " + PC);
                 EditorGUILayout.LabelField(
                     "Current instruction: " + debugger.aaa.instructionStringList[PC - 1]
                 );
+                #endregion
+
+                #region time stepping
+                EditorGUILayout.BeginHorizontal();
+                //create a button to pause execution
+                if (GUILayout.Button("Pause"))
+                {
+                    EditorApplication.isPaused = true;
+                }
+                //create a button to step forward
+                if (GUILayout.Button("Step forward"))
+                {
+                    //we need to step forward till the program counter changes
+                    //timeout after 1000 steps
+                    int oldPC = PC;
+                    int timeout = 1000;
+                    while (oldPC == PC && timeout > 0)
+                    {
+                        EditorApplication.Step();
+                        oldPC = PC;
+                        timeout--;
+                    }
+                }
+                //create a button to resume execution
+                if (GUILayout.Button("Resume"))
+                {
+                    EditorApplication.isPaused = false;
+                }
+                EditorGUILayout.EndHorizontal();
                 #endregion
 
                 //show the registers

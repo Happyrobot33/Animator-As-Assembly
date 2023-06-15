@@ -100,7 +100,7 @@ namespace AnimatorAsAssembly
         }
     }
 
-    /// <summary> This class contains all the global const variables used in the animation </summary>
+    /// <summary> This class contains all the global const variables used in the controller </summary>
     public class Globals
     {
         public AacFlLayer FX;
@@ -114,6 +114,10 @@ namespace AnimatorAsAssembly
         /// <summary> A permanent reference to the number 1 in Register form </summary>
         public Register ONE;
 
+        /// <summary> A permanent reference to the program counter variable </summary>
+        public AacFlIntParameter PROGRAMCOUNTER;
+        public static string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
+
         /// <summary> Create a new Globals object </summary>
         /// <param name="FX">The AacFlLayer to use</param>
         public Globals(AacFlLayer FX)
@@ -124,6 +128,7 @@ namespace AnimatorAsAssembly
             FX.OverrideValue(TRUE, true);
             ONE = new Register("GLOBALS/ONE", FX);
             ONE.initialize(1);
+            PROGRAMCOUNTER = FX.IntParameter(PROGRAMCOUNTERSTRING);
         }
     }
 }

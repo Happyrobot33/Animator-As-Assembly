@@ -745,122 +745,126 @@ namespace AnimatorAsAssembly
                 AacFlTransition trueCon;
                 AacFlTransition falseCon;
 
+                //get globals
+                Globals globals = new Globals(FX);
+
                 //create the relevant state
                 switch (instructionType)
                 {
-                    /*                     case "JMP":
-                                            CurrentLastNode.AutomaticallyMovesTo(
-                                                Instructions[int.Parse(instructionParts[1]), 0]
-                                            );
-                                            //modify PC
-                                            CurrentLastNode.Drives(
-                                                FX.IntParameter("&PC"),
-                                                int.Parse(instructionParts[1])
-                                            );
-                                            break;
-                                        case "JSR":
-                                            CurrentLastNode.AutomaticallyMovesTo(
-                                                Instructions[int.Parse(instructionParts[1]), 0]
-                                            );
-                                            //modify PC
-                                            CurrentLastNode.Drives(
-                                                FX.IntParameter("&PC"),
-                                                int.Parse(instructionParts[1])
-                                            );
-                                            break;
-                                        case "JEN": //JEN (Jump If Equal To Number) Jumps to the line in the program list if the register is equal to the number
-                                            var JENPCMod = FX.NewState("{JEN} MODIFY PC");
-                                            JENPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                                            JENPCMod.AutomaticallyMovesTo(
-                                                Instructions[int.Parse(instructionParts[3]), 0]
-                                            );
-                                            trueCon = CurrentLastNode.TransitionsTo(JENPCMod);
-                                            trueCon.When(
-                                                Register
-                                                    .FindRegisterInArray(instructionParts[1], registers)
-                                                    .param.IsEqualTo(int.Parse(instructionParts[2]))
-                                            );
-                    
-                                            //make sure if the condition is not met, that the PC is incremented
-                                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                                            break;
-                                        case "JNEN": //JNEN (Jump If Not Equal To Number) Jumps to the line in the program list if the register is not equal to the number
-                                            var JNENPCMod = FX.NewState("{JNEN} MODIFY PC");
-                                            //JNENPCMod is the state that modifies the PC if the JNEN condition is true, then we jump to the line in the program list
-                                            JNENPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                                            JNENPCMod.AutomaticallyMovesTo(
-                                                Instructions[int.Parse(instructionParts[3]), 0]
-                                            );
-                                            falseCon = CurrentLastNode.TransitionsTo(JNENPCMod);
-                                            falseCon.When(
-                                                Register
-                                                    .FindRegisterInArray(instructionParts[1], registers)
-                                                    .param.IsNotEqualTo(int.Parse(instructionParts[2]))
-                                            );
-                    
-                                            //make sure if the condition is not met, that the PC is incremented
-                                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                                            break;
-                                        case "JEQ": //JEQ (Jump If Equal To) Compares the first register to the second register, and if they are equal it jumps to the line in the program list
-                                            //if the JEQR flag is true, then we jump to the line in the program list
-                                            //if the JEQR flag is false, then we dont jump, letting the program continue as normal
-                                            var JEQPCMod = FX.NewState("{JEQ} MODIFY PC");
-                                            JEQPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                                            JEQPCMod.AutomaticallyMovesTo(
-                                                Instructions[int.Parse(instructionParts[3]), 0]
-                                            );
-                                            trueCon = CurrentLastNode.TransitionsTo(JEQPCMod);
-                                            var JEQR = FX.BoolParameter("&JEQR");
-                                            trueCon.When(JEQR.IsEqualTo(true));
-                    
-                                            //make sure if the condition is not met, that the PC is incremented
-                                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                                            break;
-                                        case "JIG": //JIG (Jump If Greater Than) Compares the first register to the second register, and if the first register is greater than the second register it jumps to the line in the program list
-                                            //if the JIGR flag is true, then we jump to the line in the program list
-                                            //if the JIGR flag is false, then we dont jump, letting the program continue as normal
-                                            var JIGPCMod = FX.NewState("{JIG} MODIFY PC");
-                                            JIGPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                                            JIGPCMod.AutomaticallyMovesTo(
-                                                Instructions[int.Parse(instructionParts[3]), 0]
-                                            );
-                                            trueCon = CurrentLastNode.TransitionsTo(JIGPCMod);
-                                            var JIGR = FX.BoolParameter("&JIGR");
-                                            trueCon.When(JIGR.IsEqualTo(true));
-                    
-                                            //make sure if the condition is not met, that the PC is incremented
-                                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                                            break;
-                                        case "RTS":
-                                            //RTS is going to come into here with every single line it might go to deliminated with a space
-                                            int[] rtsLines = new int[instructionParts.Length - 1];
-                                            for (int j = 1; j < instructionParts.Length; j++)
-                                            {
-                                                rtsLines[j - 1] = int.Parse(instructionParts[j]);
-                                            }
-                                            //create a transition from the RTS state to each state defined by the RTS instruction
-                                            //this transition is true when the PC is equal to the line number
-                                            //we actually want it to go the the line after where the JSR was called, so we add 1 to the line number
-                                            for (int j = 0; j < rtsLines.Length; j++)
-                                            {
-                                                var RTSState = FX.NewState("{RTS} " + rtsLines[j])
-                                                    .DrivingIncreases(FX.IntParameter("&PC"), 1);
-                                                //throw an exception if there is no state to go to after the JSR
-                                                if (rtsLines[j] + 1 >= Instructions.GetLength(0))
-                                                {
-                                                    throw new Exception(
-                                                        "RTS instruction at line "
-                                                            + i
-                                                            + " is trying to go to a line that does not exist. The JSR instruction at line "
-                                                            + i
-                                                            + " needs a opcode after it."
-                                                    );
-                                                }
-                                                RTSState.AutomaticallyMovesTo(Instructions[rtsLines[j] + 1, 0]);
-                                                trueCon = CurrentLastNode.TransitionsTo(RTSState);
-                                                trueCon.When(FX.IntParameter("&PC").IsEqualTo(rtsLines[j]));
-                                            }
-                                            break; */
+                    case "JMP":
+                        CurrentLastNode.AutomaticallyMovesTo(
+                            Instructions[int.Parse(instructionParts[1]), 0]
+                        );
+                        //modify PC
+                        CurrentLastNode.Drives(
+                            globals.PROGRAMCOUNTER,
+                            int.Parse(instructionParts[1])
+                        );
+                        break;
+                    /*
+                case "JSR":
+                    CurrentLastNode.AutomaticallyMovesTo(
+                        Instructions[int.Parse(instructionParts[1]), 0]
+                    );
+                    //modify PC
+                    CurrentLastNode.Drives(
+                        FX.IntParameter("&PC"),
+                        int.Parse(instructionParts[1])
+                    );
+                    break;
+                case "JEN": //JEN (Jump If Equal To Number) Jumps to the line in the program list if the register is equal to the number
+                    var JENPCMod = FX.NewState("{JEN} MODIFY PC");
+                    JENPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
+                    JENPCMod.AutomaticallyMovesTo(
+                        Instructions[int.Parse(instructionParts[3]), 0]
+                    );
+                    trueCon = CurrentLastNode.TransitionsTo(JENPCMod);
+                    trueCon.When(
+                        Register
+                            .FindRegisterInArray(instructionParts[1], registers)
+                            .param.IsEqualTo(int.Parse(instructionParts[2]))
+                    );
+
+                    //make sure if the condition is not met, that the PC is incremented
+                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
+                    break;
+                case "JNEN": //JNEN (Jump If Not Equal To Number) Jumps to the line in the program list if the register is not equal to the number
+                    var JNENPCMod = FX.NewState("{JNEN} MODIFY PC");
+                    //JNENPCMod is the state that modifies the PC if the JNEN condition is true, then we jump to the line in the program list
+                    JNENPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
+                    JNENPCMod.AutomaticallyMovesTo(
+                        Instructions[int.Parse(instructionParts[3]), 0]
+                    );
+                    falseCon = CurrentLastNode.TransitionsTo(JNENPCMod);
+                    falseCon.When(
+                        Register
+                            .FindRegisterInArray(instructionParts[1], registers)
+                            .param.IsNotEqualTo(int.Parse(instructionParts[2]))
+                    );
+
+                    //make sure if the condition is not met, that the PC is incremented
+                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
+                    break;
+                case "JEQ": //JEQ (Jump If Equal To) Compares the first register to the second register, and if they are equal it jumps to the line in the program list
+                    //if the JEQR flag is true, then we jump to the line in the program list
+                    //if the JEQR flag is false, then we dont jump, letting the program continue as normal
+                    var JEQPCMod = FX.NewState("{JEQ} MODIFY PC");
+                    JEQPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
+                    JEQPCMod.AutomaticallyMovesTo(
+                        Instructions[int.Parse(instructionParts[3]), 0]
+                    );
+                    trueCon = CurrentLastNode.TransitionsTo(JEQPCMod);
+                    var JEQR = FX.BoolParameter("&JEQR");
+                    trueCon.When(JEQR.IsEqualTo(true));
+
+                    //make sure if the condition is not met, that the PC is incremented
+                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
+                    break;
+                case "JIG": //JIG (Jump If Greater Than) Compares the first register to the second register, and if the first register is greater than the second register it jumps to the line in the program list
+                    //if the JIGR flag is true, then we jump to the line in the program list
+                    //if the JIGR flag is false, then we dont jump, letting the program continue as normal
+                    var JIGPCMod = FX.NewState("{JIG} MODIFY PC");
+                    JIGPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
+                    JIGPCMod.AutomaticallyMovesTo(
+                        Instructions[int.Parse(instructionParts[3]), 0]
+                    );
+                    trueCon = CurrentLastNode.TransitionsTo(JIGPCMod);
+                    var JIGR = FX.BoolParameter("&JIGR");
+                    trueCon.When(JIGR.IsEqualTo(true));
+
+                    //make sure if the condition is not met, that the PC is incremented
+                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
+                    break;
+                case "RTS":
+                    //RTS is going to come into here with every single line it might go to deliminated with a space
+                    int[] rtsLines = new int[instructionParts.Length - 1];
+                    for (int j = 1; j < instructionParts.Length; j++)
+                    {
+                        rtsLines[j - 1] = int.Parse(instructionParts[j]);
+                    }
+                    //create a transition from the RTS state to each state defined by the RTS instruction
+                    //this transition is true when the PC is equal to the line number
+                    //we actually want it to go the the line after where the JSR was called, so we add 1 to the line number
+                    for (int j = 0; j < rtsLines.Length; j++)
+                    {
+                        var RTSState = FX.NewState("{RTS} " + rtsLines[j])
+                            .DrivingIncreases(FX.IntParameter("&PC"), 1);
+                        //throw an exception if there is no state to go to after the JSR
+                        if (rtsLines[j] + 1 >= Instructions.GetLength(0))
+                        {
+                            throw new Exception(
+                                "RTS instruction at line "
+                                    + i
+                                    + " is trying to go to a line that does not exist. The JSR instruction at line "
+                                    + i
+                                    + " needs a opcode after it."
+                            );
+                        }
+                        RTSState.AutomaticallyMovesTo(Instructions[rtsLines[j] + 1, 0]);
+                        trueCon = CurrentLastNode.TransitionsTo(RTSState);
+                        trueCon.When(FX.IntParameter("&PC").IsEqualTo(rtsLines[j]));
+                    }
+                    break; */
                     default:
                         try
                         {
@@ -946,6 +950,20 @@ namespace AnimatorAsAssembly
                 //create the relevant state
                 switch (instructionType)
                 {
+                    case "JMP":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new AacFlState[] { FX.NewState("{JMP} " + instructionParts[1]) },
+                            i
+                        );
+                        break;
+                    case "LBL":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new AacFlState[] { FX.NewState("{LBL} " + instructionParts[1]) },
+                            i
+                        );
+                        break;
                     case "HALFADDER":
                         Instructions = Util.CopyIntoArray(
                             Instructions,
