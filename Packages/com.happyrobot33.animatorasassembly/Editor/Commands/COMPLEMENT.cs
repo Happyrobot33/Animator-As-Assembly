@@ -9,6 +9,8 @@ namespace AnimatorAsAssembly.Commands
     {
         public AacFlState[] states;
         public Register A;
+        public AacFlState entry;
+        public AacFlState exit;
 
         /// <summary> Calculates the Two's Complement of a register </summary>
         /// <param name="A"> The register to flip </param>
@@ -29,6 +31,11 @@ namespace AnimatorAsAssembly.Commands
             MOV mov = new MOV(one.SUM, A, FX);
             flip.entry.AutomaticallyMovesTo(one.entry);
             one.exit.AutomaticallyMovesTo(mov.states[0]);
+
+            //set our entry and exit
+            entry = flip.entry;
+            exit = mov.exit;
+
             return Util.ConcatArrays(flip.states, one.states, mov.states);
         }
     }

@@ -976,6 +976,27 @@ namespace AnimatorAsAssembly
                             i
                         );
                         break;
+                    case "SUB":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.SUB(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                Register.FindRegisterInArray(instructionParts[2], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
+                    case "INC":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.INC(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                FX
+                            ).states,
+                            i
+                        );
+                        break;
                     case "FLIP":
                         Instructions = Util.CopyIntoArray(
                             Instructions,

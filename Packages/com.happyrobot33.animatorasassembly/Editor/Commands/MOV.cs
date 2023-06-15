@@ -10,6 +10,8 @@ namespace AnimatorAsAssembly.Commands
         public AacFlState[] states;
         public Register A;
         public Register B;
+        public AacFlState entry;
+        public AacFlState exit;
 
         /// <summary> Moves a register to another register </summary>
         /// <param name="A"> The register to copy </param>
@@ -28,7 +30,8 @@ namespace AnimatorAsAssembly.Commands
             Globals globals = new Globals(FX);
 
             //entry state
-            AacFlState entry = FX.NewState("MOV");
+            entry = FX.NewState("MOV");
+            exit = entry;
 
             for (int i = 0; i < Register.bits; i++)
             {

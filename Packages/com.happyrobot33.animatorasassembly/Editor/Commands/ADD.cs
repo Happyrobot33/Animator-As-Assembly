@@ -19,6 +19,7 @@ namespace AnimatorAsAssembly.Commands
         public AacFlState exit;
 
         /// <summary> Adds two registers </summary>
+        /// <remarks> The result is stored in the second register </remarks>
         /// <param name="A"> The first register to add </param>
         /// <param name="B"> The second register to add </param>
         /// <param name="FX"> The FX controller that this command is linked to </param>
@@ -69,13 +70,17 @@ namespace AnimatorAsAssembly.Commands
             //set the carry bit if the last FullAdder has a carry bit
             FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRY, true);
 
+            //use a MOV to copy the sum register to the B register
+            MOV mov = new MOV(SUM, B, FX);
+
             //link the full adders together
             entry.AutomaticallyMovesTo(FullAdders[0].entry);
             for (int j = 0; j < Register.bits - 1; j++)
             {
                 FullAdders[j].exit.AutomaticallyMovesTo(FullAdders[j + 1].entry);
             }
-            FullAdders[Register.bits - 1].exit.AutomaticallyMovesTo(exit);
+            FullAdders[Register.bits - 1].exit.AutomaticallyMovesTo(mov.entry);
+            mov.exit.AutomaticallyMovesTo(exit);
 
             //convert the FullAdder states into a single array
             AacFlState[] FullAdderStates = new AacFlState[
@@ -92,6 +97,7 @@ namespace AnimatorAsAssembly.Commands
             return Util.ConcatArrays(
                 new AacFlState[] { entry },
                 FullAdderStates,
+                mov.states,
                 new AacFlState[] { exit }
             );
         }
