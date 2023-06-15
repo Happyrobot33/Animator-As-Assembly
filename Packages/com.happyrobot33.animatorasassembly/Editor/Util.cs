@@ -111,6 +111,7 @@ namespace AnimatorAsAssembly
         /// <summary> A permanent reference to a true boolean value </summary>
         public AacFlBoolParameter TRUE;
 
+        /// <summary> A permanent reference to the number 1 in Register form </summary>
         public Register ONE;
 
         /// <summary> Create a new Globals object </summary>
