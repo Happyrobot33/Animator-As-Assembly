@@ -9,21 +9,22 @@ namespace AnimatorAsAssembly.Commands
 
         /// <summary> Shifts a Registers bits 1 to the left</summary>
         /// <param name="A"> The register to shift </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public SHL(Register A, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public SHL(Register A, AacFlLayer Layer)
         {
             this.A = A;
-            this.BUFFER = new Register("INTERNAL/SHL/BUFFER", FX);
-            states = STATES(A, FX);
+            this.Layer = Layer;
+            this.BUFFER = new Register("INTERNAL/SHL/BUFFER", Layer);
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, AacFlLayer FX)
+        AacFlState[] STATES()
         {
             //copy from A to BUFFER
-            MOV mov = new MOV(A, BUFFER, FX);
+            MOV mov = new MOV(A, BUFFER, Layer);
 
             //copy them back
-            AacFlState emptyBuffer = FX.NewState("SHL");
+            AacFlState emptyBuffer = Layer.NewState("SHL");
             for (int i = 0; i < Register.bits - 1; i++)
             {
                 emptyBuffer.DrivingCopies(BUFFER[i], A[i + 1]);

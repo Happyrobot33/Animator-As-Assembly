@@ -8,20 +8,21 @@ namespace AnimatorAsAssembly.Commands
 
         /// <summary> Increments a register by 1</summary>
         /// <param name="A"> The register to increment </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public INC(Register A, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public INC(Register A, AacFlLayer Layer)
         {
             this.A = A;
-            states = STATES(A, FX);
+            this.Layer = Layer;
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, AacFlLayer FX)
+        AacFlState[] STATES()
         {
             //get globals
-            Globals globals = new Globals(FX);
+            Globals globals = new Globals(Layer);
 
             //add 1 to the register
-            ADD add = new ADD(globals.ONE, A, FX);
+            ADD add = new ADD(globals.ONE, A, Layer);
 
             return add.states;
         }

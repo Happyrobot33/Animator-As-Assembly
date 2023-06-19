@@ -19,42 +19,42 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The first bit to add </param>
         /// <param name="B"> The second bit to add </param>
         /// <param name="C"> The carry bit to add </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
         public FULLADDER(
             AacFlBoolParameter A,
             AacFlBoolParameter B,
             AacFlBoolParameter C,
-            AacFlLayer FX
+            AacFlLayer Layer
         )
         {
             this.A = A;
             this.B = B;
             this.C = C;
-            this.FX = FX;
-            SUM = FX.BoolParameter("INTERNAL/FULLADDER/SUM");
-            CARRY = FX.BoolParameter("INTERNAL/FULLADDER/CARRY");
+            this.Layer = Layer;
+            SUM = Layer.BoolParameter("INTERNAL/FULLADDER/SUM");
+            CARRY = Layer.BoolParameter("INTERNAL/FULLADDER/CARRY");
             states = STATES();
         }
 
         AacFlState[] STATES()
         {
             //entry state
-            AacFlState entry = FX.NewState("FULLADDER");
+            AacFlState entry = Layer.NewState("FULLADDER");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
             //first half adder
-            HALFADDER firstHalfAdder = new Commands.HALFADDER(A, B, FX, 0);
+            HALFADDER firstHalfAdder = new Commands.HALFADDER(A, B, Layer, 0);
 
             //second half adder
-            HALFADDER secondHalfAdder = new Commands.HALFADDER(firstHalfAdder.SUM, C, FX, 1);
+            HALFADDER secondHalfAdder = new Commands.HALFADDER(firstHalfAdder.SUM, C, Layer, 1);
 
             //set carry based on either half adders carry flag
-            carryCalc = FX.NewState("FULLADDER CARRY");
+            carryCalc = Layer.NewState("FULLADDER CARRY");
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            AacFlState exit = FX.NewState("FULLADDER EXIT");
+            AacFlState exit = Layer.NewState("FULLADDER EXIT");
             exit.DrivingCopies(secondHalfAdder.SUM, SUM);
 
             //entry state

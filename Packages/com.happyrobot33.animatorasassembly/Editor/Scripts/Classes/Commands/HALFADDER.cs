@@ -17,35 +17,35 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Adds two bits together </summary>
         /// <param name="A"> The first bit to add </param>
         /// <param name="B"> The second bit to add </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
         /// <param name="i"> The identifier of this command (avoids command overlap) </param>
-        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer FX, int i = 0)
+        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer Layer, int i = 0)
         {
             this.A = A;
             this.B = B;
-            this.FX = FX;
-            SUM = FX.BoolParameter("INTERNAL/HALFADDER/SUM" + i);
-            CARRY = FX.BoolParameter("INTERNAL/HALFADDER/CARRY" + i);
+            this.Layer = Layer;
+            SUM = Layer.BoolParameter("INTERNAL/HALFADDER/SUM" + i);
+            CARRY = Layer.BoolParameter("INTERNAL/HALFADDER/CARRY" + i);
             states = STATES();
         }
 
         AacFlState[] STATES()
         {
             //entry state
-            AacFlState entry = FX.NewState("HALFADDER");
+            AacFlState entry = Layer.NewState("HALFADDER");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
             //sum calc
-            sumCalc = FX.NewState("HALFADDER SUM");
+            sumCalc = Layer.NewState("HALFADDER SUM");
             sumCalc.Drives(SUM, true);
 
             //carry calc
-            carryCalc = FX.NewState("HALFADDER CARRY");
+            carryCalc = Layer.NewState("HALFADDER CARRY");
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            AacFlState exit = FX.NewState("HALFADDER EXIT");
+            AacFlState exit = Layer.NewState("HALFADDER EXIT");
 
             //entry state
             //XOR A and B to get the sum

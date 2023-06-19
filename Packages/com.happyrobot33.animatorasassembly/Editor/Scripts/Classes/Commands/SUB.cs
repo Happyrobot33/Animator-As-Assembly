@@ -11,24 +11,25 @@ namespace AnimatorAsAssembly.Commands
         /// <remarks> The result is stored in the second register </remarks>
         /// <param name="A"> The first register to sub </param>
         /// <param name="B"> The second register to sub </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public SUB(Register A, Register B, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public SUB(Register A, Register B, AacFlLayer Layer)
         {
             this.A = A;
             this.B = B;
-            states = STATES(A, B, FX);
+            this.Layer = Layer;
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, Register B, AacFlLayer FX)
+        AacFlState[] STATES()
         {
             //get globals
-            Globals globals = new Globals(FX);
+            Globals globals = new Globals(Layer);
 
             //calculate the complement of B
-            COMPLEMENT complement = new COMPLEMENT(B, FX);
+            COMPLEMENT complement = new COMPLEMENT(B, Layer);
 
             //do the subtraction
-            ADD add = new ADD(A, complement.A, FX);
+            ADD add = new ADD(A, complement.A, Layer);
 
             complement.exit.AutomaticallyMovesTo(add.entry);
 

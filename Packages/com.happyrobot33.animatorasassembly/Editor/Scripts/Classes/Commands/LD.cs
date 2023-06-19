@@ -12,18 +12,19 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Loads a register with a int value </summary>
         /// <param name="A"> The register to load into </param>
         /// <param name="value"> The value to load into the register </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public LD(Register A, int value, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public LD(Register A, int value, AacFlLayer Layer)
         {
             this.A = A;
+            this.Layer = Layer;
             //truncate the value to fit in the register's bit count
             this.value = value & ((1 << Register.bits) - 1);
-            states = STATES(A, this.value, FX);
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, int value, AacFlLayer FX)
+        AacFlState[] STATES()
         {
-            AacFlState entry = FX.NewState("LD");
+            AacFlState entry = Layer.NewState("LD");
             for (int i = 0; i < Register.bits; i++)
             {
                 bool bitValue = (value & (1 << i)) != 0;

@@ -13,30 +13,30 @@ namespace AnimatorAsAssembly.Commands
         /// <remarks> The result is stored in the second register </remarks>
         /// <param name="A"> The first register to add </param>
         /// <param name="B"> The second register to add </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public ADD(Register A, Register B, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public ADD(Register A, Register B, AacFlLayer Layer)
         {
             this.A = A;
             this.B = B;
-            this.FX = FX;
-            CARRY = FX.BoolParameter("INTERNAL/ADD/CARRY");
-            SUM = new Register("INTERNAL/ADD/SUM", FX);
+            this.Layer = Layer;
+            CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
+            SUM = new Register("INTERNAL/ADD/SUM", Layer);
             states = STATES();
         }
 
         AacFlState[] STATES()
         {
             //globals
-            Globals globals = new Globals(FX);
+            Globals globals = new Globals(Layer);
 
             //entry state
-            AacFlState entry = FX.NewState("EIGHTBITADDER");
+            AacFlState entry = Layer.NewState("EIGHTBITADDER");
             //clear sum and carry registers
             entry.Drives(CARRY, false);
             SUM.Set(entry, 0);
 
             //exit state
-            AacFlState exit = FX.NewState("EIGHTBITADDER EXIT");
+            AacFlState exit = Layer.NewState("EIGHTBITADDER EXIT");
 
             FULLADDER[] FullAdders = new FULLADDER[Register.bits];
 
@@ -47,11 +47,11 @@ namespace AnimatorAsAssembly.Commands
                 if (j > 0)
                 {
                     //copy prevcarry into our own register so it isnt cleared
-                    prevcarry = FX.BoolParameter("ADD/PREV_CARRY");
+                    prevcarry = Layer.BoolParameter("ADD/PREV_CARRY");
                     FullAdders[j - 1].exit.DrivingCopies(FullAdders[j - 1].CARRY, prevcarry);
                 }
                 // create a FullAdder for each bit
-                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, FX);
+                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, Layer);
                 //copy the sum bit to the output register
                 adder.exit.DrivingCopies(adder.SUM, SUM[j]);
 
@@ -62,7 +62,7 @@ namespace AnimatorAsAssembly.Commands
             FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRY, true);
 
             //use a MOV to copy the sum register to the B register
-            MOV mov = new MOV(SUM, B, FX);
+            MOV mov = new MOV(SUM, B, Layer);
 
             //link the full adders together
             entry.AutomaticallyMovesTo(FullAdders[0].entry);

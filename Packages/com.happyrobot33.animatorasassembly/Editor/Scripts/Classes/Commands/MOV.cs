@@ -2,33 +2,31 @@ using AnimatorAsCode.Framework;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class MOV
+    public class MOV : OPCODE
     {
-        public AacFlState[] states;
         public Register A;
         public Register B;
-        public AacFlState entry;
-        public AacFlState exit;
 
         /// <summary> Moves a register to another register </summary>
         /// <param name="A"> The register to copy </param>
         /// <param name="B"> The register to copy to </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public MOV(Register A, Register B, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public MOV(Register A, Register B, AacFlLayer Layer)
         {
             this.A = A;
             this.B = B;
-            states = STATES(A, B, FX);
+            this.Layer = Layer;
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, Register B, AacFlLayer FX)
+        AacFlState[] STATES()
         {
             //globals
-            Globals globals = new Globals(FX);
+            Globals globals = new Globals(Layer);
 
             //entry state
-            entry = FX.NewState("MOV");
-            exit = entry;
+            AacFlState entry = Layer.NewState("MOV");
+            AacFlState exit = entry;
 
             for (int i = 0; i < Register.bits; i++)
             {

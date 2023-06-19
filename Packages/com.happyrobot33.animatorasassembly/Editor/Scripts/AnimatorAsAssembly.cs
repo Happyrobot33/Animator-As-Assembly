@@ -143,7 +143,7 @@ namespace AnimatorAsAssembly
                     AacExample.Options().WriteDefaultsOn()
                 );
 
-                var FX = aac.CreateMainFxLayer();
+                var ControllerLayer = aac.CreateMainFxLayer();
 
                 Register[] registers = new Register[0];
 
@@ -151,7 +151,7 @@ namespace AnimatorAsAssembly
                 AacFlState[,] Instructions = new AacFlState[1, 1];
 
                 //create a dummy default state
-                AacFlState DefaultState = FX.NewState("Default");
+                AacFlState DefaultState = ControllerLayer.NewState("Default");
 
                 //remove comments
                 CompiledCode = Cleanup(RAWINSTRUCTIONS);
@@ -159,16 +159,16 @@ namespace AnimatorAsAssembly
                 //run the display generation code if the user wants it
                 if (useDisplay)
                 {
-                    GenerateDisplay(FX, registers, displayWidth, displayHeight);
+                    GenerateDisplay(ControllerLayer, registers, displayWidth, displayHeight);
                 }
 
-                GenerateContactSenderSystem(FX);
+                GenerateContactSenderSystem(ControllerLayer);
 
                 //read in the instructions
-                Instructions = ParseInstructions(CompiledCode, FX, out registers);
+                Instructions = ParseInstructions(CompiledCode, ControllerLayer, out registers);
 
                 //correlate all of the instructions with their paths
-                CorrelatePaths(Instructions, FX, CompiledCode, registers);
+                CorrelatePaths(Instructions, ControllerLayer, CompiledCode, registers);
 
                 //create final connection between default state and the first instruction
                 DefaultState.AutomaticallyMovesTo(Instructions[0, 0]);
@@ -198,11 +198,16 @@ namespace AnimatorAsAssembly
         /// <remarks> This function is called by the Create() function.
         /// The display is a 2d array of boolean values.
         /// All GPU registers use a * prefix to differentiate them from the CPU registers.</remarks>
-        /// <param name="FX"> The main FX layer </param>
+        /// <param name="ControllerLayer"> The main FX layer </param>
         /// <param name="registers"> The registers that are used by the CPU </param>
         /// <param name="width"> The width of the display </param>
         /// <param name="height"> The height of the display </param>
-        public void GenerateDisplay(AacFlLayer FX, Register[] registers, int width, int height)
+        public void GenerateDisplay(
+            AacFlLayer ControllerLayer,
+            Register[] registers,
+            int width,
+            int height
+        )
         {
             //progress bar
             EditorUtility.DisplayProgressBar("Compiling", "Generating Display", 0.1f);
@@ -226,7 +231,7 @@ namespace AnimatorAsAssembly
             {
                 int x = i % width;
                 int y = i / width;
-                VRAM[i] = FX.FloatParameter("*VRAM_" + x + "," + y);
+                VRAM[i] = ControllerLayer.FloatParameter("*VRAM_" + x + "," + y);
             }
 
             //create a gameobject for each pixel in the display
@@ -296,8 +301,8 @@ namespace AnimatorAsAssembly
         /// <summary> Generates a contact sender layer for each contact sender </summary>
         /// <remarks> This function is called by the Create() function.
         /// The contact sender layer is a layer that will turn the contact sender gameobject on and off depending on a boolean with the same name as the contact sender itself.</remarks>
-        /// <param name="FX"> The main FX layer </param>
-        public void GenerateContactSenderSystem(AacFlLayer FX)
+        /// <param name="ControllerLayer"> The main FX layer </param>
+        public void GenerateContactSenderSystem(AacFlLayer ControllerLayer)
         {
             //progress bar
             EditorUtility.DisplayProgressBar("Compiling", "Generating Contact Sender System", 0.1f);
@@ -319,7 +324,7 @@ namespace AnimatorAsAssembly
                 AacFlState On = ContactSenderLayer.NewState("On");
 
                 //create a new int for the contact sender
-                AacFlIntParameter ContactSenderBool = FX.IntParameter(sender.name);
+                AacFlIntParameter ContactSenderBool = ControllerLayer.IntParameter(sender.name);
 
                 //create a transition from the off state to the on state if the boolean is true
                 AacFlTransition OnTransition = Off.TransitionsTo(On);
@@ -563,12 +568,12 @@ namespace AnimatorAsAssembly
         /// <remarks> This organizes the graph if enabled, adding a dummy state above each instruction to show what line it is on
         /// this also handles connecting each instruction to the next instruction </remarks>
         /// <param name="Instructions"> The instructions to correlate. X in the 2D array is the instruction number, Y is the individual states that make up that instruction</param>
-        /// <param name="FX"> The FX layer to correlate </param>
+        /// <param name="ControllerLayer"> The FX layer to correlate </param>
         /// <param name="raw"> The raw program </param>
         /// <param name="registers"> The registers to correlate </param>
         public void CorrelatePaths(
             AacFlState[,] Instructions,
-            AacFlLayer FX,
+            AacFlLayer ControllerLayer,
             string raw,
             Register[] registers
         )
@@ -610,7 +615,7 @@ namespace AnimatorAsAssembly
                         );
                     }
                     //create a empty state above the instruction to denote what line it is on
-                    AacFlState LineIndicator = FX.NewState("Line: " + x);
+                    AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
                     LineIndicator.Over(Instructions[x, 0]);
                 }
                 EditorUtility.ClearProgressBar();
@@ -682,7 +687,7 @@ namespace AnimatorAsAssembly
                 AacFlTransition falseCon;
 
                 //get globals
-                Globals globals = new Globals(FX);
+                Globals globals = new Globals(ControllerLayer);
 
                 //create the relevant state
                 switch (instructionType)
@@ -805,7 +810,10 @@ namespace AnimatorAsAssembly
                         try
                         {
                             //always make the program counter increment on the current instruction
-                            CurrentFirstNode.DrivingIncreases(FX.IntParameter("INTERNAL/PC"), 1);
+                            CurrentFirstNode.DrivingIncreases(
+                                ControllerLayer.IntParameter("INTERNAL/PC"),
+                                1
+                            );
                             instructionStringList.Add(instruction);
                         }
                         catch { }
@@ -820,10 +828,14 @@ namespace AnimatorAsAssembly
 
         /// <summary> Parses the instructions. </summary>
         /// <param name="raw"> The raw instructions to parse. </param>
-        /// <param name="FX"> The FX layer. </param>
+        /// <param name="ControllerLayer"> The FX layer. </param>
         /// <param name="registers"> [out] The registers that were found in the instructions. </param>
         /// <returns> The parsed instructions. </returns>
-        public AacFlState[,] ParseInstructions(string raw, AacFlLayer FX, out Register[] registers)
+        public AacFlState[,] ParseInstructions(
+            string raw,
+            AacFlLayer ControllerLayer,
+            out Register[] registers
+        )
         {
             Profiler.BeginSample("ParseInstructions");
 
@@ -872,7 +884,7 @@ namespace AnimatorAsAssembly
                         if (Register.FindRegisterInArray(part, Registers) == null)
                         {
                             //if the register does not exist, then create it
-                            Register newReg = new Register(part, FX);
+                            Register newReg = new Register(part, ControllerLayer);
 
                             //increment the ammount of registers used
                             RegistersUsed++;
@@ -889,14 +901,20 @@ namespace AnimatorAsAssembly
                     case "JMP":
                         Instructions = Util.CopyIntoArray(
                             Instructions,
-                            new AacFlState[] { FX.NewState("{JMP} " + instructionParts[1]) },
+                            new AacFlState[]
+                            {
+                                ControllerLayer.NewState("{JMP} " + instructionParts[1])
+                            },
                             i
                         );
                         break;
                     case "LBL":
                         Instructions = Util.CopyIntoArray(
                             Instructions,
-                            new AacFlState[] { FX.NewState("{LBL} " + instructionParts[1]) },
+                            new AacFlState[]
+                            {
+                                ControllerLayer.NewState("{LBL} " + instructionParts[1])
+                            },
                             i
                         );
                         break;
@@ -904,9 +922,9 @@ namespace AnimatorAsAssembly
                         Instructions = Util.CopyIntoArray(
                             Instructions,
                             new Commands.HALFADDER(
-                                FX.BoolParameter(instructionParts[1]),
-                                FX.BoolParameter(instructionParts[2]),
-                                FX
+                                ControllerLayer.BoolParameter(instructionParts[1]),
+                                ControllerLayer.BoolParameter(instructionParts[2]),
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -915,10 +933,10 @@ namespace AnimatorAsAssembly
                         Instructions = Util.CopyIntoArray(
                             Instructions,
                             new Commands.FULLADDER(
-                                FX.BoolParameter(instructionParts[1]),
-                                FX.BoolParameter(instructionParts[2]),
-                                FX.BoolParameter(instructionParts[3]),
-                                FX
+                                ControllerLayer.BoolParameter(instructionParts[1]),
+                                ControllerLayer.BoolParameter(instructionParts[2]),
+                                ControllerLayer.BoolParameter(instructionParts[3]),
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -929,7 +947,7 @@ namespace AnimatorAsAssembly
                             new Commands.LD(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
                                 int.Parse(instructionParts[2]),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -940,7 +958,7 @@ namespace AnimatorAsAssembly
                             new Commands.ADD(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
                                 Register.FindRegisterInArray(instructionParts[2], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -951,7 +969,7 @@ namespace AnimatorAsAssembly
                             new Commands.SUB(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
                                 Register.FindRegisterInArray(instructionParts[2], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -961,7 +979,7 @@ namespace AnimatorAsAssembly
                             Instructions,
                             new Commands.INC(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -971,7 +989,7 @@ namespace AnimatorAsAssembly
                             Instructions,
                             new Commands.DEC(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -981,7 +999,7 @@ namespace AnimatorAsAssembly
                             Instructions,
                             new Commands.SHL(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -991,7 +1009,7 @@ namespace AnimatorAsAssembly
                             Instructions,
                             new Commands.FLIP(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -1001,7 +1019,7 @@ namespace AnimatorAsAssembly
                             Instructions,
                             new Commands.COMPLEMENT(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );
@@ -1012,7 +1030,7 @@ namespace AnimatorAsAssembly
                             new Commands.MOV(
                                 Register.FindRegisterInArray(instructionParts[1], Registers),
                                 Register.FindRegisterInArray(instructionParts[2], Registers),
-                                FX
+                                ControllerLayer
                             ).states,
                             i
                         );

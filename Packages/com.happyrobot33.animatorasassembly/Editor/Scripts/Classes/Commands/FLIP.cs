@@ -4,24 +4,23 @@ using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
-    public class FLIP
+    public class FLIP : OPCODE
     {
-        public AacFlState[] states;
         public Register A;
-        public AacFlState entry;
 
         /// <summary> Bitwise flips a register </summary>
         /// <param name="A"> The register to flip </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public FLIP(Register A, AacFlLayer FX)
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public FLIP(Register A, AacFlLayer Layer)
         {
             this.A = A;
-            states = STATES(A, FX);
+            this.Layer = Layer;
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, AacFlLayer FX)
+        AacFlState[] STATES()
         {
-            entry = FX.NewState("FLIP");
+            AacFlState entry = Layer.NewState("FLIP");
             for (int i = 0; i < Register.bits; i++)
             {
                 entry.DrivingRemaps(A[i], 0f, 1f, A[i], 1f, 0f);

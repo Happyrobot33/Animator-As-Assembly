@@ -8,21 +8,22 @@ namespace AnimatorAsAssembly.Commands
 
         /// <summary> Calculates the Two's Complement of a register </summary>
         /// <param name="A"> The register to flip </param>
-        /// <param name="FX"> The FX controller that this command is linked to </param>
-        public COMPLEMENT(Register A, AacFlLayer FX)
+        /// <param name="Layer"> The Layer that this command is linked to </param>
+        public COMPLEMENT(Register A, AacFlLayer Layer)
         {
             this.A = A;
-            states = STATES(A, FX);
+            this.Layer = Layer;
+            states = STATES();
         }
 
-        AacFlState[] STATES(Register A, AacFlLayer FX)
+        AacFlState[] STATES()
         {
             //globals
-            Globals globals = new Globals(FX);
+            Globals globals = new Globals(Layer);
 
-            FLIP flip = new FLIP(A, FX);
-            ADD one = new ADD(A, globals.ONE, FX);
-            MOV mov = new MOV(one.SUM, A, FX);
+            FLIP flip = new FLIP(A, Layer);
+            ADD one = new ADD(A, globals.ONE, Layer);
+            MOV mov = new MOV(one.SUM, A, Layer);
             flip.entry.AutomaticallyMovesTo(one.entry);
             one.exit.AutomaticallyMovesTo(mov.states[0]);
 
