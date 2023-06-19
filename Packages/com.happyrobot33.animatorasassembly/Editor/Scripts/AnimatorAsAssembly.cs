@@ -974,6 +974,17 @@ namespace AnimatorAsAssembly
                             i
                         );
                         break;
+                    case "MUL":
+                        Instructions = Util.CopyIntoArray(
+                            Instructions,
+                            new Commands.MUL(
+                                Register.FindRegisterInArray(instructionParts[1], Registers),
+                                Register.FindRegisterInArray(instructionParts[2], Registers),
+                                ControllerLayer
+                            ).states,
+                            i
+                        );
+                        break;
                     case "INC":
                         Instructions = Util.CopyIntoArray(
                             Instructions,

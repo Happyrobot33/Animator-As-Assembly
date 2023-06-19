@@ -13,7 +13,7 @@ namespace AnimatorAsAssembly
         public string name;
 
         /// <summary> The bit count per register </summary>
-        public static int bits = 16;
+        public static int bits = 8;
 
         /// <summary> The FX controller that this register is linked to </summary>
         public AacFlLayer FX;

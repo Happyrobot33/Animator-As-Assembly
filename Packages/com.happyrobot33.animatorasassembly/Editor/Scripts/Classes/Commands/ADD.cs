@@ -6,11 +6,12 @@ namespace AnimatorAsAssembly.Commands
     {
         public Register A;
         public Register B;
+        public Register C;
         public AacFlBoolParameter CARRY;
         public Register SUM;
 
         /// <summary> Adds two registers </summary>
-        /// <remarks> The result is stored in the second register </remarks>
+        /// <remarks> The result is stored in the second register or in C </remarks>
         /// <param name="A"> The first register to add </param>
         /// <param name="B"> The second register to add </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
@@ -18,6 +19,20 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.B = B;
+            this.C = B;
+            this.Layer = Layer;
+            CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
+            SUM = new Register("INTERNAL/ADD/SUM", Layer);
+            states = STATES();
+        }
+
+        /// <inheritdoc cref="ADD(Register, Register, AacFlLayer)"/>
+        /// <param name="C"> The register to store the result in </param>
+        public ADD(Register A, Register B, Register C, AacFlLayer Layer)
+        {
+            this.A = A;
+            this.B = B;
+            this.C = C;
             this.Layer = Layer;
             CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
             SUM = new Register("INTERNAL/ADD/SUM", Layer);
@@ -58,8 +73,8 @@ namespace AnimatorAsAssembly.Commands
             //set the carry bit if the last FullAdder has a carry bit
             FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRY, true);
 
-            //use a MOV to copy the sum register to the B register
-            MOV mov = new MOV(SUM, B, Layer);
+            //use a MOV to copy the sum register to the C register
+            MOV mov = new MOV(SUM, C, Layer);
 
             //link the full adders together
             entry.AutomaticallyMovesTo(FullAdders[0].entry);

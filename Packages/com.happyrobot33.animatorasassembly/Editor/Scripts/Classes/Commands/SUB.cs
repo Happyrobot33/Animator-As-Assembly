@@ -6,9 +6,10 @@ namespace AnimatorAsAssembly.Commands
     {
         public Register A;
         public Register B;
+        public Register C;
 
         /// <summary> Subtracts two registers </summary>
-        /// <remarks> The result is stored in the second register </remarks>
+        /// <remarks> The result is stored in the second register or C </remarks>
         /// <param name="A"> The first register to sub </param>
         /// <param name="B"> The second register to sub </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
@@ -16,6 +17,18 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.B = B;
+            this.C = B;
+            this.Layer = Layer;
+            states = STATES();
+        }
+
+        /// <inheritdoc cref="SUB(Register, Register, AacFlLayer)"/>
+        /// <param name="C"> The register to store the result in </param>
+        public SUB(Register A, Register B, Register C, AacFlLayer Layer)
+        {
+            this.A = A;
+            this.B = B;
+            this.C = C;
             this.Layer = Layer;
             states = STATES();
         }
@@ -26,7 +39,7 @@ namespace AnimatorAsAssembly.Commands
             COMPLEMENT complement = new COMPLEMENT(B, Layer);
 
             //do the subtraction
-            ADD add = new ADD(A, complement.A, Layer);
+            ADD add = new ADD(A, complement.A, C, Layer);
 
             complement.exit.AutomaticallyMovesTo(add.entry);
 
