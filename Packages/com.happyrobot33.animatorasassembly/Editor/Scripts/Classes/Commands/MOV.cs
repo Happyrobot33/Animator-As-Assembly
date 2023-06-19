@@ -1,4 +1,5 @@
 using AnimatorAsCode.Framework;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -21,6 +22,7 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("MOV");
             //entry state
             AacFlState entry = Layer.NewState("MOV");
             AacFlState exit = entry;
@@ -29,6 +31,8 @@ namespace AnimatorAsAssembly.Commands
             {
                 entry.DrivingCopies(A[i], B[i]);
             }
+
+            Profiler.EndSample();
             return new AacFlState[] { entry };
         }
     }

@@ -1,4 +1,5 @@
 using AnimatorAsCode.Framework;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -35,6 +36,7 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("SUB");
             //calculate the complement of B
             COMPLEMENT complement = new COMPLEMENT(B, Layer);
 
@@ -43,6 +45,7 @@ namespace AnimatorAsAssembly.Commands
 
             complement.exit.AutomaticallyMovesTo(add.entry);
 
+            Profiler.EndSample();
             return Util.ConcatArrays(complement.states, add.states);
         }
     }

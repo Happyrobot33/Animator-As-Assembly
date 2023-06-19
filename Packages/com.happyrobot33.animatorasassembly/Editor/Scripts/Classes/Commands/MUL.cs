@@ -1,6 +1,7 @@
 using AnimatorAsCode.Framework;
 using System.Linq;
 using System.Collections.Generic;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -40,6 +41,7 @@ namespace AnimatorAsAssembly.Commands
               10011010   (this is binary for decimal 154) */
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("MUL");
             AacFlState entry = Layer.NewState("MUL");
             AacFlState exit = Layer.NewState("MUL_EXIT");
 
@@ -52,6 +54,7 @@ namespace AnimatorAsAssembly.Commands
             List<AacFlState> interstates = new List<AacFlState>();
             for (int i = 0; i < Register.bits; i++)
             {
+                Profiler.BeginSample("MUL_INTERMEDIATE_" + i);
                 //create a new intermediate state
                 //this state determines if to add or skip the intermediate result
                 AacFlState interSplit = Layer.NewState("MUL_INTERMEDIATE_" + i + "_SPLIT");
@@ -93,12 +96,14 @@ namespace AnimatorAsAssembly.Commands
                 interstates.AddRange(shl.states);
                 interstates.AddRange(add.states);
                 interstates.Add(interExit);
+                Profiler.EndSample();
             }
 
             MOV movToResult = new MOV(Result, A, Layer);
             interstates.Last().AutomaticallyMovesTo(movToResult.entry);
             movToResult.exit.AutomaticallyMovesTo(exit);
 
+            Profiler.EndSample();
             return Util.ConcatArrays(entry, interstates.ToArray(), movToResult.states, exit);
         }
     }

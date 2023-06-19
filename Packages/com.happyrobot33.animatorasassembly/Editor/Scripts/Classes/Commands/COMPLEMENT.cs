@@ -1,4 +1,5 @@
 using AnimatorAsCode.Framework;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -18,12 +19,14 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("COMPLEMENT");
             FLIP flip = new FLIP(A, Layer);
             ADD one = new ADD(A, Globals.ONE, Layer);
             MOV mov = new MOV(one.SUM, A, Layer);
             flip.entry.AutomaticallyMovesTo(one.entry);
             one.exit.AutomaticallyMovesTo(mov.states[0]);
 
+            Profiler.EndSample();
             return Util.ConcatArrays(flip.states, one.states, mov.states);
         }
     }

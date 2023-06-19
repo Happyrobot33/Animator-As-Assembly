@@ -1,4 +1,5 @@
 using AnimatorAsCode.Framework;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -41,6 +42,7 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("ADD");
             //entry state
             AacFlState entry = Layer.NewState("EIGHTBITADDER");
             //clear sum and carry registers
@@ -54,6 +56,7 @@ namespace AnimatorAsAssembly.Commands
 
             for (int j = 0; j < Register.bits; j++)
             {
+                Profiler.BeginSample("ADD/FULLADDER " + j);
                 /// <summary> The previous carry bit </summary>
                 AacFlBoolParameter prevcarry = Globals.FALSE;
                 if (j > 0)
@@ -68,6 +71,7 @@ namespace AnimatorAsAssembly.Commands
                 adder.exit.DrivingCopies(adder.SUM, SUM[j]);
 
                 FullAdders[j] = adder;
+                Profiler.EndSample();
             }
 
             //set the carry bit if the last FullAdder has a carry bit
@@ -97,6 +101,7 @@ namespace AnimatorAsAssembly.Commands
                 }
             }
 
+            Profiler.EndSample();
             return Util.ConcatArrays(
                 new AacFlState[] { entry },
                 FullAdderStates,

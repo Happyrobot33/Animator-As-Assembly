@@ -2,6 +2,7 @@ using AnimatorAsCode;
 using AnimatorAsCode.Framework;
 using UnityEngine;
 using AnimatorAsAssembly;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -31,6 +32,7 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("HALFADDER");
             //entry state
             AacFlState entry = Layer.NewState("HALFADDER");
             entry.Drives(SUM, false);
@@ -59,6 +61,7 @@ namespace AnimatorAsAssembly.Commands
             sumCalc.AutomaticallyMovesTo(exit);
             carryCalc.AutomaticallyMovesTo(exit);
 
+            Profiler.EndSample();
             return Util.ConcatArrays(entry, sumCalc, carryCalc, exit);
         }
     }

@@ -1,4 +1,5 @@
 using AnimatorAsCode.Framework;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -18,9 +19,11 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("INC");
             //add 1 to the register
             ADD add = new ADD(Globals.ONE, A, Layer);
 
+            Profiler.EndSample();
             return add.states;
         }
     }

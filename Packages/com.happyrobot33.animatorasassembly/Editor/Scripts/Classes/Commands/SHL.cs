@@ -1,4 +1,5 @@
 using AnimatorAsCode.Framework;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -20,6 +21,7 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES(int shift)
         {
+            Profiler.BeginSample("SHL");
             //copy from A to BUFFER
             MOV mov = new MOV(A, BUFFER, Layer);
 
@@ -37,6 +39,7 @@ namespace AnimatorAsAssembly.Commands
 
             mov.exit.AutomaticallyMovesTo(emptyBuffer);
 
+            Profiler.EndSample();
             return Util.ConcatArrays(mov.states, new AacFlState[] { emptyBuffer });
         }
     }

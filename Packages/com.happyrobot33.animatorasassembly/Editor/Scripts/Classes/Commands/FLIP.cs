@@ -1,6 +1,7 @@
 using AnimatorAsCode;
 using AnimatorAsCode.Framework;
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -20,11 +21,13 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
+            Profiler.BeginSample("FLIP");
             AacFlState entry = Layer.NewState("FLIP");
             for (int i = 0; i < Register.bits; i++)
             {
                 entry.DrivingRemaps(A[i], 0f, 1f, A[i], 1f, 0f);
             }
+            Profiler.EndSample();
             return new AacFlState[] { entry };
         }
     }

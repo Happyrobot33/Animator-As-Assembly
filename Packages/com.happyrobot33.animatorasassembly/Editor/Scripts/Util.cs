@@ -1,6 +1,7 @@
 using AnimatorAsCode.Framework;
 using System.Linq;
 using UnityEditor;
+using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly
 {
@@ -93,9 +94,11 @@ namespace AnimatorAsAssembly
         /// <returns>The concatenated array</returns>
         public static AacFlState[] ConcatArrays(params object[] objects)
         {
+            Profiler.BeginSample("ConcatArrays");
             object[][] arrays = objects
                 .Select(x => x is object[] ? (object[])x : new object[] { x })
                 .ToArray();
+            Profiler.EndSample();
             return arrays.Aggregate((a, b) => a.Concat(b).ToArray()).Cast<AacFlState>().ToArray();
         }
     }
