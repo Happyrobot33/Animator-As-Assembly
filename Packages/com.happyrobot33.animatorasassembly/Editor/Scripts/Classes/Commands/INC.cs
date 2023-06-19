@@ -18,11 +18,8 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
-            //get globals
-            Globals globals = new Globals(Layer);
-
             //add 1 to the register
-            ADD add = new ADD(globals.ONE, A, Layer);
+            ADD add = new ADD(Globals.ONE, A, Layer);
 
             return add.states;
         }

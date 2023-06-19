@@ -21,9 +21,6 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
-            //globals
-            Globals globals = new Globals(Layer);
-
             //entry state
             AacFlState entry = Layer.NewState("MOV");
             AacFlState exit = entry;

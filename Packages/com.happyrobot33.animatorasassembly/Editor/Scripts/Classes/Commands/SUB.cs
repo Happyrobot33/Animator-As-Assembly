@@ -22,9 +22,6 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
-            //get globals
-            Globals globals = new Globals(Layer);
-
             //calculate the complement of B
             COMPLEMENT complement = new COMPLEMENT(B, Layer);
 

@@ -683,11 +683,8 @@ namespace AnimatorAsAssembly
                 catch { }
 
                 //define common transition names
-                AacFlTransition trueCon;
-                AacFlTransition falseCon;
-
-                //get globals
-                Globals globals = new Globals(ControllerLayer);
+                //AacFlTransition trueCon;
+                //AacFlTransition falseCon;
 
                 //create the relevant state
                 switch (instructionType)
@@ -698,7 +695,7 @@ namespace AnimatorAsAssembly
                         );
                         //modify PC
                         CurrentLastNode.Drives(
-                            globals.PROGRAMCOUNTER,
+                            Globals.PROGRAMCOUNTER,
                             int.Parse(instructionParts[1])
                         );
                         break;
@@ -894,6 +891,9 @@ namespace AnimatorAsAssembly
                         }
                     }
                 }
+
+                //Initialize Global Variables
+                new Globals(ControllerLayer);
 
                 //create the relevant state
                 switch (instructionType)

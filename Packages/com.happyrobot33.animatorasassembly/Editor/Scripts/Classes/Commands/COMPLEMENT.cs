@@ -18,11 +18,8 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
-            //globals
-            Globals globals = new Globals(Layer);
-
             FLIP flip = new FLIP(A, Layer);
-            ADD one = new ADD(A, globals.ONE, Layer);
+            ADD one = new ADD(A, Globals.ONE, Layer);
             MOV mov = new MOV(one.SUM, A, Layer);
             flip.entry.AutomaticallyMovesTo(one.entry);
             one.exit.AutomaticallyMovesTo(mov.states[0]);

@@ -26,9 +26,6 @@ namespace AnimatorAsAssembly.Commands
 
         AacFlState[] STATES()
         {
-            //globals
-            Globals globals = new Globals(Layer);
-
             //entry state
             AacFlState entry = Layer.NewState("EIGHTBITADDER");
             //clear sum and carry registers
@@ -43,7 +40,7 @@ namespace AnimatorAsAssembly.Commands
             for (int j = 0; j < Register.bits; j++)
             {
                 /// <summary> The previous carry bit </summary>
-                AacFlBoolParameter prevcarry = globals.FALSE;
+                AacFlBoolParameter prevcarry = Globals.FALSE;
                 if (j > 0)
                 {
                     //copy prevcarry into our own register so it isnt cleared

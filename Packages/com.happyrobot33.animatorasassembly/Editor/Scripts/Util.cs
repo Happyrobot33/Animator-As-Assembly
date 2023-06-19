@@ -103,26 +103,23 @@ namespace AnimatorAsAssembly
     /// <summary> This class contains all the global const variables used in the controller </summary>
     public class Globals
     {
-        public AacFlLayer FX;
-
         /// <summary> A permanent reference to a false boolean value </summary>
-        public AacFlBoolParameter FALSE;
+        public static AacFlBoolParameter FALSE;
 
         /// <summary> A permanent reference to a true boolean value </summary>
-        public AacFlBoolParameter TRUE;
+        public static AacFlBoolParameter TRUE;
 
         /// <summary> A permanent reference to the number 1 in Register form </summary>
-        public Register ONE;
+        public static Register ONE;
 
         /// <summary> A permanent reference to the program counter variable </summary>
-        public AacFlIntParameter PROGRAMCOUNTER;
-        public static string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
+        public static AacFlIntParameter PROGRAMCOUNTER;
+        public const string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
 
         /// <summary> Create a new Globals object </summary>
         /// <param name="FX">The AacFlLayer to use</param>
         public Globals(AacFlLayer FX)
         {
-            this.FX = FX;
             FALSE = FX.BoolParameter("GLOBALS/FALSE");
             TRUE = FX.BoolParameter("GLOBALS/TRUE");
             FX.OverrideValue(TRUE, true);
