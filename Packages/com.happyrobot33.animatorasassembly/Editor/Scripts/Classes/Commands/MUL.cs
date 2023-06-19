@@ -76,10 +76,7 @@ namespace AnimatorAsAssembly.Commands
                 //mov in nothing if the bit is 0
                 AacFlState mul0 = Layer.NewState("MUL_INTERMEDIATE_" + i + "_0");
                 mul0.AutomaticallyMovesTo(interExit);
-                for (int j = 0; j < Register.bits; j++)
-                {
-                    mul0.Drives(Intermediate[j], false);
-                }
+                Intermediate.Set(mul0, 0);
 
                 //add intermediate to the result
                 ADD add = new ADD(Intermediate, Result, Layer);
