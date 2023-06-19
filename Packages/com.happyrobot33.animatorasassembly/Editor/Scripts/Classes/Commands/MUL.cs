@@ -24,6 +24,8 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.B = B;
+            this.Intermediate = new Register("INTERNAL/MUL/Intermediate", Layer);
+            this.Result = new Register("INTERNAL/MUL/Result", Layer);
             this.Layer = Layer;
             states = STATES();
         }
@@ -44,12 +46,6 @@ namespace AnimatorAsAssembly.Commands
             Profiler.BeginSample("MUL");
             AacFlState entry = Layer.NewState("MUL");
             AacFlState exit = Layer.NewState("MUL_EXIT");
-
-            //create the intermediate register
-            Intermediate = new Register("Intermediate", Layer);
-
-            //create the result register
-            Result = new Register("Result", Layer);
 
             List<AacFlState> interstates = new List<AacFlState>();
             for (int i = 0; i < Register.bits; i++)

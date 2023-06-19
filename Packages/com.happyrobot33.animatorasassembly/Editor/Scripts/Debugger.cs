@@ -160,6 +160,7 @@ namespace AnimatorAsAssembly
                 EditorGUILayout.EndHorizontal();
                 #endregion
 
+                #region registers
                 //show the registers
                 for (int i = 0; i < debugger.registersList.Count; i++)
                 {
@@ -226,6 +227,7 @@ namespace AnimatorAsAssembly
 
                     EditorGUILayout.EndFoldoutHeaderGroup();
                 }
+                #endregion
             }
             else
             {
