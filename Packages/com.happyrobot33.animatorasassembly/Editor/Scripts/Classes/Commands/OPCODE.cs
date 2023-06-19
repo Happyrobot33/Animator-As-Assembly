@@ -1,5 +1,4 @@
 using AnimatorAsCode.Framework;
-using System.ComponentModel.DataAnnotations;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -12,7 +11,6 @@ namespace AnimatorAsAssembly.Commands
         public AacFlState[] states;
 
         /// <summary> The FX layer that this command is linked to </summary>
-        //[Required(ErrorMessage = "Layer is required")]
         internal AacFlLayer Layer;
 
         /// <summary> The entry state for this opcode </summary>
