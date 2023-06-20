@@ -484,8 +484,7 @@ namespace AnimatorAsAssembly
         }
 
         /// <summary> Organizes the graph of the program </summary>
-        /// <remarks> This organizes the graph if enabled, adding a dummy state above each instruction to show what line it is on
-        /// this also handles connecting each instruction to the next instruction </remarks>
+        /// <remarks> This organizes the graph if enabled, adding a dummy state above each instruction to show what line it is on </remarks>
         /// <param name="Instructions"> The instructions to correlate. X in the 2D array is the instruction number, Y is the individual states that make up that instruction</param>
         /// <param name="ControllerLayer"> The FX layer to correlate </param>
         /// <param name="raw"> The raw program </param>
@@ -557,8 +556,7 @@ namespace AnimatorAsAssembly
             //split the instructions into an array
             string[] instructions = raw.Split('\n');
 
-            //create a list of states that will be used to store the program
-            //the max sub states a opcode can have is 20
+            //create a list of instructions that make up the program
             List<Commands.OPCODE> Instructions = new List<Commands.OPCODE>();
 
             //loop through the instructions, making the relevant states based on the instruction
