@@ -24,6 +24,13 @@ namespace AnimatorAsAssembly.Commands
             init(A, B, lblname, Layer);
         }
 
+        /// <summary> Jumps to a state if A >= B </summary>
+        /// <remarks> This is used for internal jumps. After initializing this, Link(state) MUST be called </remarks>
+        public JIG(Register A, Register B, AacFlLayer Layer)
+        {
+            init(A, B, "INTERNAL", Layer);
+        }
+
         /// <summary> Jumps to a LBL if A >= B </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
@@ -87,6 +94,11 @@ namespace AnimatorAsAssembly.Commands
             }
 
             base.Link(opcodes);
+        }
+
+        public void Link(AacFlState destination)
+        {
+            JumpAway.AutomaticallyMovesTo(destination);
         }
     }
 }

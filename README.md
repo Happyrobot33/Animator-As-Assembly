@@ -43,11 +43,11 @@ https://www.matthewherber.com/Animator-As-Assembly/
 - [x] `ADD`: Adds the contents of the first register to the second register and stores the result in the third register
 - [x] `SUB`: Subtracts the contents of the first register from the second register and stores the result in the third register
 - [ ] `JEQ`: Compares the contents of the first register to the second register, and if they are equal it jumps to the specified label (syntax: `JEQ REGISTER REGISTER LABEL`)
-- [ ] `JIG`: Compares the contents of the first register to the second register, and if the first register is greater than the second register it jumps to the specified label (syntax: `JIG REGISTER REGISTER LABEL`)
+- [x] `JIG`: Compares the contents of the first register to the second register, and if the first register is greater than the second register it jumps to the specified label (syntax: `JIG REGISTER REGISTER LABEL`)
 - [ ] `MUL`: Multiplies the contents of the first register by the contents of the second register and stores the result in the third register
 - [ ] `MULN`: Multiplies the contents of the first register by a static number and stores the result in the second register (syntax: `MULN REGISTER NUMBER REGISTER`)
   - Significantly faster than `MUL`
-- [ ] `DIV`: Divides the contents of the first register by the contents of the second register and stores the result in the third register (rounds up). The remainder is stored in DAC2 if needed. Note that if you use the remainder, the result will be 1 larger than it should be. TODO: Remainder calculation is not accurate
+- [x] `DIV`: Divides the contents of the first register by the contents of the second register and stores the result in the third register (rounds up). The remainder is stored in DAC2 if needed. Note that if you use the remainder, the result will be 1 larger than it should be.
 - [ ] `NOCONNECT`: Does nothing, but does not connect the previous instruction to itself
 - [ ] `SWAP`: Swaps the contents of the first register with the contents of the second register
 - [ ] `JSR`: Jumps to a subroutine (syntax: `JSR SUBROUTINE_NAME`). Stores the return address in PC

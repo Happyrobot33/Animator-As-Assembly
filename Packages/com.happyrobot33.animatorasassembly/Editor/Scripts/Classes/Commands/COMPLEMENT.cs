@@ -36,7 +36,7 @@ namespace AnimatorAsAssembly.Commands
         {
             Profiler.BeginSample("COMPLEMENT");
             FLIP flip = new FLIP(A, Layer);
-            ADD one = new ADD(A, Globals.ONE, Layer);
+            ADD one = new ADD(Globals.ONE, A, Layer);
             MOV mov = new MOV(one.SUM, A, Layer);
             flip.exit.AutomaticallyMovesTo(one.entry);
             one.exit.AutomaticallyMovesTo(mov.states[0]);

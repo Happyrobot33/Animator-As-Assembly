@@ -56,16 +56,19 @@ namespace AnimatorAsAssembly.Commands
         AacFlState[] STATES()
         {
             Profiler.BeginSample("SUB");
+            Register Btemp = new Register("INTERNAL/SUB/Btemp", Layer);
+            MOV mov = new MOV(B, Btemp, Layer);
             //calculate the complement of B
-            COMPLEMENT complement = new COMPLEMENT(B, Layer);
+            COMPLEMENT complement = new COMPLEMENT(Btemp, Layer);
 
             //do the subtraction
             ADD add = new ADD(A, complement.A, C, Layer);
 
+            mov.exit.AutomaticallyMovesTo(complement.entry);
             complement.exit.AutomaticallyMovesTo(add.entry);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(complement.states, add.states);
+            return Util.ConcatArrays(mov.states, complement.states, add.states);
         }
     }
 }
