@@ -68,7 +68,7 @@ namespace AnimatorAsAssembly.Commands
             complement.exit.AutomaticallyMovesTo(add.entry);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(mov.states, complement.states, add.states);
+            return Util.CombineStates(mov.states, complement.states, add.states);
         }
     }
 }

@@ -53,7 +53,7 @@ namespace AnimatorAsAssembly.Commands
               00000000   (this is 1011 x 0)
               00010110   (this is 1011 x 1, shifted one position to the left)
               00101100   (this is 1011 x 1, shifted two positions to the left)
-            + 10110000   (this is 1011 x 1, shifted three positions to the left)
+            + 01011000   (this is 1011 x 1, shifted three positions to the left)
               =========
               10011010   (this is binary for decimal 154) */
         AacFlState[] STATES()
@@ -117,7 +117,7 @@ namespace AnimatorAsAssembly.Commands
             movToResult.exit.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(entry, interstates.ToArray(), movToResult.states, exit);
+            return Util.CombineStates(entry, interstates.ToArray(), movToResult.states, exit);
         }
     }
 }

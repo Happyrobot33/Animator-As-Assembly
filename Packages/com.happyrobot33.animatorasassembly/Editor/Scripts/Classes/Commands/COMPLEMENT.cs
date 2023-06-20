@@ -42,7 +42,7 @@ namespace AnimatorAsAssembly.Commands
             one.exit.AutomaticallyMovesTo(mov.states[0]);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(flip.states, one.states, mov.states);
+            return Util.CombineStates(flip.states, one.states, mov.states);
         }
     }
 }

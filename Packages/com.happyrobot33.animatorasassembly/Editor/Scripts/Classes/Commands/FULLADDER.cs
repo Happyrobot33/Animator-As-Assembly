@@ -71,7 +71,7 @@ namespace AnimatorAsAssembly.Commands
             secondHalfAdder.exit.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(
+            return Util.CombineStates(
                 entry,
                 firstHalfAdder.states,
                 secondHalfAdder.states,

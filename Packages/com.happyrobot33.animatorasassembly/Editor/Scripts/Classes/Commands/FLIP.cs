@@ -51,7 +51,7 @@ namespace AnimatorAsAssembly.Commands
                 exit.DrivingCopies(BUFFER[i], A[i]);
             }
             Profiler.EndSample();
-            return Util.ConcatArrays(entry, exit);
+            return Util.CombineStates(entry, exit);
         }
     }
 }

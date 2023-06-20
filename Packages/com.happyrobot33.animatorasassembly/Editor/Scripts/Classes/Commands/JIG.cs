@@ -70,7 +70,7 @@ namespace AnimatorAsAssembly.Commands
             sub.exit.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(entry, sub.states, JumpAway, exit);
+            return Util.CombineStates(entry, sub.states, JumpAway, exit);
         }
 
         public override void Link(List<OPCODE> opcodes)

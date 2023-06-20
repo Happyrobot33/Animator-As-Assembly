@@ -59,7 +59,7 @@ namespace AnimatorAsAssembly.Commands
             mov.exit.AutomaticallyMovesTo(emptyBuffer);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(mov.states, emptyBuffer);
+            return Util.CombineStates(mov.states, emptyBuffer);
         }
     }
 }

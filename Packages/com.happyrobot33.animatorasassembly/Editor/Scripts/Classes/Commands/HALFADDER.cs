@@ -62,7 +62,7 @@ namespace AnimatorAsAssembly.Commands
             carryCalc.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(entry, sumCalc, carryCalc, exit);
+            return Util.CombineStates(entry, sumCalc, carryCalc, exit);
         }
     }
 }

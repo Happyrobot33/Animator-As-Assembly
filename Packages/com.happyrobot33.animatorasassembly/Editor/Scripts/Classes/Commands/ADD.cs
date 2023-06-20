@@ -119,7 +119,7 @@ namespace AnimatorAsAssembly.Commands
             }
 
             Profiler.EndSample();
-            return Util.ConcatArrays(
+            return Util.CombineStates(
                 new AacFlState[] { entry },
                 FullAdderStates,
                 mov.states,

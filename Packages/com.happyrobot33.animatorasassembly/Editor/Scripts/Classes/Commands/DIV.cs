@@ -92,7 +92,7 @@ namespace AnimatorAsAssembly.Commands
             returnR.exit.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
-            return Util.ConcatArrays(
+            return Util.CombineStates(
                 entry,
                 mov.states,
                 sub.states,
