@@ -5,13 +5,6 @@ A Unity editor script to compile custom assembly into animator layers
 https://www.matthewherber.com/Animator-As-Assembly/
 
 ## Instructions
-### Variables:
-- `$`: register
-- `%`: label
-- `&`: internal register
-- `!`: input register
-- `*`: GPU register
-
 ### Symbols:
 - `#`: comment
 - `;`: subroutine
