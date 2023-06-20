@@ -68,15 +68,7 @@ namespace AnimatorAsAssembly.Commands
             //set the quotient to 0
             Quotient.Set(entry, 0);
 
-            //decrement the denominator into a temp register
-            //this allows for R to equal D
-            //Register Btemp = new Register("INTERNAL/DIV/TEMP", Layer);
-            //MOV mov2 = new MOV(B, Btemp, Layer);
-            //DEC dec = new DEC(Btemp, Layer);
-
             entry.AutomaticallyMovesTo(mov.entry);
-            //mov.exit.AutomaticallyMovesTo(mov2.entry);
-            //mov2.exit.AutomaticallyMovesTo(dec.entry);
 
             #region WHILE R >= D
             SUB sub = new SUB(Remainder, B, Remainder, Layer);
