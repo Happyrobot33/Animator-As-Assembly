@@ -39,7 +39,6 @@ https://www.matthewherber.com/Animator-As-Assembly/
 - [ ] `NOP`: Does nothing for 1 cycle
 - [x] `MOV`: Copies the contents of the first register into the second register
 - [x] `LD`: Loads the specified number into the register (syntax: `LD REGISTER NUMBER`)
-- [ ] `LDB`: Loads a boolean into the register (syntax: `LDB REGISTER BOOLEAN`)
 - [x] `ADD`: Adds the contents of the first register to the second register and stores the result in the third register
 - [x] `SUB`: Subtracts the contents of the first register from the second register and stores the result in the third register
 - [ ] `JEQ`: Compares the contents of the first register to the second register, and if they are equal it jumps to the specified label (syntax: `JEQ REGISTER REGISTER LABEL`)
