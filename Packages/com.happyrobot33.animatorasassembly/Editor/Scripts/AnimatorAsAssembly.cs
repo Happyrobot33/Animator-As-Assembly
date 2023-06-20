@@ -53,6 +53,7 @@ namespace AnimatorAsAssembly
 
         /// <summary> This is a string list of all the instructions in the compiled code. index it with the program counter to get the current instruction </summary>
         [SerializeField]
+        [HideInInspector]
         public List<string> instructionStringList = new List<string>();
 
         private AacFlBase aac;
