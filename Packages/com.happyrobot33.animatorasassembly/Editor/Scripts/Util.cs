@@ -68,26 +68,6 @@ namespace AnimatorAsAssembly
             return newArray;
         }
 
-        /// <inheritdoc cref="CopyIntoArray(Register[], Register)"/>
-        public static LBL[] CopyIntoArray(LBL[] array, LBL value)
-        {
-            UnityEngine.Profiling.Profiler.BeginSample("CopyIntoArray [LBL]");
-            //create a new array with a length of the old array + 1
-            LBL[] newArray = new LBL[array.Length + 1];
-
-            //copy each element in, one by one
-            for (int i = 0; i < array.Length; i++)
-            {
-                newArray[i] = array[i];
-            }
-
-            //add the new value to the end of the array
-            newArray[newArray.Length - 1] = value;
-
-            UnityEngine.Profiling.Profiler.EndSample();
-            return newArray;
-        }
-
         //thank god for chatGPT for this one
         /// <summary> Concatenates multiple arrays into one </summary>
         /// <param name="objects">The arrays to concatenate</param>

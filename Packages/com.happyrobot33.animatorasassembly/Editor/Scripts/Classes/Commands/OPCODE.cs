@@ -50,7 +50,7 @@ namespace AnimatorAsAssembly.Commands
         }
 
         /// <summary> This links this opcode to the previous opcode. This is overridable by inheritors to provide different behaviour </summary>
-        public void Link(List<OPCODE> opcodes)
+        public virtual void Link(List<OPCODE> opcodes)
         {
             //find self in list using the ID
             int index = opcodes.FindIndex(x => x.ID == this.ID);

@@ -23,11 +23,6 @@ namespace AnimatorAsAssembly
         [HideInInspector]
         public int RegistersUsed = 0;
 
-        //[HideInInspector]
-
-        //[ReadOnly]
-        public LBL[] Labels = new LBL[0];
-
         [Header("Compiler Options")]
         [Tooltip(
             "This is used to determine the maximum size of the stack. If you are using a lot of PUSH, POP or subroutine commands, you may need to increase this."
@@ -125,7 +120,6 @@ namespace AnimatorAsAssembly
 
                 Profiler.BeginSample("Compile");
                 RegistersUsed = 0;
-                Labels = new LBL[0];
                 instructionStringList = new List<string>();
 
                 aac = AacExample.AnimatorAsCode(
@@ -475,75 +469,6 @@ namespace AnimatorAsAssembly
 
             //remove the last \n
             output = output.Substring(0, output.Length - 1);
-
-            //find all the labels in output and store them in the Labels array
-            for (int i = 0; i < output.Split('\n').Length; i++)
-            {
-                string line = output.Split('\n')[i];
-
-                if (line.Contains("LBL"))
-                {
-                    LBL newLabel = new LBL(line.Split(' ')[1], i);
-                    Labels = Util.CopyIntoArray(Labels, newLabel);
-                }
-            }
-
-            //loop through and resolve all JMP to their relevant LBL
-            for (int i = 0; i < Labels.Length; i++)
-            {
-                //JMP
-                //output = output.Replace("JMP " + Labels[i].Name, "JMP " + Labels[i].Line); //messy comparison, leads to issues
-
-                //special case for the JEN, JNEN and JEQ instructions
-                //these instructions need to have the register number and the number they are comparing to kept
-                for (int j = 0; j < output.Split('\n').Length; j++)
-                {
-                    string line = output.Split('\n')[j];
-
-                    if (
-                        line.Contains("JEN ")
-                        || line.Contains("JNEN ")
-                        || line.Contains("JEQ ")
-                        || line.Contains("JIG ")
-                    )
-                    {
-                        string[] split = line.Split(' ');
-                        //make sure this is the right label
-                        if (split[3] == Labels[i].Name)
-                        {
-                            //dont use replace as it is messy
-                            //output = output.Replace(line, split[0] + " " + split[1] + " " + split[2] + " " + Labels[i].Line);
-                            output =
-                                output.Substring(0, output.IndexOf(line))
-                                + split[0]
-                                + " "
-                                + split[1]
-                                + " "
-                                + split[2]
-                                + " "
-                                + Labels[i].Line
-                                + output.Substring(output.IndexOf(line) + line.Length);
-                        }
-                    }
-
-                    if (line.Contains("JMP "))
-                    {
-                        string[] split = line.Split(' ');
-                        //make sure this is the right label
-                        if (split[1] == Labels[i].Name)
-                        {
-                            //dont use replace as it is messy
-                            //output = output.Replace(line, split[0] + " " + Labels[i].Line);
-                            output =
-                                output.Substring(0, output.IndexOf(line))
-                                + split[0]
-                                + " "
-                                + Labels[i].Line
-                                + output.Substring(output.IndexOf(line) + line.Length);
-                        }
-                    }
-                }
-            }
 
             //if there is a JSR instruction at the end of the program, add a NOP to the end of the program
             if (output.Split('\n')[output.Split('\n').Length - 1].StartsWith("JSR"))
