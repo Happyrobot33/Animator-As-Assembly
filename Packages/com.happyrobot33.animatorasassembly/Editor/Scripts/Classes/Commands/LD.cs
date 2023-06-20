@@ -16,6 +16,21 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public LD(Register A, int value, AacFlLayer Layer)
         {
+            init(A, value, Layer);
+        }
+
+        /// <summary> Loads a register with a int value </summary>
+        /// <param name="args"> The arguments for the command </param>
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public LD(string[] args, AacFlLayer Layer)
+        {
+            //split the args into the register and the value
+            init(new Register(args[0], Layer), int.Parse(args[1]), Layer);
+        }
+
+        /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
+        void init(Register A, int value, AacFlLayer Layer)
+        {
             this.A = A;
             this.Layer = Layer;
             //truncate the value to fit in the register's bit count

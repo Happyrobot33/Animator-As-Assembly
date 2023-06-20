@@ -22,6 +22,21 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public MUL(Register A, Register B, AacFlLayer Layer)
         {
+            init(A, B, Layer);
+        }
+
+        /// <summary> Multiplies a register by another. Result is stored in A </summary>
+        /// <param name="args"> The arguments for the command </param>
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public MUL(string[] args, AacFlLayer Layer)
+        {
+            //split the args into the register and the value
+            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer);
+        }
+
+        /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
+        void init(Register A, Register B, AacFlLayer Layer)
+        {
             this.A = A;
             this.B = B;
             this.Intermediate = new Register("INTERNAL/MUL/Intermediate", Layer);
@@ -35,17 +50,19 @@ namespace AnimatorAsAssembly.Commands
         /*        1011   (this is binary for decimal 11)
                 x 1110   (this is binary for decimal 14)
                 ======
-                  0000   (this is 1011 x 0)
-                 1011    (this is 1011 x 1, shifted one position to the left)
-                1011     (this is 1011 x 1, shifted two positions to the left)
-             + 1011      (this is 1011 x 1, shifted three positions to the left)
-             =========
+              00000000   (this is 1011 x 0)
+              00010110   (this is 1011 x 1, shifted one position to the left)
+              00101100   (this is 1011 x 1, shifted two positions to the left)
+            + 10110000   (this is 1011 x 1, shifted three positions to the left)
+              =========
               10011010   (this is binary for decimal 154) */
         AacFlState[] STATES()
         {
             Profiler.BeginSample("MUL");
             AacFlState entry = Layer.NewState("MUL");
             AacFlState exit = Layer.NewState("MUL_EXIT");
+
+            Result.Set(entry, 0);
 
             List<AacFlState> interstates = new List<AacFlState>();
             for (int i = 0; i < Register.bits; i++)

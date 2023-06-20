@@ -16,20 +16,39 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public SUB(Register A, Register B, AacFlLayer Layer)
         {
-            this.A = A;
-            this.B = B;
-            this.C = B;
-            this.Layer = Layer;
-            states = STATES();
+            init(A, B, Layer);
         }
 
         /// <inheritdoc cref="SUB(Register, Register, AacFlLayer)"/>
         /// <param name="C"> The register to store the result in </param>
         public SUB(Register A, Register B, Register C, AacFlLayer Layer)
         {
+            init(A, B, Layer, C);
+        }
+
+        /// <summary> Subtracts two registers </summary>
+        /// <param name="args"> The arguments for the command </param>
+        /// <param name="Layer"> The FX controller that this command is linked to </param>
+        public SUB(string[] args, AacFlLayer Layer)
+        {
+            //split the args into the register and the value
+            if (args.Length == 2)
+                init(new Register(args[0], Layer), new Register(args[1], Layer), Layer);
+            else
+                init(
+                    new Register(args[0], Layer),
+                    new Register(args[1], Layer),
+                    Layer,
+                    new Register(args[2], Layer)
+                );
+        }
+
+        /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
+        void init(Register A, Register B, AacFlLayer Layer, Register C = null)
+        {
             this.A = A;
             this.B = B;
-            this.C = C;
+            this.C = C ?? B;
             this.Layer = Layer;
             states = STATES();
         }

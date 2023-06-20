@@ -7,6 +7,7 @@ using AnimatorAsCode.Framework;
 using AnimatorAsCode.Framework.Examples;
 using UnityEngine.Profiling;
 using System;
+using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -65,20 +66,6 @@ namespace AnimatorAsAssembly
         {
             try
             {
-                /*
-                //Attempt to modify where the animator controller window is looking at, in order to prevent a redraw callback happening every edit
-                //This is not a perfect solution, but it does help SIGNFICANTLY
-                //get a reference to AnimatorControllerTool
-                Type animatorWindowType = Type.GetType("UnityEditor.Graphs.AnimatorControllerTool, UnityEditor.Graphs");
-                var window = EditorWindow.GetWindow(animatorWindowType);
-                foreach (var property in animatorWindowType.GetProperties())
-                {
-                    Debug.Log(property.Name + " " + property.PropertyType + " " + property.GetValue(window));
-                }
-                //change the selected layer to 0
-                animatorWindowType.GetProperty("selectedLayerIndex").SetValue(window, 0);
-                */
-
                 //Place the Asset Database in a state where
                 //importing is suspended for most APIs
                 AssetDatabase.StartAssetEditing();
@@ -88,7 +75,7 @@ namespace AnimatorAsAssembly
                 var allSubAssets = AssetDatabase.LoadAllAssetsAtPath(
                     AssetDatabase.GetAssetPath(assetContainer)
                 );
-                Debug.Log("Sub Assets: " + allSubAssets.Length);
+                Debug.Log("Sub assets before cleanup: " + allSubAssets.Length);
                 //remove all sub assets except for the controller
                 for (int i = 0; i < allSubAssets.Length; i++)
                 {
@@ -123,6 +110,12 @@ namespace AnimatorAsAssembly
                         controller.parameters = new AnimatorControllerParameter[0];
                     }
                 }
+                //list how many sub assets are in the controller
+                allSubAssets = AssetDatabase.LoadAllAssetsAtPath(
+                    AssetDatabase.GetAssetPath(assetContainer)
+                );
+                Debug.Log("Sub assets after cleanup: " + allSubAssets.Length);
+
                 AssetDatabase.StopAssetEditing();
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
@@ -147,9 +140,6 @@ namespace AnimatorAsAssembly
 
                 Register[] registers = new Register[0];
 
-                //create a list of states that will be used to store the program
-                AacFlState[,] Instructions = new AacFlState[1, 1];
-
                 //create a dummy default state
                 AacFlState DefaultState = ControllerLayer.NewState("Default");
 
@@ -165,13 +155,16 @@ namespace AnimatorAsAssembly
                 GenerateContactSenderSystem(ControllerLayer);
 
                 //read in the instructions
-                Instructions = ParseInstructions(CompiledCode, ControllerLayer, out registers);
+                List<Commands.OPCODE> Instructions = CompileMicroCode(
+                    CompiledCode,
+                    ControllerLayer
+                );
 
                 //correlate all of the instructions with their paths
-                CorrelatePaths(Instructions, ControllerLayer, CompiledCode, registers);
+                OrganizeGraph(Instructions, ControllerLayer, CompiledCode);
 
                 //create final connection between default state and the first instruction
-                DefaultState.AutomaticallyMovesTo(Instructions[0, 0]);
+                DefaultState.AutomaticallyMovesTo(Instructions[0].states[0]);
                 Profiler.EndSample();
             }
             catch (Exception e)
@@ -202,7 +195,7 @@ namespace AnimatorAsAssembly
         /// <param name="registers"> The registers that are used by the CPU </param>
         /// <param name="width"> The width of the display </param>
         /// <param name="height"> The height of the display </param>
-        public void GenerateDisplay(
+        void GenerateDisplay(
             AacFlLayer ControllerLayer,
             Register[] registers,
             int width,
@@ -302,7 +295,7 @@ namespace AnimatorAsAssembly
         /// <remarks> This function is called by the Create() function.
         /// The contact sender layer is a layer that will turn the contact sender gameobject on and off depending on a boolean with the same name as the contact sender itself.</remarks>
         /// <param name="ControllerLayer"> The main FX layer </param>
-        public void GenerateContactSenderSystem(AacFlLayer ControllerLayer)
+        void GenerateContactSenderSystem(AacFlLayer ControllerLayer)
         {
             //progress bar
             EditorUtility.DisplayProgressBar("Compiling", "Generating Contact Sender System", 0.1f);
@@ -353,7 +346,7 @@ namespace AnimatorAsAssembly
         /// Cleanup also removes all new lines from the raw instructions, unless a ; is present. </remarks>
         /// <param name="raw"> The raw instructions </param>
         /// <returns> The cleaned up instruction string</returns>
-        public string Cleanup(string raw)
+        string Cleanup(string raw)
         {
             //progress bar
             EditorUtility.DisplayProgressBar("Compiling", "Cleaning up code", 0.1f);
@@ -564,24 +557,22 @@ namespace AnimatorAsAssembly
             return output;
         }
 
-        /// <summary> Correlates the paths in the graph to the instructions in the program </summary>
+        /// <summary> Organizes the graph of the program </summary>
         /// <remarks> This organizes the graph if enabled, adding a dummy state above each instruction to show what line it is on
         /// this also handles connecting each instruction to the next instruction </remarks>
         /// <param name="Instructions"> The instructions to correlate. X in the 2D array is the instruction number, Y is the individual states that make up that instruction</param>
         /// <param name="ControllerLayer"> The FX layer to correlate </param>
         /// <param name="raw"> The raw program </param>
-        /// <param name="registers"> The registers to correlate </param>
-        public void CorrelatePaths(
-            AacFlState[,] Instructions,
+        void OrganizeGraph(
+            List<Commands.OPCODE> Instructions,
             AacFlLayer ControllerLayer,
-            string raw,
-            Register[] registers
+            string raw
         )
         {
             Profiler.BeginSample("Path Correlation");
 
             //progress bar
-            EditorUtility.DisplayProgressBar("Correlating Paths", "Correlating Paths", 0);
+            EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0);
 
             //split the instructions into an array
             string[] instructions = raw.Split('\n');
@@ -590,20 +581,20 @@ namespace AnimatorAsAssembly
             //[x, y]
             if (organizeGraph)
             {
-                EditorUtility.DisplayProgressBar("Correlating Paths", "Organizing Graph", 0f);
+                EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0f);
                 Vector2 zero = new Vector2(0, 1000);
-                for (int x = 0; x < Instructions.GetLength(0); x++)
+                for (int x = 0; x < Instructions.Count; x++)
                 {
                     //the Y may not be the same for every X, so we need to check for null
-                    for (int y = 0; y < Instructions.GetLength(1); y++)
+                    for (int y = 0; y < Instructions[x].Length; y++)
                     {
-                        if (Instructions[x, y] == null)
+                        if (Instructions[x][y] == null)
                         {
                             //go to the next X
                             break;
                         }
                         //shift the instruction to the correct position
-                        Instructions[x, y].Shift(
+                        Instructions[x][y].Shift(
                             zero,
                             (x * horizontalGraphScale),
                             y * verticalGraphScale
@@ -611,211 +602,14 @@ namespace AnimatorAsAssembly
                         EditorUtility.DisplayProgressBar(
                             "Correlating Paths",
                             "Organizing Graph",
-                            (float)x / (float)Instructions.GetLength(0)
+                            (float)x / (float)Instructions.Count
                         );
                     }
                     //create a empty state above the instruction to denote what line it is on
                     AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
-                    LineIndicator.Over(Instructions[x, 0]);
+                    LineIndicator.Over(Instructions[x][0]);
                 }
                 EditorUtility.ClearProgressBar();
-            }
-
-            //create the correct instant transitions based on the instruction
-            for (int i = 0; i < instructions.Length; i++)
-            {
-                string instruction = instructions[i];
-
-                //split the instruction into an array
-                string[] instructionParts = instruction.Split(' ');
-
-                //get the instruction type
-                string instructionType = instructionParts[0];
-
-                //progress bar
-                EditorUtility.DisplayProgressBar(
-                    "Correlating Paths",
-                    "Correlating Paths {" + instruction + "}",
-                    (float)i / (float)instructions.Length
-                );
-
-                //try to connect the previous instruction to the current one
-                //do this by connecting the Last node in the previous instruction to the first node in the current instruction
-                AacFlState PreviousFirstNode = null;
-                AacFlState PreviousLastNode = null;
-                AacFlState CurrentFirstNode = null;
-                AacFlState CurrentLastNode = null;
-
-                try
-                {
-                    int CurrentLastNodeSecondIndex = 0;
-                    for (int j = 0; j < Instructions.GetLength(1); j++)
-                    {
-                        if (Instructions[i, j] != null)
-                        {
-                            CurrentLastNodeSecondIndex = j;
-                        }
-                    }
-
-                    CurrentLastNode = Instructions[i, CurrentLastNodeSecondIndex];
-                    //get the first node in the current instruction
-                    CurrentFirstNode = Instructions[i, 0];
-
-                    //get the last node in the previous instruction
-                    //we cant just use the length as the last node, we need to search for the last valid node
-                    int PreviousLastNodeSecondIndex = 0;
-                    for (int j = 0; j < Instructions.GetLength(1); j++)
-                    {
-                        if (Instructions[i - 1, j] != null)
-                        {
-                            PreviousLastNodeSecondIndex = j;
-                        }
-                    }
-                    PreviousLastNode = Instructions[i - 1, PreviousLastNodeSecondIndex];
-
-                    PreviousFirstNode = Instructions[i - 1, 0];
-                    //connect the last node in the previous instruction to the first node in the current instruction
-                    if (instructionType != "NOCONNECT")
-                    {
-                        PreviousLastNode.AutomaticallyMovesTo(CurrentFirstNode);
-                    }
-                }
-                catch { }
-
-                //define common transition names
-                //AacFlTransition trueCon;
-                //AacFlTransition falseCon;
-
-                //create the relevant state
-                switch (instructionType)
-                {
-                    case "JMP":
-                        CurrentLastNode.AutomaticallyMovesTo(
-                            Instructions[int.Parse(instructionParts[1]), 0]
-                        );
-                        //modify PC
-                        CurrentLastNode.Drives(
-                            Globals.PROGRAMCOUNTER,
-                            int.Parse(instructionParts[1])
-                        );
-                        break;
-                    /*
-                case "JSR":
-                    CurrentLastNode.AutomaticallyMovesTo(
-                        Instructions[int.Parse(instructionParts[1]), 0]
-                    );
-                    //modify PC
-                    CurrentLastNode.Drives(
-                        FX.IntParameter("&PC"),
-                        int.Parse(instructionParts[1])
-                    );
-                    break;
-                case "JEN": //JEN (Jump If Equal To Number) Jumps to the line in the program list if the register is equal to the number
-                    var JENPCMod = FX.NewState("{JEN} MODIFY PC");
-                    JENPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                    JENPCMod.AutomaticallyMovesTo(
-                        Instructions[int.Parse(instructionParts[3]), 0]
-                    );
-                    trueCon = CurrentLastNode.TransitionsTo(JENPCMod);
-                    trueCon.When(
-                        Register
-                            .FindRegisterInArray(instructionParts[1], registers)
-                            .param.IsEqualTo(int.Parse(instructionParts[2]))
-                    );
-
-                    //make sure if the condition is not met, that the PC is incremented
-                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                    break;
-                case "JNEN": //JNEN (Jump If Not Equal To Number) Jumps to the line in the program list if the register is not equal to the number
-                    var JNENPCMod = FX.NewState("{JNEN} MODIFY PC");
-                    //JNENPCMod is the state that modifies the PC if the JNEN condition is true, then we jump to the line in the program list
-                    JNENPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                    JNENPCMod.AutomaticallyMovesTo(
-                        Instructions[int.Parse(instructionParts[3]), 0]
-                    );
-                    falseCon = CurrentLastNode.TransitionsTo(JNENPCMod);
-                    falseCon.When(
-                        Register
-                            .FindRegisterInArray(instructionParts[1], registers)
-                            .param.IsNotEqualTo(int.Parse(instructionParts[2]))
-                    );
-
-                    //make sure if the condition is not met, that the PC is incremented
-                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                    break;
-                case "JEQ": //JEQ (Jump If Equal To) Compares the first register to the second register, and if they are equal it jumps to the line in the program list
-                    //if the JEQR flag is true, then we jump to the line in the program list
-                    //if the JEQR flag is false, then we dont jump, letting the program continue as normal
-                    var JEQPCMod = FX.NewState("{JEQ} MODIFY PC");
-                    JEQPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                    JEQPCMod.AutomaticallyMovesTo(
-                        Instructions[int.Parse(instructionParts[3]), 0]
-                    );
-                    trueCon = CurrentLastNode.TransitionsTo(JEQPCMod);
-                    var JEQR = FX.BoolParameter("&JEQR");
-                    trueCon.When(JEQR.IsEqualTo(true));
-
-                    //make sure if the condition is not met, that the PC is incremented
-                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                    break;
-                case "JIG": //JIG (Jump If Greater Than) Compares the first register to the second register, and if the first register is greater than the second register it jumps to the line in the program list
-                    //if the JIGR flag is true, then we jump to the line in the program list
-                    //if the JIGR flag is false, then we dont jump, letting the program continue as normal
-                    var JIGPCMod = FX.NewState("{JIG} MODIFY PC");
-                    JIGPCMod.Drives(FX.IntParameter("&PC"), int.Parse(instructionParts[3]));
-                    JIGPCMod.AutomaticallyMovesTo(
-                        Instructions[int.Parse(instructionParts[3]), 0]
-                    );
-                    trueCon = CurrentLastNode.TransitionsTo(JIGPCMod);
-                    var JIGR = FX.BoolParameter("&JIGR");
-                    trueCon.When(JIGR.IsEqualTo(true));
-
-                    //make sure if the condition is not met, that the PC is incremented
-                    CurrentFirstNode.DrivingIncreases(FX.IntParameter("&PC"), 1);
-                    break;
-                case "RTS":
-                    //RTS is going to come into here with every single line it might go to deliminated with a space
-                    int[] rtsLines = new int[instructionParts.Length - 1];
-                    for (int j = 1; j < instructionParts.Length; j++)
-                    {
-                        rtsLines[j - 1] = int.Parse(instructionParts[j]);
-                    }
-                    //create a transition from the RTS state to each state defined by the RTS instruction
-                    //this transition is true when the PC is equal to the line number
-                    //we actually want it to go the the line after where the JSR was called, so we add 1 to the line number
-                    for (int j = 0; j < rtsLines.Length; j++)
-                    {
-                        var RTSState = FX.NewState("{RTS} " + rtsLines[j])
-                            .DrivingIncreases(FX.IntParameter("&PC"), 1);
-                        //throw an exception if there is no state to go to after the JSR
-                        if (rtsLines[j] + 1 >= Instructions.GetLength(0))
-                        {
-                            throw new Exception(
-                                "RTS instruction at line "
-                                    + i
-                                    + " is trying to go to a line that does not exist. The JSR instruction at line "
-                                    + i
-                                    + " needs a opcode after it."
-                            );
-                        }
-                        RTSState.AutomaticallyMovesTo(Instructions[rtsLines[j] + 1, 0]);
-                        trueCon = CurrentLastNode.TransitionsTo(RTSState);
-                        trueCon.When(FX.IntParameter("&PC").IsEqualTo(rtsLines[j]));
-                    }
-                    break; */
-                    default:
-                        try
-                        {
-                            //always make the program counter increment on the current instruction
-                            CurrentFirstNode.DrivingIncreases(
-                                ControllerLayer.IntParameter("INTERNAL/PC"),
-                                1
-                            );
-                            instructionStringList.Add(instruction);
-                        }
-                        catch { }
-                        break;
-                }
             }
 
             //end the progress bar
@@ -826,27 +620,20 @@ namespace AnimatorAsAssembly
         /// <summary> Parses the instructions. </summary>
         /// <param name="raw"> The raw instructions to parse. </param>
         /// <param name="ControllerLayer"> The FX layer. </param>
-        /// <param name="registers"> [out] The registers that were found in the instructions. </param>
         /// <returns> The parsed instructions. </returns>
-        public AacFlState[,] ParseInstructions(
-            string raw,
-            AacFlLayer ControllerLayer,
-            out Register[] registers
-        )
+        List<Commands.OPCODE> CompileMicroCode(string raw, AacFlLayer ControllerLayer)
         {
-            Profiler.BeginSample("ParseInstructions");
+            Profiler.BeginSample("CompileMicroCode");
 
             //begin a progress bar
-            EditorUtility.DisplayProgressBar("Parsing Instructions", "Parsing Instructions", 0);
+            EditorUtility.DisplayProgressBar("Compiling MicroCode", "Compiling MicroCode", 0);
 
             //split the instructions into an array
             string[] instructions = raw.Split('\n');
 
             //create a list of states that will be used to store the program
             //the max sub states a opcode can have is 20
-            AacFlState[,] Instructions = new AacFlState[instructions.Length, 1];
-
-            Register[] Registers = new Register[1];
+            List<Commands.OPCODE> Instructions = new List<Commands.OPCODE>();
 
             //loop through the instructions, making the relevant states based on the instruction
             for (int i = 0; i < instructions.Length; i++)
@@ -856,226 +643,86 @@ namespace AnimatorAsAssembly
                 //split the instruction into an array
                 string[] instructionParts = instruction.Split(' ');
 
+                //create a array of everything but the instruction
+                string[] instructionArgs = new string[instructionParts.Length - 1];
+                for (int j = 1; j < instructionParts.Length; j++)
+                {
+                    instructionArgs[j - 1] = instructionParts[j];
+                }
+
                 //get the instruction type
                 string instructionType = instructionParts[0];
 
                 //progress bar
                 EditorUtility.DisplayProgressBar(
-                    "Parsing Instructions",
-                    "Parsing Instruction {" + instruction + "}",
+                    "Compiling MicroCode",
+                    "Compiling MicroCode {" + instruction + "}",
                     (float)i / (float)instructions.Length
                 );
-
-                //create a register for each register in the instruction
-                //a register must include atleast one non number
-                for (int j = 1; j < instructionParts.Length; j++)
-                {
-                    string part = instructionParts[j];
-
-                    //check to see if the part is not just a number using int.TryParse
-                    int number;
-                    if (!int.TryParse(part, out number) && !part.Contains("%"))
-                    {
-                        //if the part is not just a number, then it must be a register
-                        //check to see if the register already exists
-                        if (Register.FindRegisterInArray(part, Registers) == null)
-                        {
-                            //if the register does not exist, then create it
-                            Register newReg = new Register(part, ControllerLayer);
-
-                            //increment the ammount of registers used
-                            RegistersUsed++;
-
-                            //add it into the registers array
-                            Registers = Util.CopyIntoArray(Registers, newReg);
-                        }
-                    }
-                }
 
                 //Initialize Global Variables
                 new Globals(ControllerLayer);
 
-                //create the relevant state
-                switch (instructionType)
+                //get the Commands namespace
+                string nameSpace = "AnimatorAsAssembly.Commands.";
+
+                //create the relevant states based on the instruction type using reflection
+                Type type = Type.GetType(nameSpace + instructionType);
+
+                //create a new instance of the type
+                if (type != null)
                 {
-                    case "JMP":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new AacFlState[]
-                            {
-                                ControllerLayer.NewState("{JMP} " + instructionParts[1])
-                            },
-                            i
-                        );
-                        break;
-                    case "LBL":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new AacFlState[]
-                            {
-                                ControllerLayer.NewState("{LBL} " + instructionParts[1])
-                            },
-                            i
-                        );
-                        break;
-                    case "HALFADDER":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.HALFADDER(
-                                ControllerLayer.BoolParameter(instructionParts[1]),
-                                ControllerLayer.BoolParameter(instructionParts[2]),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "FULLADDER":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.FULLADDER(
-                                ControllerLayer.BoolParameter(instructionParts[1]),
-                                ControllerLayer.BoolParameter(instructionParts[2]),
-                                ControllerLayer.BoolParameter(instructionParts[3]),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "LD":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.LD(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                int.Parse(instructionParts[2]),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "ADD":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.ADD(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                Register.FindRegisterInArray(instructionParts[2], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "SUB":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.SUB(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                Register.FindRegisterInArray(instructionParts[2], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "MUL":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.MUL(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                Register.FindRegisterInArray(instructionParts[2], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "INC":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.INC(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "DEC":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.DEC(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "SHL":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.SHL(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "FLIP":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.FLIP(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "COMPLEMENT":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.COMPLEMENT(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    case "MOV":
-                        Instructions = Util.CopyIntoArray(
-                            Instructions,
-                            new Commands.MOV(
-                                Register.FindRegisterInArray(instructionParts[1], Registers),
-                                Register.FindRegisterInArray(instructionParts[2], Registers),
-                                ControllerLayer
-                            ).states,
-                            i
-                        );
-                        break;
-                    default:
-                        //throw an exception if the instruction is not valid
-                        throw new Exception("Invalid instruction: " + instruction);
+                    object[] args = { instructionArgs, ControllerLayer };
+                    Commands.OPCODE instance =
+                        Activator.CreateInstance(type, args: args) as Commands.OPCODE;
+
+                    //add the states to the list
+                    Instructions.Add(instance);
+
+                    instructionStringList.Add(instruction);
+                }
+                else
+                {
+                    Debug.LogError("Instruction type " + instructionType + " not found");
                 }
             }
 
-            registers = Registers;
             Profiler.EndSample();
             //end the progress bar
             EditorUtility.ClearProgressBar();
+
+            //Link the microcode
+            LinkMicroCode(Instructions);
+
             return Instructions;
         }
-    }
 
-    /// <summary> A label is a name and a line number </summary>
-    public class LBL
-    {
-        /// <summary> The name of the label </summary>
-        public string Name;
-
-        /// <summary> The line number of the label </summary>
-        public int Line;
-
-        /// <summary> Create a new label </summary>
-        /// <param name="name">The name of the label</param>
-        /// <param name="LineNumber">The line number of the label</param>
-        public LBL(string name, int LineNumber)
+        /// <summary> Links the micro code by running each microcodes linker function. </summary>
+        /// <param name="Instructions"> The instructions to link. </param>
+        void LinkMicroCode(List<Commands.OPCODE> Instructions)
         {
-            this.Name = name;
-            this.Line = LineNumber;
+            Profiler.BeginSample("LinkMicroCode");
+
+            //begin a progress bar
+            EditorUtility.DisplayProgressBar("Linking MicroCode", "Linking MicroCode", 0);
+
+            //loop through the instructions, linking the relevant states based on the instruction
+            for (int i = 0; i < Instructions.Count; i++)
+            {
+                //progress bar
+                EditorUtility.DisplayProgressBar(
+                    "Linking MicroCode",
+                    "Linking MicroCode",
+                    (float)i / (float)Instructions.Count
+                );
+
+                //link the states
+                Instructions[i].Link(Instructions);
+            }
+
+            Profiler.EndSample();
+            //end the progress bar
+            EditorUtility.ClearProgressBar();
         }
     }
 
