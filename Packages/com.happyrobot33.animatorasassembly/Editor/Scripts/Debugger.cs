@@ -24,6 +24,8 @@ namespace AnimatorAsAssembly
 
         [HideInInspector]
         public LyumaAv3Runtime runtime;
+
+        [HideInInspector]
         public AnimatorAsAssembly aaa;
 
         public void Start()
