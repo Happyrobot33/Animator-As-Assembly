@@ -23,7 +23,7 @@ namespace AnimatorAsAssembly
             PB1.progress = 0.5f;
             NPB.Show();
 
-            PB1.close();
+            PB1.finish();
         }
 
         private List<ProgressBar> progressBars = new List<ProgressBar>();
@@ -39,22 +39,27 @@ namespace AnimatorAsAssembly
             Repaint();
             foreach (ProgressBar progressBar in progressBars)
             {
-                EditorGUILayout.LabelField(progressBar.title);
-                EditorGUILayout.LabelField(progressBar.description);
-                EditorGUILayout.LabelField(progressBar.progress.ToString());
+                progressBar.render();
             }
         }
 
-        public struct ProgressBar
+        public class ProgressBar
         {
             public string title;
             public string description;
             public float progress;
             internal NestedProgressBar parent;
 
-            public void close()
+            public void finish()
             {
                 parent.removeProgressBar(this);
+            }
+
+            public void render()
+            {
+                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+                EditorGUILayout.LabelField(description);
+                EditorGUILayout.LabelField(progress.ToString());
             }
         }
 
