@@ -21,6 +21,7 @@ namespace AnimatorAsAssembly
                 "Test Bar Description 2"
             );
             PB1.progress = 0.5f;
+            PB2.progress = 0.25f;
             NPB.Show();
 
             PB1.finish();
@@ -59,7 +60,21 @@ namespace AnimatorAsAssembly
             {
                 EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
                 EditorGUILayout.LabelField(description);
-                EditorGUILayout.LabelField(progress.ToString());
+                //create the container rect
+                Rect containerRect = EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+                //create the fill rect
+                Rect fillRect = new Rect(containerRect);
+                fillRect.width *= progress;
+                //draw the empty rect
+                EditorGUI.DrawRect(containerRect, Color.gray);
+                //draw the fill rect
+                EditorGUI.DrawRect(fillRect, Color.green);
+                //end the horizontal layout
+                GUIStyle style = new GUIStyle(EditorStyles.label);
+                style.alignment = TextAnchor.MiddleCenter;
+                style.normal.textColor = Color.white;
+                EditorGUILayout.LabelField((progress * 100).ToString() + "%", style);
+                EditorGUILayout.EndHorizontal();
             }
         }
 
