@@ -62,61 +62,9 @@ namespace AnimatorAsAssembly
         {
             try
             {
-                //Place the Asset Database in a state where
-                //importing is suspended for most APIs
-                AssetDatabase.StartAssetEditing();
+                //remove all junk sub assets
+                Util.CleanAnimatorControllerAsset(AssetDatabase.GetAssetPath(assetContainer));
 
-                EditorUtility.DisplayProgressBar("Clearing Asset", "Clearing Asset", 0.1f);
-                //list how many sub assets are in the controller
-                var allSubAssets = AssetDatabase.LoadAllAssetsAtPath(
-                    AssetDatabase.GetAssetPath(assetContainer)
-                );
-                Debug.Log("Sub assets before cleanup: " + allSubAssets.Length);
-                //remove all sub assets except for the controller
-                for (int i = 0; i < allSubAssets.Length; i++)
-                {
-                    bool cancel = EditorUtility.DisplayCancelableProgressBar(
-                        "Clearing Asset",
-                        "Clearing Asset",
-                        ((float)i / (float)allSubAssets.Length)
-                    );
-                    if (cancel)
-                    {
-                        EditorUtility.ClearProgressBar();
-                        AssetDatabase.StopAssetEditing();
-                        AssetDatabase.SaveAssets();
-                        AssetDatabase.Refresh();
-                        Resources.UnloadUnusedAssets();
-                        AssetDatabase.StartAssetEditing();
-                        return;
-                    }
-                    if (
-                        allSubAssets[i].GetType() != typeof(AnimatorController)
-                        && allSubAssets[i].GetType() != typeof(AnimatorStateMachine)
-                    )
-                    {
-                        DestroyImmediate(allSubAssets[i], true);
-                    }
-
-                    //if it is the animator controller, remove all parameters
-                    if (allSubAssets[i].GetType() == typeof(AnimatorController))
-                    {
-                        //remove all parameters, which are objects in the animator controller AnimatorParameters array
-                        var controller = (AnimatorController)allSubAssets[i];
-                        controller.parameters = new AnimatorControllerParameter[0];
-                    }
-                }
-                //list how many sub assets are in the controller
-                allSubAssets = AssetDatabase.LoadAllAssetsAtPath(
-                    AssetDatabase.GetAssetPath(assetContainer)
-                );
-                Debug.Log("Sub assets after cleanup: " + allSubAssets.Length);
-
-                AssetDatabase.StopAssetEditing();
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
-                Resources.UnloadUnusedAssets();
-                EditorUtility.ClearProgressBar();
                 AssetDatabase.StartAssetEditing();
 
                 Profiler.BeginSample("Compile");
@@ -160,6 +108,9 @@ namespace AnimatorAsAssembly
 
                 //create final connection between default state and the first instruction
                 DefaultState.AutomaticallyMovesTo(Instructions[0].states[0]);
+
+                //remove all junk sub assets
+                Util.CleanAnimatorControllerAsset(AssetDatabase.GetAssetPath(assetContainer));
                 Profiler.EndSample();
             }
             catch (Exception e)
@@ -511,7 +462,7 @@ namespace AnimatorAsAssembly
                 for (int x = 0; x < Instructions.Count; x++)
                 {
                     //the Y may not be the same for every X, so we need to check for null
-                    for (int y = 0; y < Instructions[x].Length; y++)
+                    /* for (int y = 0; y < Instructions[x].Length; y++)
                     {
                         if (Instructions[x][y] == null)
                         {
@@ -524,15 +475,20 @@ namespace AnimatorAsAssembly
                             (x * horizontalGraphScale),
                             y * verticalGraphScale
                         );
-                        EditorUtility.DisplayProgressBar(
-                            "Correlating Paths",
-                            "Organizing Graph",
-                            (float)x / (float)Instructions.Count
-                        );
-                    }
+                    } */
+                    Instructions[x].Layer.Position = new Vector2(
+                        (x * horizontalGraphScale),
+                        zero.y
+                    );
+                    EditorUtility.DisplayProgressBar(
+                        "Correlating Paths",
+                        "Organizing Graph",
+                        (float)x / (float)Instructions.Count
+                    );
                     //create a empty state above the instruction to denote what line it is on
                     AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
-                    LineIndicator.Over(Instructions[x][0]);
+                    LineIndicator.Shift(zero, (x * horizontalGraphScale), -verticalGraphScale);
+                    //LineIndicator.Over(Instructions[x].Layer.Position);
                 }
                 EditorUtility.ClearProgressBar();
             }

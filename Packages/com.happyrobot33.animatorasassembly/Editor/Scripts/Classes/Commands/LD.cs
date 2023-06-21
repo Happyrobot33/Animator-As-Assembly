@@ -32,7 +32,7 @@ namespace AnimatorAsAssembly.Commands
         void init(Register A, int value, AacFlLayer Layer)
         {
             this.A = A;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("LD");
             //truncate the value to fit in the register's bit count
             this.value = value & ((1 << Register.bits) - 1);
             states = STATES();
