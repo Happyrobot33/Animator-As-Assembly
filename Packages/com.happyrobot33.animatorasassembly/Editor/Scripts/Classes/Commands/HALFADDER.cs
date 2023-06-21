@@ -24,7 +24,7 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.B = B;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("HALFADDER");
             SUM = Layer.BoolParameter("INTERNAL/HALFADDER/SUM" + i);
             CARRY = Layer.BoolParameter("INTERNAL/HALFADDER/CARRY" + i);
             states = STATES();

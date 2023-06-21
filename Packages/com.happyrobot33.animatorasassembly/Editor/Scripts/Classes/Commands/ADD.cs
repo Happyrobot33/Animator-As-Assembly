@@ -51,7 +51,7 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.C = C ?? B;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("ADD");
             CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
             SUM = new Register("INTERNAL/ADD/SUM", Layer);
             states = STATES();

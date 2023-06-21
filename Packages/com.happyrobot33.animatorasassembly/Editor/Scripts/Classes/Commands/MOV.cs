@@ -31,7 +31,7 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.B = B;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("MOV");
             states = STATES();
         }
 

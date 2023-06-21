@@ -31,7 +31,7 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.C = C;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("FULLADDER");
             SUM = Layer.BoolParameter("INTERNAL/FULLADDER/SUM");
             CARRY = Layer.BoolParameter("INTERNAL/FULLADDER/CARRY");
             states = STATES();

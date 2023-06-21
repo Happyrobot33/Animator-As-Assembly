@@ -33,7 +33,7 @@ namespace AnimatorAsAssembly.Commands
         void init(Register A, AacFlLayer Layer, int shift = 1)
         {
             this.A = A;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("SHL");
             this.BUFFER = new Register("INTERNAL/SHL/BUFFER", Layer);
             states = STATES(shift);
         }

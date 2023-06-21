@@ -32,7 +32,7 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.BUFFER = new Register("INTERNAL/FLIP/BUFFER", Layer);
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("FLIP");
             states = STATES();
         }
 

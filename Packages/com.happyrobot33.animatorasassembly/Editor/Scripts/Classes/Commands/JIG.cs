@@ -47,7 +47,7 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.LBLname = lblname;
             this.Compare = new Register("INTERNAL/JIG/Compare", Layer);
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("JIG");
             states = STATES();
         }
 

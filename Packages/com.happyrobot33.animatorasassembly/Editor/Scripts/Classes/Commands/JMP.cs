@@ -29,7 +29,7 @@ namespace AnimatorAsAssembly.Commands
         void init(string name, AacFlLayer Layer)
         {
             this.name = name;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("JMP");
             states = STATES();
         }
 

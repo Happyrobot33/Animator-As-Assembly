@@ -28,7 +28,7 @@ namespace AnimatorAsAssembly.Commands
         void init(Register A, AacFlLayer Layer)
         {
             this.A = A;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("COMPLEMENT");
             states = STATES();
         }
 

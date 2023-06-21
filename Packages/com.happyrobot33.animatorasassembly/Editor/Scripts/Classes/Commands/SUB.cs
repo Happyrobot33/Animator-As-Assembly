@@ -49,7 +49,7 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.C = C ?? B;
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("SUB");
             states = STATES();
         }
 

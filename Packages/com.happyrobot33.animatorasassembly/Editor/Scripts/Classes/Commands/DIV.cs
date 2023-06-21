@@ -39,7 +39,7 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.Remainder = new Register("INTERNAL/DIV/REMAINDER", Layer);
             this.Quotient = new Register("INTERNAL/DIV/QUOTIENT", Layer);
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("DIV");
             states = STATES();
         }
 

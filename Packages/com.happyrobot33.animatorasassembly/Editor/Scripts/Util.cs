@@ -24,11 +24,13 @@ namespace AnimatorAsAssembly
             return arrays.Aggregate((a, b) => a.Concat(b).ToArray()).Cast<AacFlState>().ToArray();
         }
 
-        /// <summary> Cleans a asset by removing all fileID 0 sub assets </summary>
+        /// <summary> Cleans a animator controller by removing all unreferenced sub assets </summary>
         public static void CleanAnimatorControllerAsset(string path)
         {
             try
             {
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
                 AssetDatabase.StartAssetEditing();
                 EditorUtility.DisplayProgressBar("Clearing Asset", "Clearing Asset", 0.1f);
                 Type type = AssetDatabase.GetMainAssetTypeAtPath(path);
@@ -43,7 +45,7 @@ namespace AnimatorAsAssembly
                     EditorUtility.DisplayProgressBar(
                         "Clearing Asset",
                         "Clearing Asset",
-                        0.1f + (i / subAssets.Length) * 0.9f
+                        (float)i / subAssets.Length
                     );
                     if (subAssets[i] == asset)
                         continue;
@@ -88,7 +90,10 @@ namespace AnimatorAsAssembly
                             //Debug.Log(subAssets[i].name);
                         }
                     }
-                    else if (subAssets[i] is AnimatorTransition)
+                    else if (
+                        subAssets[i] is AnimatorTransition
+                        || subAssets[i] is AnimatorStateTransition
+                    )
                     {
                         //determine if the transition is used
                         bool used = false;

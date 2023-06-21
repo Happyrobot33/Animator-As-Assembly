@@ -110,7 +110,9 @@ namespace AnimatorAsAssembly
                 DefaultState.AutomaticallyMovesTo(Instructions[0].states[0]);
 
                 //remove all junk sub assets
-                Util.CleanAnimatorControllerAsset(AssetDatabase.GetAssetPath(assetContainer));
+                //Util.CleanAnimatorControllerAsset(AssetDatabase.GetAssetPath(assetContainer));
+
+                //save the asset
                 Profiler.EndSample();
             }
             catch (Exception e)
@@ -130,6 +132,8 @@ namespace AnimatorAsAssembly
                 //a "finally" block, we ensure the AssetDatabase
                 //state will be reset when leaving this function
                 AssetDatabase.StopAssetEditing();
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
             }
         }
 
@@ -458,7 +462,7 @@ namespace AnimatorAsAssembly
             if (organizeGraph)
             {
                 EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0f);
-                Vector2 zero = new Vector2(0, 1000);
+                Vector2 zero = new Vector2(2, 5);
                 for (int x = 0; x < Instructions.Count; x++)
                 {
                     //the Y may not be the same for every X, so we need to check for null
@@ -476,19 +480,11 @@ namespace AnimatorAsAssembly
                             y * verticalGraphScale
                         );
                     } */
-                    Instructions[x].Layer.Position = new Vector2(
-                        (x * horizontalGraphScale),
-                        zero.y
-                    );
-                    EditorUtility.DisplayProgressBar(
-                        "Correlating Paths",
-                        "Organizing Graph",
-                        (float)x / (float)Instructions.Count
-                    );
+                    Instructions[x].Layer.Position =
+                        zero + new Vector2(x * horizontalGraphScale, 0);
                     //create a empty state above the instruction to denote what line it is on
-                    AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
-                    LineIndicator.Shift(zero, (x * horizontalGraphScale), -verticalGraphScale);
-                    //LineIndicator.Over(Instructions[x].Layer.Position);
+                    //AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
+                    //LineIndicator.Over(Instructions[x][0]);
                 }
                 EditorUtility.ClearProgressBar();
             }

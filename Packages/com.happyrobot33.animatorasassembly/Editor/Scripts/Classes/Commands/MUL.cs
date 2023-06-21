@@ -41,7 +41,7 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.Intermediate = new Register("INTERNAL/MUL/Intermediate", Layer);
             this.Result = new Register("INTERNAL/MUL/Result", Layer);
-            this.Layer = Layer;
+            this.Layer = Layer.NewStateGroup("MUL");
             states = STATES();
         }
 
