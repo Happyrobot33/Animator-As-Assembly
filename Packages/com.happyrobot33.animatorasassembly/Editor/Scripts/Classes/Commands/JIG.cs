@@ -27,7 +27,7 @@ namespace AnimatorAsAssembly.Commands
             Register B,
             string lblname,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow
+            ComplexProgressBar progressWindow
         )
         {
             init(A, B, lblname, Layer, progressWindow);
@@ -35,7 +35,7 @@ namespace AnimatorAsAssembly.Commands
 
         /// <summary> Jumps to a state if A >= B </summary>
         /// <remarks> This is used for internal jumps. After initializing this, Link(state) MUST be called </remarks>
-        public JIG(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public JIG(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(A, B, "INTERNAL", Layer, progressWindow);
         }
@@ -43,7 +43,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Jumps to a LBL if A >= B </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public JIG(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public JIG(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             init(
@@ -61,7 +61,7 @@ namespace AnimatorAsAssembly.Commands
             Register B,
             string lblname,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow
+            ComplexProgressBar progressWindow
         )
         {
             this.A = A;

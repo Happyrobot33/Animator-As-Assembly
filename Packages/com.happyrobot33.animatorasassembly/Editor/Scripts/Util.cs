@@ -29,7 +29,7 @@ namespace AnimatorAsAssembly
         /// <summary> Cleans a animator controller by removing all unreferenced sub assets </summary>
         public static IEnumerator<EditorCoroutine> CleanAnimatorControllerAsset(
             string path,
-            NestedProgressBar progressBar
+            ComplexProgressBar progressBar
         )
         {
             try

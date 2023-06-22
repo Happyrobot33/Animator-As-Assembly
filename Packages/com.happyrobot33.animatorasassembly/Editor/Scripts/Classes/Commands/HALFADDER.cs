@@ -26,7 +26,7 @@ namespace AnimatorAsAssembly.Commands
             AacFlBoolParameter A,
             AacFlBoolParameter B,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow,
+            ComplexProgressBar progressWindow,
             int i = 0
         )
         {

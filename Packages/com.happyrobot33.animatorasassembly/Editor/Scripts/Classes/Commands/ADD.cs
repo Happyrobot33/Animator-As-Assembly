@@ -21,7 +21,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The first register to add </param>
         /// <param name="B"> The second register to add </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public ADD(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public ADD(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(A, B, Layer, progressWindow);
         }
@@ -33,7 +33,7 @@ namespace AnimatorAsAssembly.Commands
             Register B,
             Register C,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow
+            ComplexProgressBar progressWindow
         )
         {
             init(A, B, Layer, progressWindow, C);
@@ -42,7 +42,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Adds two registers </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public ADD(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public ADD(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             if (args.Length == 2)
@@ -67,7 +67,7 @@ namespace AnimatorAsAssembly.Commands
             Register A,
             Register B,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow,
+            ComplexProgressBar progressWindow,
             Register C = null
         )
         {

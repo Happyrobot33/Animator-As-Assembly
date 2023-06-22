@@ -16,7 +16,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The register to load into </param>
         /// <param name="value"> The value to load into the register </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public LD(Register A, int value, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public LD(Register A, int value, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(A, value, Layer);
         }
@@ -24,14 +24,14 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Loads a register with a int value </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public LD(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public LD(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             init(new Register(args[0], Layer), int.Parse(args[1]), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, int value, AacFlLayer Layer, NestedProgressBar progressWindow)
+        void init(Register A, int value, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.Layer = Layer.NewStateGroup("LD");

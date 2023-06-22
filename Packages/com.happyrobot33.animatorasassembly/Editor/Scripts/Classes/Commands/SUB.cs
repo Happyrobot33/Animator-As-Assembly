@@ -19,7 +19,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The first register to sub </param>
         /// <param name="B"> The second register to sub </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public SUB(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public SUB(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(A, B, Layer, progressWindow);
         }
@@ -31,7 +31,7 @@ namespace AnimatorAsAssembly.Commands
             Register B,
             Register C,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow
+            ComplexProgressBar progressWindow
         )
         {
             init(A, B, Layer, progressWindow, C);
@@ -40,7 +40,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Subtracts two registers </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public SUB(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public SUB(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             if (args.Length == 2)
@@ -65,7 +65,7 @@ namespace AnimatorAsAssembly.Commands
             Register A,
             Register B,
             AacFlLayer Layer,
-            NestedProgressBar progressWindow,
+            ComplexProgressBar progressWindow,
             Register C = null
         )
         {

@@ -15,7 +15,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Calculates the Two's Complement of a register </summary>
         /// <param name="A"> The register to flip </param>
         /// <param name="Layer"> The Layer that this command is linked to </param>
-        public COMPLEMENT(Register A, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public COMPLEMENT(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(A, Layer, progressWindow);
         }
@@ -23,14 +23,14 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Calculates the Two's Complement of a register </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public COMPLEMENT(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public COMPLEMENT(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             init(new Register(args[0], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, AacFlLayer Layer, NestedProgressBar progressWindow)
+        void init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.Layer = Layer.NewStateGroup("COMPLEMENT");

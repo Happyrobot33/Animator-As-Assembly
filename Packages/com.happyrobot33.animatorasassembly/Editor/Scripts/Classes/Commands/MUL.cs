@@ -24,7 +24,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The register to multiply </param>
         /// <param name="B"> The register to multiply by </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public MUL(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public MUL(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(A, B, Layer, progressWindow);
         }
@@ -32,14 +32,14 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Multiplies a register by another. Result is stored in A </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public MUL(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public MUL(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
+        void init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.B = B;

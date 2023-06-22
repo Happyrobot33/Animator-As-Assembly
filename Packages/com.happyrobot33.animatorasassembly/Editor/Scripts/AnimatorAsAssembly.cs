@@ -63,7 +63,7 @@ namespace AnimatorAsAssembly
         {
             try
             {
-                NestedProgressBar progressBar = new NestedProgressBar("Animator As Assembly");
+                ComplexProgressBar progressBar = new ComplexProgressBar("Animator As Assembly");
                 ProgressBar mainProgressBar = progressBar.registerNewProgressBar(
                     "Compiling",
                     "Compiling the code"
@@ -529,7 +529,7 @@ namespace AnimatorAsAssembly
         IEnumerator<EditorCoroutine> CompileMicroCode(
             string raw,
             AacFlLayer ControllerLayer,
-            NestedProgressBar progressBar,
+            ComplexProgressBar progressBar,
             Action<List<Commands.OPCODE>> callback
         )
         {

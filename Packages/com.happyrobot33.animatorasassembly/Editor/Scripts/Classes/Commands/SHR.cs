@@ -17,7 +17,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Shifts a Registers bits 1 to the right</summary>
         /// <param name="A"> The register to shift </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public SHR(Register A, AacFlLayer Layer, NestedProgressBar progressWindow, int shift = 1)
+        public SHR(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow, int shift = 1)
         {
             init(A, Layer, shift);
         }
@@ -25,7 +25,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Shifts a Registers bits 1 to the right</summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public SHR(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public SHR(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             if (args.Length == 1)
@@ -35,7 +35,7 @@ namespace AnimatorAsAssembly.Commands
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, AacFlLayer Layer, NestedProgressBar progressWindow, int shift = 1)
+        void init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow, int shift = 1)
         {
             this.A = A;
             this.Layer = Layer.NewStateGroup("SHR");

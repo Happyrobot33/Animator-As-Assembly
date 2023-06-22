@@ -7,12 +7,12 @@ using Unity.EditorCoroutines.Editor;
 
 namespace AnimatorAsAssembly
 {
-    public class NestedProgressBar : EditorWindow
+    public class ComplexProgressBar : EditorWindow
     {
         private List<ProgressBar> progressBars = new List<ProgressBar>();
         public string windowTitle;
 
-        public NestedProgressBar(string windowTitle)
+        public ComplexProgressBar(string windowTitle)
         {
             titleContent = new GUIContent(windowTitle);
         }
@@ -68,7 +68,7 @@ namespace AnimatorAsAssembly
         public string description;
         public float height;
         public float progress;
-        internal NestedProgressBar parent;
+        internal ComplexProgressBar parent;
 
         public void finish()
         {

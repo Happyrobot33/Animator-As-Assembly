@@ -15,7 +15,7 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Denotes a LBL </summary>
         /// <param name="name"> The name of the LBL </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public LBL(string name, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public LBL(string name, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             init(name, Layer, progressWindow);
         }
@@ -23,14 +23,14 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Denotes a LBL </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public LBL(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
+        public LBL(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             init(args[0], Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(string name, AacFlLayer Layer, NestedProgressBar progressWindow)
+        void init(string name, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.name = name;
             this.Layer = Layer.NewStateGroup("LBL");

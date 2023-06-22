@@ -19,7 +19,7 @@ namespace AnimatorAsAssembly.Commands
         }
 
         /// <summary> The progress window of the compiler </summary>
-        internal NestedProgressBar progressWindow;
+        internal ComplexProgressBar progressWindow;
 
         /// <summary> The states that make up this opcode. May contain states from other nested opcodes </summary>
         public AacFlState[] states;
