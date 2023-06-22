@@ -1,6 +1,9 @@
+using AnimatorAsCode;
 using AnimatorAsCode.Framework;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using Unity.EditorCoroutines.Editor;
+using AnimatorAsAssembly;
 using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
@@ -18,29 +21,29 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The register to multiply </param>
         /// <param name="B"> The register to multiply by </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public DIV(Register A, Register B, AacFlLayer Layer)
+        public DIV(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
-            init(A, B, Layer);
+            init(A, B, Layer, progressWindow);
         }
 
         /// <summary> Divides a register by another. Quotient is stored in A, remainder is stored in B </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public DIV(string[] args, AacFlLayer Layer)
+        public DIV(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer);
+            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer)
+        void init(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
             this.A = A;
             this.B = B;
             this.Remainder = new Register("INTERNAL/DIV/REMAINDER", Layer);
             this.Quotient = new Register("INTERNAL/DIV/QUOTIENT", Layer);
             this.Layer = Layer.NewStateGroup("DIV");
-            states = STATES();
+            this.progressWindow = progressWindow;
         }
 
         /*
@@ -56,14 +59,19 @@ namespace AnimatorAsAssembly.Commands
         end
         return (Q,R)
         */
-        AacFlState[] STATES()
+        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("DIV");
+            ProgressBar PB = this.progressWindow.registerNewProgressBar("DIV", "");
+            yield return PB.setProgress(0);
+
             AacFlState entry = Layer.NewState("DIV");
             AacFlState exit = Layer.NewState("DIV_EXIT");
 
             //copy the numerator into the remainder
-            MOV mov = new MOV(A, Remainder, Layer);
+            MOV mov = new MOV(A, Remainder, Layer, progressWindow);
+            yield return mov.compile();
+            yield return PB.setProgress(0.1f);
 
             //set the quotient to 0
             Quotient.Set(entry, 0);
@@ -71,11 +79,18 @@ namespace AnimatorAsAssembly.Commands
             entry.AutomaticallyMovesTo(mov.entry);
 
             #region WHILE R >= D
-            SUB sub = new SUB(Remainder, B, Remainder, Layer);
-            INC inc = new INC(Quotient, Layer);
+            SUB sub = new SUB(Remainder, B, Remainder, Layer, progressWindow);
+            yield return sub.compile();
+            yield return PB.setProgress(0.2f);
+
+            INC inc = new INC(Quotient, Layer, progressWindow);
+            yield return inc.compile();
+            yield return PB.setProgress(0.3f);
 
             //while R >= D
-            JIG jig = new JIG(Remainder, B, Layer);
+            JIG jig = new JIG(Remainder, B, Layer, progressWindow);
+            yield return jig.compile();
+            yield return PB.setProgress(0.4f);
             jig.Link(sub.entry);
 
             sub.exit.AutomaticallyMovesTo(inc.entry);
@@ -84,24 +99,33 @@ namespace AnimatorAsAssembly.Commands
 
             mov.exit.AutomaticallyMovesTo(jig.entry);
 
-            MOV returnQ = new MOV(Quotient, A, Layer);
-            MOV returnR = new MOV(Remainder, B, Layer);
+            MOV returnQ = new MOV(Quotient, A, Layer, progressWindow);
+            yield return returnQ.compile();
+            yield return PB.setProgress(0.7f);
+
+            MOV returnR = new MOV(Remainder, B, Layer, progressWindow);
+            yield return returnR.compile();
+            yield return PB.setProgress(1f);
 
             jig.exit.AutomaticallyMovesTo(returnQ.entry);
             returnQ.exit.AutomaticallyMovesTo(returnR.entry);
             returnR.exit.AutomaticallyMovesTo(exit);
 
+            PB.finish();
             Profiler.EndSample();
-            return Util.CombineStates(
-                entry,
-                mov.states,
-                sub.states,
-                inc.states,
-                jig.states,
-                returnQ.states,
-                returnR.states,
-                exit
+            callback(
+                Util.CombineStates(
+                    entry,
+                    mov.states,
+                    sub.states,
+                    inc.states,
+                    jig.states,
+                    returnQ.states,
+                    returnR.states,
+                    exit
+                )
             );
+            yield break;
         }
     }
 }
