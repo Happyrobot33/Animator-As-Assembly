@@ -77,6 +77,7 @@ namespace AnimatorAsAssembly.Commands
             );
         }
 
+        /// <summary> Compile the opcode into states, this is not done at object creation since it needs to be async </summary>
         public virtual EditorCoroutine compile()
         {
             return EditorCoroutineUtility.StartCoroutineOwnerless(
