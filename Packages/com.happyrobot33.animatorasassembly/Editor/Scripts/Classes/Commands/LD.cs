@@ -41,19 +41,7 @@ namespace AnimatorAsAssembly.Commands
             //states = STATES();
         }
 
-        public override EditorCoroutine compile()
-        {
-            return EditorCoroutineUtility.StartCoroutineOwnerless(
-                STATES(
-                    (AacFlState[] states) =>
-                    {
-                        this.states = states;
-                    }
-                )
-            );
-        }
-
-        IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("LD");
             ProgressBar PB = this.progressWindow.registerNewProgressBar("LD", "");

@@ -79,6 +79,7 @@ namespace AnimatorAsAssembly
         {
             GUIContent titleContent = new GUIContent(title);
             GUIContent descriptionContent = new GUIContent(description);
+            progress = Mathf.Round(progress * 100) / 100;
             GUIContent progressContent = new GUIContent((progress * 100).ToString() + "%");
             GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel);
             GUIStyle descriptionStyle = new GUIStyle(EditorStyles.label);
@@ -87,7 +88,10 @@ namespace AnimatorAsAssembly
             progressStyle.normal.textColor = Color.black;
 
             EditorGUILayout.LabelField(titleContent, titleStyle);
-            EditorGUILayout.LabelField(descriptionContent, descriptionStyle);
+            if (description != "")
+            {
+                EditorGUILayout.LabelField(descriptionContent, descriptionStyle);
+            }
 
             //create the container rect
             Rect containerRect = EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
@@ -107,7 +111,10 @@ namespace AnimatorAsAssembly
 
             float height = 0;
             height = titleStyle.CalcHeight(titleContent, containerRect.width);
-            height += descriptionStyle.CalcHeight(descriptionContent, containerRect.width);
+            if (description != "")
+            {
+                height += descriptionStyle.CalcHeight(descriptionContent, containerRect.width);
+            }
             height += progressStyle.CalcHeight(progressContent, containerRect.width);
             height += 10;
             trySetHeight(height);

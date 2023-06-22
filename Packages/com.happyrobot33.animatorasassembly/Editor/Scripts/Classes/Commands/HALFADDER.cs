@@ -1,6 +1,8 @@
 using AnimatorAsCode;
 using AnimatorAsCode.Framework;
-
+using System;
+using System.Collections.Generic;
+using Unity.EditorCoroutines.Editor;
 using AnimatorAsAssembly;
 using UnityEngine.Profiling;
 
@@ -20,17 +22,23 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="B"> The second bit to add </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         /// <param name="i"> The identifier of this command (avoids command overlap) </param>
-        public HALFADDER(AacFlBoolParameter A, AacFlBoolParameter B, AacFlLayer Layer, int i = 0)
+        public HALFADDER(
+            AacFlBoolParameter A,
+            AacFlBoolParameter B,
+            AacFlLayer Layer,
+            NestedProgressBar progressWindow,
+            int i = 0
+        )
         {
             this.A = A;
             this.B = B;
             this.Layer = Layer.NewStateGroup("HALFADDER");
             SUM = Layer.BoolParameter("INTERNAL/HALFADDER/SUM" + i);
             CARRY = Layer.BoolParameter("INTERNAL/HALFADDER/CARRY" + i);
-            states = STATES();
+            this.progressWindow = progressWindow;
         }
 
-        AacFlState[] STATES()
+        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("HALFADDER");
             //entry state
@@ -62,7 +70,8 @@ namespace AnimatorAsAssembly.Commands
             carryCalc.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
-            return Util.CombineStates(entry, sumCalc, carryCalc, exit);
+            callback(Util.CombineStates(entry, sumCalc, carryCalc, exit));
+            yield break;
         }
     }
 }

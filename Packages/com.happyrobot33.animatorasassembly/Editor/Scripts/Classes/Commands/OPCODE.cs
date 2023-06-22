@@ -79,8 +79,20 @@ namespace AnimatorAsAssembly.Commands
 
         public virtual EditorCoroutine compile()
         {
+            return EditorCoroutineUtility.StartCoroutineOwnerless(
+                STATES(
+                    (AacFlState[] states) =>
+                    {
+                        this.states = states;
+                    }
+                )
+            );
+        }
+
+        public virtual IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        {
             throw new NotImplementedException(
-                "The compile method is not implemented for this opcode!"
+                "The STATES method is not implemented for this opcode!"
             );
         }
     }

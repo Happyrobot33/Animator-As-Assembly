@@ -1,4 +1,9 @@
+using AnimatorAsCode;
 using AnimatorAsCode.Framework;
+using System;
+using System.Collections.Generic;
+using Unity.EditorCoroutines.Editor;
+using AnimatorAsAssembly;
 using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
@@ -16,37 +21,55 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The first register to add </param>
         /// <param name="B"> The second register to add </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public ADD(Register A, Register B, AacFlLayer Layer)
+        public ADD(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
-            init(A, B, Layer);
+            init(A, B, Layer, progressWindow);
         }
 
         /// <inheritdoc cref="ADD(Register, Register, AacFlLayer)"/>
         /// <param name="C"> The register to store the result in </param>
-        public ADD(Register A, Register B, Register C, AacFlLayer Layer)
+        public ADD(
+            Register A,
+            Register B,
+            Register C,
+            AacFlLayer Layer,
+            NestedProgressBar progressWindow
+        )
         {
-            init(A, B, Layer, C);
+            init(A, B, Layer, progressWindow, C);
         }
 
         /// <summary> Adds two registers </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public ADD(string[] args, AacFlLayer Layer)
+        public ADD(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
             //split the args into the register and the value
             if (args.Length == 2)
-                init(new Register(args[0], Layer), new Register(args[1], Layer), Layer);
+                init(
+                    new Register(args[0], Layer),
+                    new Register(args[1], Layer),
+                    Layer,
+                    progressWindow
+                );
             else
                 init(
                     new Register(args[0], Layer),
                     new Register(args[1], Layer),
                     Layer,
+                    progressWindow,
                     new Register(args[2], Layer)
                 );
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer, Register C = null)
+        void init(
+            Register A,
+            Register B,
+            AacFlLayer Layer,
+            NestedProgressBar progressWindow,
+            Register C = null
+        )
         {
             this.A = A;
             this.B = B;
@@ -54,12 +77,14 @@ namespace AnimatorAsAssembly.Commands
             this.Layer = Layer.NewStateGroup("ADD");
             CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
             SUM = new Register("INTERNAL/ADD/SUM", Layer);
-            states = STATES();
+            this.progressWindow = progressWindow;
         }
 
-        AacFlState[] STATES()
+        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("ADD");
+            ProgressBar PB = this.progressWindow.registerNewProgressBar("ADD", "");
+            yield return PB.setProgress(0f);
             //entry state
             AacFlState entry = Layer.NewState("EIGHTBITADDER");
             //clear sum and carry registers
@@ -83,19 +108,22 @@ namespace AnimatorAsAssembly.Commands
                     FullAdders[j - 1].exit.DrivingCopies(FullAdders[j - 1].CARRY, prevcarry);
                 }
                 // create a FullAdder for each bit
-                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, Layer);
+                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, Layer, progressWindow);
+                yield return adder.compile();
                 //copy the sum bit to the output register
                 adder.exit.DrivingCopies(adder.SUM, SUM[j]);
 
                 FullAdders[j] = adder;
                 Profiler.EndSample();
+                yield return PB.setProgress((float)j / Register.bits);
             }
 
             //set the carry bit if the last FullAdder has a carry bit
             FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRY, true);
 
             //use a MOV to copy the sum register to the C register
-            MOV mov = new MOV(SUM, C, Layer);
+            MOV mov = new MOV(SUM, C, Layer, progressWindow);
+            yield return mov.compile();
 
             //link the full adders together
             entry.AutomaticallyMovesTo(FullAdders[0].entry);
@@ -118,13 +146,18 @@ namespace AnimatorAsAssembly.Commands
                 }
             }
 
+            PB.finish();
+
             Profiler.EndSample();
-            return Util.CombineStates(
-                new AacFlState[] { entry },
-                FullAdderStates,
-                mov.states,
-                new AacFlState[] { exit }
+            callback(
+                Util.CombineStates(
+                    new AacFlState[] { entry },
+                    FullAdderStates,
+                    mov.states,
+                    new AacFlState[] { exit }
+                )
             );
+            yield break;
         }
     }
 }
