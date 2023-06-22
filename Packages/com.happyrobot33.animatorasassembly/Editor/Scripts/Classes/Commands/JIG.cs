@@ -1,6 +1,9 @@
+using AnimatorAsCode;
 using AnimatorAsCode.Framework;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using Unity.EditorCoroutines.Editor;
+using AnimatorAsAssembly;
 using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
@@ -19,41 +22,61 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="B"> </param>
         /// <param name="LBL"> The LBL to jump to </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public JIG(Register A, Register B, string lblname, AacFlLayer Layer)
+        public JIG(
+            Register A,
+            Register B,
+            string lblname,
+            AacFlLayer Layer,
+            NestedProgressBar progressWindow
+        )
         {
-            init(A, B, lblname, Layer);
+            init(A, B, lblname, Layer, progressWindow);
         }
 
         /// <summary> Jumps to a state if A >= B </summary>
         /// <remarks> This is used for internal jumps. After initializing this, Link(state) MUST be called </remarks>
-        public JIG(Register A, Register B, AacFlLayer Layer)
+        public JIG(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
-            init(A, B, "INTERNAL", Layer);
+            init(A, B, "INTERNAL", Layer, progressWindow);
         }
 
         /// <summary> Jumps to a LBL if A >= B </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public JIG(string[] args, AacFlLayer Layer)
+        public JIG(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), new Register(args[1], Layer), args[2], Layer);
+            init(
+                new Register(args[0], Layer),
+                new Register(args[1], Layer),
+                args[2],
+                Layer,
+                progressWindow
+            );
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, string lblname, AacFlLayer Layer)
+        void init(
+            Register A,
+            Register B,
+            string lblname,
+            AacFlLayer Layer,
+            NestedProgressBar progressWindow
+        )
         {
             this.A = A;
             this.B = B;
             this.LBLname = lblname;
             this.Compare = new Register("INTERNAL/JIG/Compare", Layer);
             this.Layer = Layer.NewStateGroup("JIG");
-            states = STATES();
+            this.progressWindow = progressWindow;
         }
 
-        AacFlState[] STATES()
+        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("JIG");
+            ProgressBar PB = this.progressWindow.registerNewProgressBar("JIG", "");
+            yield return PB.setProgress(0);
             AacFlState entry = Layer.NewState("JIG");
             AacFlState exit = Layer.NewState("JIG_EXIT");
             JumpAway = Layer.NewState("JIG_JUMPAWAY");
@@ -62,15 +85,19 @@ namespace AnimatorAsAssembly.Commands
             //do this by checking if A - B is negative
             //if it is, then A < B
             //if it isn't, then A >= B
-            sub = new SUB(A, B, Compare, Layer);
+            sub = new SUB(A, B, Compare, Layer, progressWindow);
+            yield return sub.compile();
+            yield return PB.setProgress(0.5f);
             entry.AutomaticallyMovesTo(sub.entry);
 
             //if the highest bit is 1, then A < B
             sub.exit.TransitionsTo(JumpAway).When(Compare[Register.bits - 1].IsFalse());
             sub.exit.AutomaticallyMovesTo(exit);
 
+            PB.finish();
             Profiler.EndSample();
-            return Util.CombineStates(entry, sub.states, JumpAway, exit);
+            callback(Util.CombineStates(entry, sub.states, JumpAway, exit));
+            yield break;
         }
 
         public override void Link(List<OPCODE> opcodes)
