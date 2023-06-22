@@ -1,6 +1,10 @@
+using AnimatorAsCode;
 using AnimatorAsCode.Framework;
+using System;
 using System.Linq;
 using System.Collections.Generic;
+using Unity.EditorCoroutines.Editor;
+using AnimatorAsAssembly;
 using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands
@@ -20,29 +24,29 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The register to multiply </param>
         /// <param name="B"> The register to multiply by </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public MUL(Register A, Register B, AacFlLayer Layer)
+        public MUL(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
-            init(A, B, Layer);
+            init(A, B, Layer, progressWindow);
         }
 
         /// <summary> Multiplies a register by another. Result is stored in A </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public MUL(string[] args, AacFlLayer Layer)
+        public MUL(string[] args, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer);
+            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer)
+        void init(Register A, Register B, AacFlLayer Layer, NestedProgressBar progressWindow)
         {
             this.A = A;
             this.B = B;
             this.Intermediate = new Register("INTERNAL/MUL/Intermediate", Layer);
             this.Result = new Register("INTERNAL/MUL/Result", Layer);
             this.Layer = Layer.NewStateGroup("MUL");
-            states = STATES();
+            this.progressWindow = progressWindow;
         }
 
         // Binary multiplication is complicated
@@ -56,9 +60,11 @@ namespace AnimatorAsAssembly.Commands
             + 01011000   (this is 1011 x 1, shifted three positions to the left)
               =========
               10011010   (this is binary for decimal 154) */
-        AacFlState[] STATES()
+        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("MUL");
+            ProgressBar PB = this.progressWindow.registerNewProgressBar("MUL", "");
+            yield return PB.setProgress(0);
             AacFlState entry = Layer.NewState("MUL");
             AacFlState exit = Layer.NewState("MUL_EXIT");
 
@@ -84,10 +90,12 @@ namespace AnimatorAsAssembly.Commands
                 AacFlState interExit = Layer.NewState("MUL_INTERMEDIATE_" + i + "_EXIT");
 
                 //define the intermediate register
-                MOV mov = new MOV(A, Intermediate, Layer);
+                MOV mov = new MOV(A, Intermediate, Layer, progressWindow);
+                yield return mov.compile();
 
                 //shift the intermediate register by i bits
-                SHL shl = new SHL(Intermediate, Layer, i);
+                SHL shl = new SHL(Intermediate, Layer, progressWindow, i);
+                yield return shl.compile();
 
                 //mov in nothing if the bit is 0
                 AacFlState mul0 = Layer.NewState("MUL_INTERMEDIATE_" + i + "_0");
@@ -95,7 +103,8 @@ namespace AnimatorAsAssembly.Commands
                 Intermediate.Set(mul0, 0);
 
                 //add intermediate to the result
-                ADD add = new ADD(Intermediate, Result, Layer);
+                ADD add = new ADD(Intermediate, Result, Layer, progressWindow);
+                yield return add.compile();
 
                 interSplit.TransitionsTo(mul0).When(B[i].IsFalse());
                 interSplit.TransitionsTo(mov.entry).When(B[i].IsTrue());
@@ -110,14 +119,20 @@ namespace AnimatorAsAssembly.Commands
                 interstates.AddRange(add.states);
                 interstates.Add(interExit);
                 Profiler.EndSample();
+
+                yield return PB.setProgress((float)i / (Register.bits + 1));
             }
 
-            MOV movToResult = new MOV(Result, A, Layer);
+            MOV movToResult = new MOV(Result, A, Layer, progressWindow);
+            yield return movToResult.compile();
+            yield return PB.setProgress(1);
             interstates.Last().AutomaticallyMovesTo(movToResult.entry);
             movToResult.exit.AutomaticallyMovesTo(exit);
 
+            PB.finish();
             Profiler.EndSample();
-            return Util.CombineStates(entry, interstates.ToArray(), movToResult.states, exit);
+            callback(Util.CombineStates(entry, interstates.ToArray(), movToResult.states, exit));
+            yield break;
         }
     }
 }
