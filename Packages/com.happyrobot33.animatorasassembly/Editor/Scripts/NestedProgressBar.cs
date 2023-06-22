@@ -22,7 +22,7 @@ namespace AnimatorAsAssembly
             );
             PB1.progress = 0.5f;
             PB2.progress = 0.25f;
-            NPB.Show();
+            NPB.ShowUtility();
 
             PB1.finish();
         }
@@ -35,49 +35,24 @@ namespace AnimatorAsAssembly
             titleContent = new GUIContent(windowTitle);
         }
 
-        void OnGUI()
+        public void OnGUI()
         {
-            Repaint();
             foreach (ProgressBar progressBar in progressBars)
             {
                 progressBar.render();
             }
-        }
 
-        public class ProgressBar
-        {
-            public string title;
-            public string description;
-            public float progress;
-            internal NestedProgressBar parent;
-
-            public void finish()
+            //Auto close the window if there are no progress bars left
+            if (progressBars.Count == 0)
             {
-                parent.removeProgressBar(this);
-            }
-
-            public void render()
-            {
-                EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
-                EditorGUILayout.LabelField(description);
-                //create the container rect
-                Rect containerRect = EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
-                //create the fill rect
-                Rect fillRect = new Rect(containerRect);
-                fillRect.width *= progress;
-                //draw the empty rect
-                EditorGUI.DrawRect(containerRect, Color.gray);
-                //draw the fill rect
-                EditorGUI.DrawRect(fillRect, Color.green);
-                //end the horizontal layout
-                GUIStyle style = new GUIStyle(EditorStyles.label);
-                style.alignment = TextAnchor.MiddleCenter;
-                style.normal.textColor = Color.white;
-                EditorGUILayout.LabelField((progress * 100).ToString() + "%", style);
-                EditorGUILayout.EndHorizontal();
+                Close();
             }
         }
 
+        /// <summary> Registers a new progress bar and returns it </summary>
+        /// <param name="title">The title of the progress bar</param>
+        /// <param name="description">The description of the progress bar</param>
+        /// <returns>The progress bar that was just created</returns>
         public ProgressBar registerNewProgressBar(string title, string description)
         {
             ProgressBar progressBar = new ProgressBar();
@@ -89,9 +64,45 @@ namespace AnimatorAsAssembly
             return progressBar;
         }
 
+        /// <summary> Removes a progress bar from the list of progress bars </summary>
+        /// <param name="progressBar">The progress bar to remove</param>
         public void removeProgressBar(ProgressBar progressBar)
         {
             progressBars.Remove(progressBar);
+        }
+    }
+
+    public class ProgressBar
+    {
+        public string title;
+        public string description;
+        public float progress;
+        internal NestedProgressBar parent;
+
+        public void finish()
+        {
+            parent.removeProgressBar(this);
+        }
+
+        public void render()
+        {
+            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(description);
+            //create the container rect
+            Rect containerRect = EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+            //create the fill rect
+            Rect fillRect = new Rect(containerRect);
+            fillRect.width *= progress;
+            //draw the empty rect
+            EditorGUI.DrawRect(containerRect, Color.gray);
+            //draw the fill rect
+            EditorGUI.DrawRect(fillRect, Color.green);
+            //end the horizontal layout
+            GUIStyle style = new GUIStyle(EditorStyles.label);
+            style.alignment = TextAnchor.MiddleCenter;
+            style.normal.textColor = Color.white;
+            EditorGUILayout.LabelField((progress * 100).ToString() + "%", style);
+            EditorGUILayout.EndHorizontal();
         }
     }
 }

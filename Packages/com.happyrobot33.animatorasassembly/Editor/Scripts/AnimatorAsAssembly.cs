@@ -10,6 +10,7 @@ using System;
 using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace AnimatorAsAssembly
 {
@@ -621,6 +622,12 @@ namespace AnimatorAsAssembly
             EditorGUILayout.LabelField("Registers used: " + myScript.RegistersUsed);
             if (GUILayout.Button("Create"))
             {
+                NestedProgressBar progressBar = new NestedProgressBar("Animator As Assembly");
+                ProgressBar mainProgressBar = progressBar.registerNewProgressBar(
+                    "Compiling",
+                    "Compiling the code"
+                );
+                progressBar.ShowUtility();
                 //run the create function outside of OnInspectorGUI
                 myScript.Create();
                 //calculate the time taken to compile the program, rounded to 3 decimal places
