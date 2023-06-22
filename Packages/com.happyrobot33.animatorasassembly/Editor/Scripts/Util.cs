@@ -5,6 +5,8 @@ using UnityEditor;
 using UnityEngine.Profiling;
 using UnityEngine;
 using UnityEditor.Animations;
+using System.Collections.Generic;
+using Unity.EditorCoroutines.Editor;
 
 namespace AnimatorAsAssembly
 {
@@ -25,28 +27,37 @@ namespace AnimatorAsAssembly
         }
 
         /// <summary> Cleans a animator controller by removing all unreferenced sub assets </summary>
-        public static void CleanAnimatorControllerAsset(string path)
+        public static IEnumerator<EditorCoroutine> CleanAnimatorControllerAsset(
+            string path,
+            NestedProgressBar progressBar
+        )
         {
             try
             {
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
                 AssetDatabase.StartAssetEditing();
-                EditorUtility.DisplayProgressBar("Clearing Asset", "Clearing Asset", 0.1f);
+                /* EditorUtility.DisplayProgressBar("Clearing Asset", "Clearing Asset", 0.1f); */
                 Type type = AssetDatabase.GetMainAssetTypeAtPath(path);
                 var asset = AssetDatabase.LoadAssetAtPath(path, type);
                 var subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
+
+                //add a progress bar
+                ProgressBar ourProgressBar = progressBar.registerNewProgressBar(
+                    "Clearing Asset",
+                    "Cleaning the Animator Controller Asset"
+                );
 
                 //get the animator controller
                 AnimatorController controller = asset as AnimatorController;
 
                 for (int i = 0; i < subAssets.Length; i++)
                 {
-                    EditorUtility.DisplayProgressBar(
+                    /* EditorUtility.DisplayProgressBar(
                         "Clearing Asset",
                         "Clearing Asset",
                         (float)i / subAssets.Length
-                    );
+                    ); */
                     if (subAssets[i] == asset)
                         continue;
                     if (subAssets[i] is AnimatorStateMachine)
@@ -172,15 +183,20 @@ namespace AnimatorAsAssembly
                             //Debug.Log(subAssets[i].name);
                         }
                     }
+                    ourProgressBar.setProgress((float)i / subAssets.Length);
+                    yield return null;
                 }
+
+                ourProgressBar.finish();
             }
             finally
             {
                 AssetDatabase.StopAssetEditing();
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh();
-                EditorUtility.ClearProgressBar();
+                /* EditorUtility.ClearProgressBar(); */
             }
+            yield break;
         }
     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEngine;
+using Unity.EditorCoroutines.Editor;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -16,6 +17,9 @@ namespace AnimatorAsAssembly.Commands
         {
             get { return this.GetHashCode(); }
         }
+
+        /// <summary> The progress window of the compiler </summary>
+        internal NestedProgressBar progressWindow;
 
         /// <summary> The states that make up this opcode. May contain states from other nested opcodes </summary>
         public AacFlState[] states;
@@ -70,6 +74,13 @@ namespace AnimatorAsAssembly.Commands
         {
             throw new NotImplementedException(
                 "The init method is not implemented for this opcode!"
+            );
+        }
+
+        public virtual EditorCoroutine compile()
+        {
+            throw new NotImplementedException(
+                "The compile method is not implemented for this opcode!"
             );
         }
     }

@@ -1,6 +1,6 @@
 using AnimatorAsCode;
 using AnimatorAsCode.Framework;
-using UnityEngine;
+
 using UnityEngine.Profiling;
 
 namespace AnimatorAsAssembly.Commands

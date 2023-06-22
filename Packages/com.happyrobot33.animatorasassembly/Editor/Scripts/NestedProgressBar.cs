@@ -3,30 +3,12 @@ using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.EditorCoroutines.Editor;
 
 namespace AnimatorAsAssembly
 {
     public class NestedProgressBar : EditorWindow
     {
-        [MenuItem("Debug/Show Progress Bar")]
-        public static void ShowProgressBar()
-        {
-            NestedProgressBar NPB = new NestedProgressBar("Test Window");
-            ProgressBar PB1 = NPB.registerNewProgressBar(
-                "Test Bar Title 1",
-                "Test Bar Description 1"
-            );
-            ProgressBar PB2 = NPB.registerNewProgressBar(
-                "Test Bar Title 2",
-                "Test Bar Description 2"
-            );
-            PB1.progress = 0.5f;
-            PB2.progress = 0.25f;
-            NPB.ShowUtility();
-
-            PB1.finish();
-        }
-
         private List<ProgressBar> progressBars = new List<ProgressBar>();
         public string windowTitle;
 
@@ -37,9 +19,10 @@ namespace AnimatorAsAssembly
 
         public void OnGUI()
         {
+            float height = 0;
             foreach (ProgressBar progressBar in progressBars)
             {
-                progressBar.render();
+                height += progressBar.render();
             }
 
             //Auto close the window if there are no progress bars left
@@ -47,6 +30,12 @@ namespace AnimatorAsAssembly
             {
                 Close();
             }
+
+            //this is hardcoded because I don't know how to get the height of the title bar
+            height += 20;
+
+            this.maxSize = new Vector2(500, height);
+            this.minSize = new Vector2(500, height);
         }
 
         /// <summary> Registers a new progress bar and returns it </summary>
@@ -61,6 +50,7 @@ namespace AnimatorAsAssembly
             progressBar.progress = 0;
             progressBar.parent = this;
             this.progressBars.Add(progressBar);
+            Repaint();
             return progressBar;
         }
 
@@ -76,6 +66,7 @@ namespace AnimatorAsAssembly
     {
         public string title;
         public string description;
+        public float height;
         public float progress;
         internal NestedProgressBar parent;
 
@@ -84,25 +75,59 @@ namespace AnimatorAsAssembly
             parent.removeProgressBar(this);
         }
 
-        public void render()
+        public float render()
         {
-            EditorGUILayout.LabelField(title, EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(description);
+            GUIContent titleContent = new GUIContent(title);
+            GUIContent descriptionContent = new GUIContent(description);
+            GUIContent progressContent = new GUIContent((progress * 100).ToString() + "%");
+            GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel);
+            GUIStyle descriptionStyle = new GUIStyle(EditorStyles.label);
+            GUIStyle progressStyle = new GUIStyle(EditorStyles.label);
+            progressStyle.alignment = TextAnchor.MiddleCenter;
+            progressStyle.normal.textColor = Color.black;
+
+            EditorGUILayout.LabelField(titleContent, titleStyle);
+            EditorGUILayout.LabelField(descriptionContent, descriptionStyle);
+
             //create the container rect
             Rect containerRect = EditorGUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
+
             //create the fill rect
             Rect fillRect = new Rect(containerRect);
             fillRect.width *= progress;
+
             //draw the empty rect
             EditorGUI.DrawRect(containerRect, Color.gray);
             //draw the fill rect
             EditorGUI.DrawRect(fillRect, Color.green);
+
             //end the horizontal layout
-            GUIStyle style = new GUIStyle(EditorStyles.label);
-            style.alignment = TextAnchor.MiddleCenter;
-            style.normal.textColor = Color.white;
-            EditorGUILayout.LabelField((progress * 100).ToString() + "%", style);
+            EditorGUILayout.LabelField(progressContent, progressStyle);
             EditorGUILayout.EndHorizontal();
+
+            float height = 0;
+            height = titleStyle.CalcHeight(titleContent, containerRect.width);
+            height += descriptionStyle.CalcHeight(descriptionContent, containerRect.width);
+            height += progressStyle.CalcHeight(progressContent, containerRect.width);
+            height += 10;
+            trySetHeight(height);
+            return this.height;
+        }
+
+        private void trySetHeight(float height)
+        {
+            //check to see if layout event
+            if (Event.current.type == EventType.Layout)
+            {
+                this.height = height;
+            }
+        }
+
+        public EditorCoroutine setProgress(float progress)
+        {
+            this.progress = progress;
+            parent.Repaint();
+            return null;
         }
     }
 }

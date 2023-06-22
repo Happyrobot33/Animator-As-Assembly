@@ -10,7 +10,7 @@ using System;
 using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
-using System.Threading;
+using Unity.EditorCoroutines.Editor;
 
 namespace AnimatorAsAssembly
 {
@@ -59,12 +59,27 @@ namespace AnimatorAsAssembly
 
         private AacFlBase aac;
 
-        public void Create()
+        public IEnumerator<EditorCoroutine> Create()
         {
             try
             {
+                NestedProgressBar progressBar = new NestedProgressBar("Animator As Assembly");
+                ProgressBar mainProgressBar = progressBar.registerNewProgressBar(
+                    "Compiling",
+                    "Compiling the code"
+                );
+                progressBar.ShowUtility();
+                yield return null;
+
                 //remove all junk sub assets
-                Util.CleanAnimatorControllerAsset(AssetDatabase.GetAssetPath(assetContainer));
+                yield return EditorCoroutineUtility.StartCoroutine(
+                    Util.CleanAnimatorControllerAsset(
+                        AssetDatabase.GetAssetPath(assetContainer),
+                        progressBar
+                    ),
+                    this
+                );
+                yield return mainProgressBar.setProgress(0.1f);
 
                 AssetDatabase.StartAssetEditing();
 
@@ -80,7 +95,7 @@ namespace AnimatorAsAssembly
                     AacExample.Options().WriteDefaultsOn()
                 );
 
-                var ControllerLayer = aac.CreateMainFxLayer();
+                AacFlLayer ControllerLayer = aac.CreateMainFxLayer();
 
                 Register[] registers = new Register[0];
 
@@ -88,7 +103,8 @@ namespace AnimatorAsAssembly
                 AacFlState DefaultState = ControllerLayer.NewState("Default");
 
                 //remove comments
-                CompiledCode = Cleanup(RAWINSTRUCTIONS);
+                string CleanedCode = Cleanup(RAWINSTRUCTIONS);
+                yield return mainProgressBar.setProgress(0.33f);
 
                 //run the display generation code if the user wants it
                 if (useDisplay)
@@ -99,13 +115,22 @@ namespace AnimatorAsAssembly
                 GenerateContactSenderSystem(ControllerLayer);
 
                 //read in the instructions
-                List<Commands.OPCODE> Instructions = CompileMicroCode(
-                    CompiledCode,
-                    ControllerLayer
+                List<Commands.OPCODE> Instructions = new List<Commands.OPCODE>();
+                yield return EditorCoroutineUtility.StartCoroutine(
+                    CompileMicroCode(
+                        CleanedCode,
+                        ControllerLayer,
+                        progressBar,
+                        (List<Commands.OPCODE> instructions) => Instructions = instructions
+                    ),
+                    this
                 );
+                //List<Commands.OPCODE> Instructions = CompileMicroCode(CleanedCode, ControllerLayer);
+                yield return mainProgressBar.setProgress(0.66f);
 
                 //correlate all of the instructions with their paths
-                OrganizeGraph(Instructions, ControllerLayer, CompiledCode);
+                OrganizeGraph(Instructions, ControllerLayer, CleanedCode);
+                yield return mainProgressBar.setProgress(1f);
 
                 //create final connection between default state and the first instruction
                 DefaultState.AutomaticallyMovesTo(Instructions[0].states[0]);
@@ -115,18 +140,19 @@ namespace AnimatorAsAssembly
 
                 //save the asset
                 Profiler.EndSample();
+                progressBar.Close();
             }
-            catch (Exception e)
-            {
-                EditorUtility.ClearProgressBar();
-                Debug.LogError(e);
-                //show a dialog box with the error
-                EditorUtility.DisplayDialog(
-                    "Error",
-                    "An internal error occured while compiling the code. Please check the console for more information.",
-                    "OK"
-                );
-            }
+            /*             catch (Exception e)
+                        {
+                            EditorUtility.ClearProgressBar();
+                            Debug.LogError(e);
+                            //show a dialog box with the error
+                            EditorUtility.DisplayDialog(
+                                "Error",
+                                "An internal error occured while compiling the code. Please check the console for more information.",
+                                "OK"
+                            );
+                        } */
             finally
             {
                 //By adding a call to StopAssetEditing inside
@@ -300,7 +326,7 @@ namespace AnimatorAsAssembly
         string Cleanup(string raw)
         {
             //progress bar
-            EditorUtility.DisplayProgressBar("Compiling", "Cleaning up code", 0.1f);
+            /* EditorUtility.DisplayProgressBar("Compiling", "Cleaning up code", 0.1f); */
 
             Profiler.BeginSample("Cleanup");
             string[] lines = raw.Split('\n');
@@ -334,82 +360,82 @@ namespace AnimatorAsAssembly
             //first we need to find the subroutine that the RTS is in
             //then we need to find all the JSR instructions that reference that subroutine
             //then we need to append to the RTS every single line number of the JSR instructions
-            for (int i = 0; i < output.Split('\n').Length; i++)
-            {
-                string line = output.Split('\n')[i];
-
-                if (line == "RTS")
-                {
-                    //find the subroutine that the RTS is in
-                    //subroutines are denoted by ;
-                    for (int j = i; j >= 0; j--)
-                    {
-                        string line2 = output.Split('\n')[j];
-
-                        if (line2.StartsWith(";"))
+            /*             for (int i = 0; i < output.Split('\n').Length; i++)
                         {
-                            //we have found the subroutine
-                            //now we need to find all the JSR instructions that reference this subroutine
-                            for (int k = 0; k < output.Split('\n').Length; k++)
+                            string line = output.Split('\n')[i];
+            
+                            if (line == "RTS")
                             {
-                                string line3 = output.Split('\n')[k];
-
-                                if (line3.StartsWith("JSR " + line2))
+                                //find the subroutine that the RTS is in
+                                //subroutines are denoted by ;
+                                for (int j = i; j >= 0; j--)
                                 {
-                                    //we have found a JSR instruction that references the subroutine
-                                    //append the line number to the RTS
-                                    line += " " + k;
+                                    string line2 = output.Split('\n')[j];
+            
+                                    if (line2.StartsWith(";"))
+                                    {
+                                        //we have found the subroutine
+                                        //now we need to find all the JSR instructions that reference this subroutine
+                                        for (int k = 0; k < output.Split('\n').Length; k++)
+                                        {
+                                            string line3 = output.Split('\n')[k];
+            
+                                            if (line3.StartsWith("JSR " + line2))
+                                            {
+                                                //we have found a JSR instruction that references the subroutine
+                                                //append the line number to the RTS
+                                                line += " " + k;
+                                            }
+                                        }
+            
+                                        //modify the relevant JSR instructions to point to the subroutine
+                                        for (int k = 0; k < output.Split('\n').Length; k++)
+                                        {
+                                            string line3 = output.Split('\n')[k];
+            
+                                            if (line3.StartsWith("JSR " + line2))
+                                            {
+                                                //we have found a JSR instruction that references the subroutine
+                                                //modify the JSR instruction to point to the subroutine instead of the identifier
+                                                //dont use replace as it is messy
+                                                output =
+                                                    output.Substring(0, output.IndexOf(line3))
+                                                    + "JSR "
+                                                    + j
+                                                    + output.Substring(
+                                                        output.IndexOf(line3) + 4 + line2.Length
+                                                    );
+                                            }
+                                        }
+            
+                                        //we have found the subroutine, break out of the loop
+                                        break;
+                                    }
+                                }
+            
+                                //replace the RTS with the new RTS. we cant use replace as it will replace all instances of RTS
+                                //we also need to make sure we are ONLY replacing the RTS instruction at line i
+                                for (int j = 0; j < output.Split('\n').Length; j++)
+                                {
+                                    string line2 = output.Split('\n')[j];
+            
+                                    if (line2 == "RTS")
+                                    {
+                                        if (j == i)
+                                        {
+                                            //replace the RTS with the new RTS
+                                            //split, replace, join
+                                            string[] split = output.Split('\n');
+                                            split[j] = line;
+                                            output = string.Join("\n", split);
+                                        }
+                                    }
                                 }
                             }
-
-                            //modify the relevant JSR instructions to point to the subroutine
-                            for (int k = 0; k < output.Split('\n').Length; k++)
-                            {
-                                string line3 = output.Split('\n')[k];
-
-                                if (line3.StartsWith("JSR " + line2))
-                                {
-                                    //we have found a JSR instruction that references the subroutine
-                                    //modify the JSR instruction to point to the subroutine instead of the identifier
-                                    //dont use replace as it is messy
-                                    output =
-                                        output.Substring(0, output.IndexOf(line3))
-                                        + "JSR "
-                                        + j
-                                        + output.Substring(
-                                            output.IndexOf(line3) + 4 + line2.Length
-                                        );
-                                }
-                            }
-
-                            //we have found the subroutine, break out of the loop
-                            break;
                         }
-                    }
-
-                    //replace the RTS with the new RTS. we cant use replace as it will replace all instances of RTS
-                    //we also need to make sure we are ONLY replacing the RTS instruction at line i
-                    for (int j = 0; j < output.Split('\n').Length; j++)
-                    {
-                        string line2 = output.Split('\n')[j];
-
-                        if (line2 == "RTS")
-                        {
-                            if (j == i)
-                            {
-                                //replace the RTS with the new RTS
-                                //split, replace, join
-                                string[] split = output.Split('\n');
-                                split[j] = line;
-                                output = string.Join("\n", split);
-                            }
-                        }
-                    }
-                }
-            }
-
-            //handle subroutines, denoted by ; they should be replaced with NOCONNECT
-            for (int i = 0; i < lines.Length; i++)
+            
+                        //handle subroutines, denoted by ; they should be replaced with NOCONNECT
+                        for (int i = 0; i < lines.Length; i++)
             {
                 string line = lines[i];
 
@@ -423,6 +449,7 @@ namespace AnimatorAsAssembly
                         + output.Substring(output.IndexOf(line) + line.Length);
                 }
             }
+            */
 
             //remove the last \n
             output = output.Substring(0, output.Length - 1);
@@ -435,7 +462,7 @@ namespace AnimatorAsAssembly
 
             Profiler.EndSample();
             //end the progress bar
-            EditorUtility.ClearProgressBar();
+            /* EditorUtility.ClearProgressBar(); */
             return output;
         }
 
@@ -499,18 +526,29 @@ namespace AnimatorAsAssembly
         /// <param name="raw"> The raw instructions to parse. </param>
         /// <param name="ControllerLayer"> The FX layer. </param>
         /// <returns> The parsed instructions. </returns>
-        List<Commands.OPCODE> CompileMicroCode(string raw, AacFlLayer ControllerLayer)
+        IEnumerator<EditorCoroutine> CompileMicroCode(
+            string raw,
+            AacFlLayer ControllerLayer,
+            NestedProgressBar progressBar,
+            Action<List<Commands.OPCODE>> callback
+        )
         {
             Profiler.BeginSample("CompileMicroCode");
 
             //begin a progress bar
-            EditorUtility.DisplayProgressBar("Compiling MicroCode", "Compiling MicroCode", 0);
+            /* EditorUtility.DisplayProgressBar("Compiling MicroCode", "Compiling MicroCode", 0); */
 
             //split the instructions into an array
             string[] instructions = raw.Split('\n');
 
             //create a list of instructions that make up the program
             List<Commands.OPCODE> Instructions = new List<Commands.OPCODE>();
+
+            //create a progress bar for the total progress
+            ProgressBar microcodeProgress = progressBar.registerNewProgressBar(
+                "Compiling MicroCode",
+                "Compiling instructions to state MicroCode"
+            );
 
             //loop through the instructions, making the relevant states based on the instruction
             for (int i = 0; i < instructions.Length; i++)
@@ -531,11 +569,12 @@ namespace AnimatorAsAssembly
                 string instructionType = instructionParts[0];
 
                 //progress bar
-                EditorUtility.DisplayProgressBar(
+                /* EditorUtility.DisplayProgressBar(
                     "Compiling MicroCode",
                     "Compiling MicroCode {" + instruction + "}",
                     (float)i / (float)instructions.Length
-                );
+                ); */
+                yield return microcodeProgress.setProgress((float)i / (float)instructions.Length);
 
                 //Initialize Global Variables
                 new Globals(ControllerLayer);
@@ -549,9 +588,11 @@ namespace AnimatorAsAssembly
                 //create a new instance of the type
                 if (type != null)
                 {
-                    object[] args = { instructionArgs, ControllerLayer };
+                    object[] args = { instructionArgs, ControllerLayer, progressBar };
                     Commands.OPCODE instance =
                         Activator.CreateInstance(type, args: args) as Commands.OPCODE;
+
+                    yield return instance.compile();
 
                     //add the states to the list
                     Instructions.Add(instance);
@@ -564,14 +605,18 @@ namespace AnimatorAsAssembly
                 }
             }
 
+            //end the progress bar
+            microcodeProgress.finish();
+
             Profiler.EndSample();
             //end the progress bar
-            EditorUtility.ClearProgressBar();
+            /* EditorUtility.ClearProgressBar(); */
 
             //Link the microcode
             LinkMicroCode(Instructions);
 
-            return Instructions;
+            callback(Instructions);
+            yield break;
         }
 
         /// <summary> Links the micro code by running each microcodes linker function. </summary>
@@ -622,14 +667,9 @@ namespace AnimatorAsAssembly
             EditorGUILayout.LabelField("Registers used: " + myScript.RegistersUsed);
             if (GUILayout.Button("Create"))
             {
-                NestedProgressBar progressBar = new NestedProgressBar("Animator As Assembly");
-                ProgressBar mainProgressBar = progressBar.registerNewProgressBar(
-                    "Compiling",
-                    "Compiling the code"
-                );
-                progressBar.ShowUtility();
                 //run the create function outside of OnInspectorGUI
-                myScript.Create();
+                //myScript.Create();
+                EditorCoroutineUtility.StartCoroutineOwnerless(myScript.Create());
                 //calculate the time taken to compile the program, rounded to 3 decimal places
                 lastCompileTime = Math.Round((Time.realtimeSinceStartup - currentTime), 3);
             }

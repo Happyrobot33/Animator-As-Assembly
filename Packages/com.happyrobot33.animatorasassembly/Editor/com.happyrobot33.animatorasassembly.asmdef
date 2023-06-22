@@ -3,7 +3,8 @@
     "references": [
         "GUID:bf0ba3819ee10bf43ad38d1834ba2bbe",
         "GUID:106e830cd63cdab40bb17e2f99416836",
-        "GUID:ad78a2bc77b7491eb34cece69bb8f0e6"
+        "GUID:ad78a2bc77b7491eb34cece69bb8f0e6",
+        "GUID:478a2357cc57436488a56e564b08d223"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
