@@ -98,9 +98,9 @@ namespace AnimatorAsAssembly.Commands
             //exit state
             AacFlState exit = _layer.NewState("EIGHTBITADDER EXIT");
 
-            FULLADDER[] FullAdders = new FULLADDER[Register.bits];
+            FULLADDER[] FullAdders = new FULLADDER[Register._bitDepth];
 
-            for (int j = 0; j < Register.bits; j++)
+            for (int j = 0; j < Register._bitDepth; j++)
             {
                 Profiler.BeginSample("ADD/FULLADDER " + j);
                 /// <summary> The previous carry bit </summary>
@@ -119,7 +119,7 @@ namespace AnimatorAsAssembly.Commands
 
                 FullAdders[j] = adder;
                 Profiler.EndSample();
-                yield return PB.SetProgress((float)j / Register.bits);
+                yield return PB.SetProgress((float)j / Register._bitDepth);
             }
 
             //set the carry bit if the last FullAdder has a carry bit
@@ -131,18 +131,18 @@ namespace AnimatorAsAssembly.Commands
 
             //link the full adders together
             entry.AutomaticallyMovesTo(FullAdders[0].Entry);
-            for (int j = 0; j < Register.bits - 1; j++)
+            for (int j = 0; j < Register._bitDepth - 1; j++)
             {
                 FullAdders[j].Exit.AutomaticallyMovesTo(FullAdders[j + 1].Entry);
             }
-            FullAdders[Register.bits - 1].Exit.AutomaticallyMovesTo(mov.Entry);
+            FullAdders[Register._bitDepth - 1].Exit.AutomaticallyMovesTo(mov.Entry);
             mov.Exit.AutomaticallyMovesTo(exit);
 
             //convert the FullAdder states into a single array
             AacFlState[] FullAdderStates = new AacFlState[
-                Register.bits * FullAdders[0].States.Length
+                Register._bitDepth * FullAdders[0].States.Length
             ];
-            for (int j = 0; j < Register.bits; j++)
+            for (int j = 0; j < Register._bitDepth; j++)
             {
                 for (int k = 0; k < FullAdders[j].States.Length; k++)
                 {

@@ -46,7 +46,7 @@ namespace AnimatorAsAssembly.Commands
             //entry state
             AacFlState entry = _layer.NewState("MOV");
 
-            for (int i = 0; i < Register.bits; i++)
+            for (int i = 0; i < Register._bitDepth; i++)
             {
                 entry.DrivingCopies(A[i], B[i]);
             }

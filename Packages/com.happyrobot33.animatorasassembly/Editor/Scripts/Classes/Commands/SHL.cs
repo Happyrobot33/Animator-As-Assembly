@@ -56,7 +56,7 @@ namespace AnimatorAsAssembly.Commands
 
             //copy them back
             AacFlState emptyBuffer = _layer.NewState("SHL");
-            for (int i = 0; i < Register.bits - shift; i++)
+            for (int i = 0; i < Register._bitDepth - shift; i++)
             {
                 emptyBuffer.DrivingCopies(BUFFER[i], A[i + shift]);
             }

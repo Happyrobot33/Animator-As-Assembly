@@ -10,10 +10,10 @@ namespace AnimatorAsAssembly
         public AacFlBoolParameter[] boolParams;
 
         /// <summary> The name of this register </summary>
-        public string name;
+        public string Name;
 
         /// <summary> The bit count per register </summary>
-        public static int bits = 8;
+        public static int _bitDepth = 8;
 
         /// <summary> The FX controller that this register is linked to </summary>
         public AacFlLayer FX;
@@ -23,7 +23,7 @@ namespace AnimatorAsAssembly
         /// <param name="FX"> The layer that this register is linked to </param>
         public Register(string name, AacFlLayer FX)
         {
-            this.name = name;
+            this.Name = name;
             this.FX = FX;
             this.boolParams = GenerateRegisterNames(name);
         }
@@ -46,7 +46,7 @@ namespace AnimatorAsAssembly
         /// <summary> Provide a quick way to get a parameter driver set to a specific value </summary>
         public void Set(AacFlState state, int value)
         {
-            for (int i = 0; i < bits; i++)
+            for (int i = 0; i < _bitDepth; i++)
             {
                 if ((value & (1 << i)) != 0)
                 {
@@ -62,7 +62,7 @@ namespace AnimatorAsAssembly
         /// <summary> Set the value of this register upon bootup </summary>
         public void Initialize(int value)
         {
-            for (int i = 0; i < bits; i++)
+            for (int i = 0; i < _bitDepth; i++)
             {
                 if ((value & (1 << i)) != 0)
                 {
@@ -77,14 +77,14 @@ namespace AnimatorAsAssembly
 
         AacFlBoolParameter[] GenerateRegisterNames(string name)
         {
-            string[] names = new string[bits];
-            for (int i = 0; i < bits; i++)
+            string[] names = new string[_bitDepth];
+            for (int i = 0; i < _bitDepth; i++)
             {
                 names[i] = name + "_" + i;
             }
 
-            AacFlBoolParameter[] boolParams = new AacFlBoolParameter[bits];
-            for (int i = 0; i < bits; i++)
+            AacFlBoolParameter[] boolParams = new AacFlBoolParameter[_bitDepth];
+            for (int i = 0; i < _bitDepth; i++)
             {
                 boolParams[i] = FX.BoolParameter(names[i]);
             }
@@ -105,7 +105,7 @@ namespace AnimatorAsAssembly
                     continue;
                 }
 
-                if (registers[i].name == name)
+                if (registers[i].Name == name)
                 {
                     UnityEngine.Profiling.Profiler.EndSample();
                     return registers[i];

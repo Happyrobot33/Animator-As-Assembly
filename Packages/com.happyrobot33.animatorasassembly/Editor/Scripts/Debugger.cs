@@ -85,10 +85,10 @@ namespace AnimatorAsAssembly
                 SimpleRegister register = new SimpleRegister()
                 {
                     name = registerName,
-                    bits = new string[Register.bits],
+                    bits = new string[Register._bitDepth],
                     expanded = false
                 };
-                for (int i = 0; i < Register.bits; i++)
+                for (int i = 0; i < Register._bitDepth; i++)
                 {
                     register.bits[i] = registerName + "_" + i;
                 }
@@ -185,8 +185,8 @@ namespace AnimatorAsAssembly
 
                         #region get the register bits
                         //get the register values as bools
-                        bool[] registerValues = new bool[Register.bits];
-                        for (int j = 0; j < Register.bits; j++)
+                        bool[] registerValues = new bool[Register._bitDepth];
+                        for (int j = 0; j < Register._bitDepth; j++)
                         {
                             LyumaAv3Runtime.Av3EmuParameterAccess paramAccess =
                                 new LyumaAv3Runtime.Av3EmuParameterAccess()
@@ -201,7 +201,7 @@ namespace AnimatorAsAssembly
                         #region display decimal
                         //show the register values in decimal
                         int decimalValue = 0;
-                        for (int j = 0; j < Register.bits; j++)
+                        for (int j = 0; j < Register._bitDepth; j++)
                         {
                             if (registerValues[j])
                             {
@@ -222,7 +222,7 @@ namespace AnimatorAsAssembly
                         EditorGUILayout.BeginHorizontal();
                         GUIContent label = new GUIContent("Binary:");
                         EditorGUILayout.LabelField(label);
-                        for (int j = Register.bits - 1; j >= 0; j--)
+                        for (int j = Register._bitDepth - 1; j >= 0; j--)
                         {
                             registerValues[j] = EditorGUILayout.Toggle(registerValues[j]);
                         }

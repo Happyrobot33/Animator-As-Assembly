@@ -43,13 +43,13 @@ namespace AnimatorAsAssembly.Commands
         {
             Profiler.BeginSample("FLIP");
             AacFlState entry = _layer.NewState("FLIP");
-            for (int i = 0; i < Register.bits; i++)
+            for (int i = 0; i < Register._bitDepth; i++)
             {
                 entry.DrivingRemaps(A[i], 0f, 1f, BUFFER[i], 1f, 0f);
             }
             AacFlState exit = _layer.NewState("FLIP_EXIT");
             entry.AutomaticallyMovesTo(exit);
-            for (int i = 0; i < Register.bits; i++)
+            for (int i = 0; i < Register._bitDepth; i++)
             {
                 exit.DrivingCopies(BUFFER[i], A[i]);
             }

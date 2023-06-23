@@ -91,7 +91,7 @@ namespace AnimatorAsAssembly.Commands
             entry.AutomaticallyMovesTo(sub.Entry);
 
             //if the highest bit is 1, then A < B
-            sub.Exit.TransitionsTo(JumpAway).When(Compare[Register.bits - 1].IsFalse());
+            sub.Exit.TransitionsTo(JumpAway).When(Compare[Register._bitDepth - 1].IsFalse());
             sub.Exit.AutomaticallyMovesTo(exit);
 
             PB.Finish();
