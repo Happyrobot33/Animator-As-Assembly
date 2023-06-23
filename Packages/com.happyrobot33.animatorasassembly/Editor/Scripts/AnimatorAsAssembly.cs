@@ -45,9 +45,6 @@ namespace AnimatorAsAssembly
         [CodeArea]
         public string RAWINSTRUCTIONS;
 
-        [CodeArea(true)]
-        public string CompiledCode;
-
         /// <summary> This is a string list of all the instructions in the compiled code. index it with the program counter to get the current instruction </summary>
         [SerializeField]
         [HideInInspector]
