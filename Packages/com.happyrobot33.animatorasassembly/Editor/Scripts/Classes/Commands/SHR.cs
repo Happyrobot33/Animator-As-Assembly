@@ -19,7 +19,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public SHR(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow, int shift = 1)
         {
-            init(A, Layer, shift);
+            Init(A, Layer, shift, progressWindow);
         }
 
         /// <summary> Shifts a Registers bits 1 to the right</summary>
@@ -29,50 +29,50 @@ namespace AnimatorAsAssembly.Commands
         {
             //split the args into the register and the value
             if (args.Length == 1)
-                init(new Register(args[0], Layer), Layer, progressWindow);
+                Init(new Register(args[0], Layer), Layer, progressWindow);
             else
-                init(new Register(args[0], Layer), Layer, progressWindow, int.Parse(args[1]));
+                Init(new Register(args[0], Layer), Layer, progressWindow, int.Parse(args[1]));
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow, int shift = 1)
+        void Init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow, int shift = 1)
         {
             this.A = A;
-            this.Layer = Layer.NewStateGroup("SHR");
+            this._layer = Layer.NewStateGroup("SHR");
             this.BUFFER = new Register("INTERNAL/SHR/BUFFER", Layer);
             this.shift = shift;
-            this.progressWindow = progressWindow;
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("SHR");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("SHR", "");
-            yield return PB.setProgress(0);
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("SHR", "");
+            yield return PB.SetProgress(0);
             //copy from A to BUFFER
-            MOV mov = new MOV(A, BUFFER, Layer, progressWindow);
-            yield return mov.compile();
-            yield return PB.setProgress(0.2f);
+            MOV mov = new MOV(A, BUFFER, _layer, _progressWindow);
+            yield return mov;
+            yield return PB.SetProgress(0.2f);
 
             //copy them back
-            AacFlState emptyBuffer = Layer.NewState("SHR");
+            AacFlState emptyBuffer = _layer.NewState("SHR");
             for (int i = 0; i < Register.bits - shift; i++)
             {
                 emptyBuffer.DrivingCopies(BUFFER[i + shift], A[i]);
             }
-            yield return PB.setProgress(0.4f);
+            yield return PB.SetProgress(0.4f);
 
             for (int i = 0; i < shift; i++)
             {
                 emptyBuffer.Drives(A[Register.bits - i - 1], false);
             }
-            yield return PB.setProgress(0.6f);
+            yield return PB.SetProgress(0.6f);
 
-            mov.exit.AutomaticallyMovesTo(emptyBuffer);
+            mov.Exit.AutomaticallyMovesTo(emptyBuffer);
 
-            PB.finish();
+            PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(mov.states, emptyBuffer));
+            callback(Util.CombineStates(mov.States, emptyBuffer));
             yield break;
         }
     }

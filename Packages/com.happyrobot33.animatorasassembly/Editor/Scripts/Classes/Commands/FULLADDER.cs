@@ -34,64 +34,64 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.C = C;
-            this.Layer = Layer.NewStateGroup("FULLADDER");
+            this._layer = Layer.NewStateGroup("FULLADDER");
             SUM = Layer.BoolParameter("INTERNAL/FULLADDER/SUM");
             CARRY = Layer.BoolParameter("INTERNAL/FULLADDER/CARRY");
-            this.progressWindow = progressWindow;
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("FULLADDER");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("FULLADDER", "");
-            yield return PB.setProgress(0f);
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("FULLADDER", "");
+            yield return PB.SetProgress(0f);
             //entry state
-            AacFlState entry = Layer.NewState("FULLADDER");
+            AacFlState entry = _layer.NewState("FULLADDER");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
             //first half adder
-            HALFADDER firstHalfAdder = new Commands.HALFADDER(A, B, Layer, progressWindow, 0);
-            yield return firstHalfAdder.compile();
-            yield return PB.setProgress(0.5f);
+            HALFADDER firstHalfAdder = new HALFADDER(A, B, _layer, _progressWindow, 0);
+            yield return firstHalfAdder;
+            yield return PB.SetProgress(0.5f);
 
             //second half adder
-            HALFADDER secondHalfAdder = new Commands.HALFADDER(
+            HALFADDER secondHalfAdder = new HALFADDER(
                 firstHalfAdder.SUM,
                 C,
-                Layer,
-                progressWindow,
+                _layer,
+                _progressWindow,
                 1
             );
-            yield return secondHalfAdder.compile();
-            yield return PB.setProgress(1f);
+            yield return secondHalfAdder;
+            yield return PB.SetProgress(1f);
 
             //set carry based on either half adders carry flag
-            carryCalc = Layer.NewState("FULLADDER CARRY");
+            carryCalc = _layer.NewState("FULLADDER CARRY");
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            AacFlState exit = Layer.NewState("FULLADDER EXIT");
+            AacFlState exit = _layer.NewState("FULLADDER EXIT");
             exit.DrivingCopies(secondHalfAdder.SUM, SUM);
 
             //entry state
-            entry.AutomaticallyMovesTo(firstHalfAdder.states[0]);
-            firstHalfAdder.exit.AutomaticallyMovesTo(secondHalfAdder.entry);
-            secondHalfAdder.exit
+            entry.AutomaticallyMovesTo(firstHalfAdder.States[0]);
+            firstHalfAdder.Exit.AutomaticallyMovesTo(secondHalfAdder.Entry);
+            secondHalfAdder.Exit
                 .TransitionsTo(carryCalc)
                 .When(firstHalfAdder.CARRY.IsTrue())
                 .Or()
                 .When(secondHalfAdder.CARRY.IsTrue());
             carryCalc.AutomaticallyMovesTo(exit);
-            secondHalfAdder.exit.AutomaticallyMovesTo(exit);
-            PB.finish();
+            secondHalfAdder.Exit.AutomaticallyMovesTo(exit);
+            PB.Finish();
 
             Profiler.EndSample();
             callback(
                 Util.CombineStates(
                     entry,
-                    firstHalfAdder.states,
-                    secondHalfAdder.states,
+                    firstHalfAdder.States,
+                    secondHalfAdder.States,
                     carryCalc,
                     exit
                 )

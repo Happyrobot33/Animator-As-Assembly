@@ -18,7 +18,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public FLIP(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, Layer, progressWindow);
+            Init(A, Layer, progressWindow);
         }
 
         /// <summary> Bitwise flips a register </summary>
@@ -27,27 +27,27 @@ namespace AnimatorAsAssembly.Commands
         public FLIP(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), Layer, progressWindow);
+            Init(new Register(args[0], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.BUFFER = new Register("INTERNAL/FLIP/BUFFER", Layer);
-            this.Layer = Layer.NewStateGroup("FLIP");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("FLIP");
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("FLIP");
-            AacFlState entry = Layer.NewState("FLIP");
+            AacFlState entry = _layer.NewState("FLIP");
             for (int i = 0; i < Register.bits; i++)
             {
                 entry.DrivingRemaps(A[i], 0f, 1f, BUFFER[i], 1f, 0f);
             }
-            AacFlState exit = Layer.NewState("FLIP_EXIT");
+            AacFlState exit = _layer.NewState("FLIP_EXIT");
             entry.AutomaticallyMovesTo(exit);
             for (int i = 0; i < Register.bits; i++)
             {

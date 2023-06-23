@@ -9,7 +9,7 @@ namespace AnimatorAsAssembly
 {
     public class ComplexProgressBar : EditorWindow
     {
-        private List<ProgressBar> progressBars = new List<ProgressBar>();
+        private readonly List<ProgressBar> progressBars = new List<ProgressBar>();
         public string windowTitle;
 
         public ComplexProgressBar(string windowTitle)
@@ -22,7 +22,7 @@ namespace AnimatorAsAssembly
             float height = 0;
             foreach (ProgressBar progressBar in progressBars)
             {
-                height += progressBar.render();
+                height += progressBar.Render();
             }
 
             //Auto close the window if there are no progress bars left
@@ -42,13 +42,15 @@ namespace AnimatorAsAssembly
         /// <param name="title">The title of the progress bar</param>
         /// <param name="description">The description of the progress bar</param>
         /// <returns>The progress bar that was just created</returns>
-        public ProgressBar registerNewProgressBar(string title, string description)
+        public ProgressBar RegisterNewProgressBar(string title, string description)
         {
-            ProgressBar progressBar = new ProgressBar();
-            progressBar.title = title;
-            progressBar.description = description;
-            progressBar.progress = 0;
-            progressBar.parent = this;
+            ProgressBar progressBar = new ProgressBar()
+            {
+                title = title,
+                description = description,
+                progress = 0,
+                parent = this
+            };
             this.progressBars.Add(progressBar);
             Repaint();
             return progressBar;
@@ -56,7 +58,7 @@ namespace AnimatorAsAssembly
 
         /// <summary> Removes a progress bar from the list of progress bars </summary>
         /// <param name="progressBar">The progress bar to remove</param>
-        public void removeProgressBar(ProgressBar progressBar)
+        public void RemoveProgressBar(ProgressBar progressBar)
         {
             progressBars.Remove(progressBar);
         }
@@ -70,12 +72,12 @@ namespace AnimatorAsAssembly
         public float progress;
         internal ComplexProgressBar parent;
 
-        public void finish()
+        public void Finish()
         {
-            parent.removeProgressBar(this);
+            parent.RemoveProgressBar(this);
         }
 
-        public float render()
+        public float Render()
         {
             GUIContent titleContent = new GUIContent(title);
             GUIContent descriptionContent = new GUIContent(description);
@@ -83,8 +85,10 @@ namespace AnimatorAsAssembly
             GUIContent progressContent = new GUIContent((progress * 100).ToString() + "%");
             GUIStyle titleStyle = new GUIStyle(EditorStyles.boldLabel);
             GUIStyle descriptionStyle = new GUIStyle(EditorStyles.label);
-            GUIStyle progressStyle = new GUIStyle(EditorStyles.label);
-            progressStyle.alignment = TextAnchor.MiddleCenter;
+            GUIStyle progressStyle = new GUIStyle(EditorStyles.label)
+            {
+                alignment = TextAnchor.MiddleCenter
+            };
             progressStyle.normal.textColor = Color.black;
 
             EditorGUILayout.LabelField(titleContent, titleStyle);
@@ -108,20 +112,18 @@ namespace AnimatorAsAssembly
             //end the horizontal layout
             EditorGUILayout.LabelField(progressContent, progressStyle);
             EditorGUILayout.EndHorizontal();
-
-            float height = 0;
-            height = titleStyle.CalcHeight(titleContent, containerRect.width);
+            float height = titleStyle.CalcHeight(titleContent, containerRect.width);
             if (description != "")
             {
                 height += descriptionStyle.CalcHeight(descriptionContent, containerRect.width);
             }
             height += progressStyle.CalcHeight(progressContent, containerRect.width);
             height += 10;
-            trySetHeight(height);
+            TrySetHeight(height);
             return this.height;
         }
 
-        private void trySetHeight(float height)
+        private void TrySetHeight(float height)
         {
             //check to see if layout event
             if (Event.current.type == EventType.Layout)
@@ -130,7 +132,7 @@ namespace AnimatorAsAssembly
             }
         }
 
-        public EditorCoroutine setProgress(float progress)
+        public EditorCoroutine SetProgress(float progress)
         {
             this.progress = progress;
             parent.Repaint();

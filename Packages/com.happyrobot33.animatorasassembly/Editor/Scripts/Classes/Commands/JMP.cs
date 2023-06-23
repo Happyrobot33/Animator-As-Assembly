@@ -17,7 +17,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public JMP(string name, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(name, Layer, progressWindow);
+            Init(name, Layer, progressWindow);
         }
 
         /// <summary> Jumps to a line </summary>
@@ -26,23 +26,23 @@ namespace AnimatorAsAssembly.Commands
         public JMP(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(args[0], Layer, progressWindow);
+            Init(args[0], Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(string name, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(string name, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.name = name;
-            this.Layer = Layer.NewStateGroup("JMP");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("JMP");
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("LBL");
 
             //dummy state
-            AacFlState state = Layer.NewState("LBL " + name);
+            AacFlState state = _layer.NewState("LBL " + name);
 
             Profiler.EndSample();
             callback(new AacFlState[] { state });
@@ -59,7 +59,7 @@ namespace AnimatorAsAssembly.Commands
             //skip if this is the first opcode
             if (index != 0)
             {
-                opcodes[index - 1].exit.AutomaticallyMovesTo(entry);
+                opcodes[index - 1].Exit.AutomaticallyMovesTo(Entry);
             }
 
             //find the LBL
@@ -71,10 +71,10 @@ namespace AnimatorAsAssembly.Commands
                     if (lbl.name == name)
                     {
                         //transition to the LBL
-                        entry.AutomaticallyMovesTo(lbl.entry);
+                        Entry.AutomaticallyMovesTo(lbl.Entry);
 
                         //set the program counter to the index of the LBL
-                        entry.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(lbl));
+                        Entry.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(lbl));
                         break;
                     }
                 }

@@ -23,7 +23,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public DIV(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, B, Layer, progressWindow);
+            Init(A, B, Layer, progressWindow);
         }
 
         /// <summary> Divides a register by another. Quotient is stored in A, remainder is stored in B </summary>
@@ -32,18 +32,18 @@ namespace AnimatorAsAssembly.Commands
         public DIV(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
+            Init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.B = B;
             this.Remainder = new Register("INTERNAL/DIV/REMAINDER", Layer);
             this.Quotient = new Register("INTERNAL/DIV/QUOTIENT", Layer);
-            this.Layer = Layer.NewStateGroup("DIV");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("DIV");
+            this._progressWindow = progressWindow;
         }
 
         /*
@@ -59,69 +59,69 @@ namespace AnimatorAsAssembly.Commands
         end
         return (Q,R)
         */
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("DIV");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("DIV", "");
-            yield return PB.setProgress(0);
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("DIV", "");
+            yield return PB.SetProgress(0);
 
-            AacFlState entry = Layer.NewState("DIV");
-            AacFlState exit = Layer.NewState("DIV_EXIT");
+            AacFlState entry = _layer.NewState("DIV");
+            AacFlState exit = _layer.NewState("DIV_EXIT");
 
             //copy the numerator into the remainder
-            MOV mov = new MOV(A, Remainder, Layer, progressWindow);
-            yield return mov.compile();
-            yield return PB.setProgress(0.1f);
+            MOV mov = new MOV(A, Remainder, _layer, _progressWindow);
+            yield return mov;
+            yield return PB.SetProgress(0.1f);
 
             //set the quotient to 0
             Quotient.Set(entry, 0);
 
-            entry.AutomaticallyMovesTo(mov.entry);
+            entry.AutomaticallyMovesTo(mov.Entry);
 
             #region WHILE R >= D
-            SUB sub = new SUB(Remainder, B, Remainder, Layer, progressWindow);
-            yield return sub.compile();
-            yield return PB.setProgress(0.2f);
+            SUB sub = new SUB(Remainder, B, Remainder, _layer, _progressWindow);
+            yield return sub;
+            yield return PB.SetProgress(0.2f);
 
-            INC inc = new INC(Quotient, Layer, progressWindow);
-            yield return inc.compile();
-            yield return PB.setProgress(0.3f);
+            INC inc = new INC(Quotient, _layer, _progressWindow);
+            yield return inc;
+            yield return PB.SetProgress(0.3f);
 
             //while R >= D
-            JIG jig = new JIG(Remainder, B, Layer, progressWindow);
-            yield return jig.compile();
-            yield return PB.setProgress(0.4f);
-            jig.Link(sub.entry);
+            JIG jig = new JIG(Remainder, B, _layer, _progressWindow);
+            yield return jig;
+            yield return PB.SetProgress(0.4f);
+            jig.Link(sub.Entry);
 
-            sub.exit.AutomaticallyMovesTo(inc.entry);
-            inc.exit.AutomaticallyMovesTo(jig.entry);
+            sub.Exit.AutomaticallyMovesTo(inc.Entry);
+            inc.Exit.AutomaticallyMovesTo(jig.Entry);
             #endregion
 
-            mov.exit.AutomaticallyMovesTo(jig.entry);
+            mov.Exit.AutomaticallyMovesTo(jig.Entry);
 
-            MOV returnQ = new MOV(Quotient, A, Layer, progressWindow);
-            yield return returnQ.compile();
-            yield return PB.setProgress(0.7f);
+            MOV returnQ = new MOV(Quotient, A, _layer, _progressWindow);
+            yield return returnQ;
+            yield return PB.SetProgress(0.7f);
 
-            MOV returnR = new MOV(Remainder, B, Layer, progressWindow);
-            yield return returnR.compile();
-            yield return PB.setProgress(1f);
+            MOV returnR = new MOV(Remainder, B, _layer, _progressWindow);
+            yield return returnR;
+            yield return PB.SetProgress(1f);
 
-            jig.exit.AutomaticallyMovesTo(returnQ.entry);
-            returnQ.exit.AutomaticallyMovesTo(returnR.entry);
-            returnR.exit.AutomaticallyMovesTo(exit);
+            jig.Exit.AutomaticallyMovesTo(returnQ.Entry);
+            returnQ.Exit.AutomaticallyMovesTo(returnR.Entry);
+            returnR.Exit.AutomaticallyMovesTo(exit);
 
-            PB.finish();
+            PB.Finish();
             Profiler.EndSample();
             callback(
                 Util.CombineStates(
                     entry,
-                    mov.states,
-                    sub.states,
-                    inc.states,
-                    jig.states,
-                    returnQ.states,
-                    returnR.states,
+                    mov.States,
+                    sub.States,
+                    inc.States,
+                    jig.States,
+                    returnQ.States,
+                    returnR.States,
                     exit
                 )
             );

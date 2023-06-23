@@ -30,14 +30,14 @@ namespace AnimatorAsAssembly.Commands
             ComplexProgressBar progressWindow
         )
         {
-            init(A, B, lblname, Layer, progressWindow);
+            Init(A, B, lblname, Layer, progressWindow);
         }
 
         /// <summary> Jumps to a state if A >= B </summary>
         /// <remarks> This is used for internal jumps. After initializing this, Link(state) MUST be called </remarks>
         public JIG(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, B, "INTERNAL", Layer, progressWindow);
+            Init(A, B, "INTERNAL", Layer, progressWindow);
         }
 
         /// <summary> Jumps to a LBL if A >= B </summary>
@@ -46,7 +46,7 @@ namespace AnimatorAsAssembly.Commands
         public JIG(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(
+            Init(
                 new Register(args[0], Layer),
                 new Register(args[1], Layer),
                 args[2],
@@ -56,7 +56,7 @@ namespace AnimatorAsAssembly.Commands
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(
+        void Init(
             Register A,
             Register B,
             string lblname,
@@ -68,35 +68,35 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.LBLname = lblname;
             this.Compare = new Register("INTERNAL/JIG/Compare", Layer);
-            this.Layer = Layer.NewStateGroup("JIG");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("JIG");
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("JIG");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("JIG", "");
-            yield return PB.setProgress(0);
-            AacFlState entry = Layer.NewState("JIG");
-            AacFlState exit = Layer.NewState("JIG_EXIT");
-            JumpAway = Layer.NewState("JIG_JUMPAWAY");
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("JIG", "");
+            yield return PB.SetProgress(0);
+            AacFlState entry = _layer.NewState("JIG");
+            AacFlState exit = _layer.NewState("JIG_EXIT");
+            JumpAway = _layer.NewState("JIG_JUMPAWAY");
 
             //if A >= B, jump to LBL
             //do this by checking if A - B is negative
             //if it is, then A < B
             //if it isn't, then A >= B
-            sub = new SUB(A, B, Compare, Layer, progressWindow);
-            yield return sub.compile();
-            yield return PB.setProgress(0.5f);
-            entry.AutomaticallyMovesTo(sub.entry);
+            sub = new SUB(A, B, Compare, _layer, _progressWindow);
+            yield return sub;
+            yield return PB.SetProgress(0.5f);
+            entry.AutomaticallyMovesTo(sub.Entry);
 
             //if the highest bit is 1, then A < B
-            sub.exit.TransitionsTo(JumpAway).When(Compare[Register.bits - 1].IsFalse());
-            sub.exit.AutomaticallyMovesTo(exit);
+            sub.Exit.TransitionsTo(JumpAway).When(Compare[Register.bits - 1].IsFalse());
+            sub.Exit.AutomaticallyMovesTo(exit);
 
-            PB.finish();
+            PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, sub.states, JumpAway, exit));
+            callback(Util.CombineStates(entry, sub.States, JumpAway, exit));
             yield break;
         }
 
@@ -111,7 +111,7 @@ namespace AnimatorAsAssembly.Commands
                     if (lbl.name == LBLname)
                     {
                         //transition to the LBL
-                        JumpAway.AutomaticallyMovesTo(lbl.entry);
+                        JumpAway.AutomaticallyMovesTo(lbl.Entry);
 
                         //set the program counter to the index of the LBL
                         JumpAway.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(lbl));

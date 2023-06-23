@@ -21,7 +21,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public SUB(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, B, Layer, progressWindow);
+            Init(A, B, Layer, progressWindow);
         }
 
         /// <inheritdoc cref="SUB(Register, Register, AacFlLayer)"/>
@@ -34,7 +34,7 @@ namespace AnimatorAsAssembly.Commands
             ComplexProgressBar progressWindow
         )
         {
-            init(A, B, Layer, progressWindow, C);
+            Init(A, B, Layer, progressWindow, C);
         }
 
         /// <summary> Subtracts two registers </summary>
@@ -44,24 +44,28 @@ namespace AnimatorAsAssembly.Commands
         {
             //split the args into the register and the value
             if (args.Length == 2)
-                init(
+            {
+                Init(
                     new Register(args[0], Layer),
                     new Register(args[1], Layer),
                     Layer,
                     progressWindow
                 );
+            }
             else
-                init(
+            {
+                Init(
                     new Register(args[0], Layer),
                     new Register(args[1], Layer),
                     Layer,
                     progressWindow,
                     new Register(args[2], Layer)
                 );
+            }
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(
+        void Init(
             Register A,
             Register B,
             AacFlLayer Layer,
@@ -72,36 +76,36 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.C = C ?? B;
-            this.Layer = Layer.NewStateGroup("SUB");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("SUB");
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("SUB");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("SUB", "");
-            yield return PB.setProgress(0);
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("SUB", "");
+            yield return PB.SetProgress(0);
 
-            Register Btemp = new Register("INTERNAL/SUB/Btemp", Layer);
-            MOV mov = new MOV(B, Btemp, Layer, progressWindow);
-            yield return mov.compile();
+            Register Btemp = new Register("INTERNAL/SUB/Btemp", _layer);
+            MOV mov = new MOV(B, Btemp, _layer, _progressWindow);
+            yield return mov;
 
             //calculate the complement of B
-            COMPLEMENT complement = new COMPLEMENT(Btemp, Layer, progressWindow);
-            yield return complement.compile();
-            yield return PB.setProgress(0.5f);
+            COMPLEMENT complement = new COMPLEMENT(Btemp, _layer, _progressWindow);
+            yield return complement;
+            yield return PB.SetProgress(0.5f);
 
             //do the subtraction
-            ADD add = new ADD(A, complement.A, C, Layer, progressWindow);
-            yield return add.compile();
-            yield return PB.setProgress(1f);
+            ADD add = new ADD(A, complement.A, C, _layer, _progressWindow);
+            yield return add;
+            yield return PB.SetProgress(1f);
 
-            mov.exit.AutomaticallyMovesTo(complement.entry);
-            complement.exit.AutomaticallyMovesTo(add.entry);
+            mov.Exit.AutomaticallyMovesTo(complement.Entry);
+            complement.Exit.AutomaticallyMovesTo(add.Entry);
 
-            PB.finish();
+            PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(mov.states, complement.states, add.states));
+            callback(Util.CombineStates(mov.States, complement.States, add.States));
             yield break;
         }
     }

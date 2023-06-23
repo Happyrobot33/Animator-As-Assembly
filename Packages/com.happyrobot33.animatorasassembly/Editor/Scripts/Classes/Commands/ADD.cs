@@ -23,7 +23,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public ADD(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, B, Layer, progressWindow);
+            Init(A, B, Layer, progressWindow);
         }
 
         /// <inheritdoc cref="ADD(Register, Register, AacFlLayer)"/>
@@ -36,7 +36,7 @@ namespace AnimatorAsAssembly.Commands
             ComplexProgressBar progressWindow
         )
         {
-            init(A, B, Layer, progressWindow, C);
+            Init(A, B, Layer, progressWindow, C);
         }
 
         /// <summary> Adds two registers </summary>
@@ -46,24 +46,28 @@ namespace AnimatorAsAssembly.Commands
         {
             //split the args into the register and the value
             if (args.Length == 2)
-                init(
+            {
+                Init(
                     new Register(args[0], Layer),
                     new Register(args[1], Layer),
                     Layer,
                     progressWindow
                 );
+            }
             else
-                init(
+            {
+                Init(
                     new Register(args[0], Layer),
                     new Register(args[1], Layer),
                     Layer,
                     progressWindow,
                     new Register(args[2], Layer)
                 );
+            }
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(
+        void Init(
             Register A,
             Register B,
             AacFlLayer Layer,
@@ -74,25 +78,25 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.C = C ?? B;
-            this.Layer = Layer.NewStateGroup("ADD");
+            this._layer = Layer.NewStateGroup("ADD");
             CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
             SUM = new Register("INTERNAL/ADD/SUM", Layer);
-            this.progressWindow = progressWindow;
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("ADD");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("ADD", "");
-            yield return PB.setProgress(0f);
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("ADD", "");
+            yield return PB.SetProgress(0f);
             //entry state
-            AacFlState entry = Layer.NewState("EIGHTBITADDER");
+            AacFlState entry = _layer.NewState("EIGHTBITADDER");
             //clear sum and carry registers
             entry.Drives(CARRY, false);
             SUM.Set(entry, 0);
 
             //exit state
-            AacFlState exit = Layer.NewState("EIGHTBITADDER EXIT");
+            AacFlState exit = _layer.NewState("EIGHTBITADDER EXIT");
 
             FULLADDER[] FullAdders = new FULLADDER[Register.bits];
 
@@ -104,56 +108,58 @@ namespace AnimatorAsAssembly.Commands
                 if (j > 0)
                 {
                     //copy prevcarry into our own register so it isnt cleared
-                    prevcarry = Layer.BoolParameter("ADD/PREV_CARRY");
-                    FullAdders[j - 1].exit.DrivingCopies(FullAdders[j - 1].CARRY, prevcarry);
+                    prevcarry = _layer.BoolParameter("ADD/PREV_CARRY");
+                    FullAdders[j - 1].Exit.DrivingCopies(FullAdders[j - 1].CARRY, prevcarry);
                 }
                 // create a FullAdder for each bit
-                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, Layer, progressWindow);
-                yield return adder.compile();
+                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, _layer, _progressWindow);
+                yield return adder;
                 //copy the sum bit to the output register
-                adder.exit.DrivingCopies(adder.SUM, SUM[j]);
+                adder.Exit.DrivingCopies(adder.SUM, SUM[j]);
 
                 FullAdders[j] = adder;
                 Profiler.EndSample();
-                yield return PB.setProgress((float)j / Register.bits);
+                yield return PB.SetProgress((float)j / Register.bits);
             }
 
             //set the carry bit if the last FullAdder has a carry bit
             FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRY, true);
 
             //use a MOV to copy the sum register to the C register
-            MOV mov = new MOV(SUM, C, Layer, progressWindow);
-            yield return mov.compile();
+            MOV mov = new MOV(SUM, C, _layer, _progressWindow);
+            yield return mov;
 
             //link the full adders together
-            entry.AutomaticallyMovesTo(FullAdders[0].entry);
+            entry.AutomaticallyMovesTo(FullAdders[0].Entry);
             for (int j = 0; j < Register.bits - 1; j++)
             {
-                FullAdders[j].exit.AutomaticallyMovesTo(FullAdders[j + 1].entry);
+                FullAdders[j].Exit.AutomaticallyMovesTo(FullAdders[j + 1].Entry);
             }
-            FullAdders[Register.bits - 1].exit.AutomaticallyMovesTo(mov.entry);
-            mov.exit.AutomaticallyMovesTo(exit);
+            FullAdders[Register.bits - 1].Exit.AutomaticallyMovesTo(mov.Entry);
+            mov.Exit.AutomaticallyMovesTo(exit);
 
             //convert the FullAdder states into a single array
             AacFlState[] FullAdderStates = new AacFlState[
-                Register.bits * FullAdders[0].states.Length
+                Register.bits * FullAdders[0].States.Length
             ];
             for (int j = 0; j < Register.bits; j++)
             {
-                for (int k = 0; k < FullAdders[j].states.Length; k++)
+                for (int k = 0; k < FullAdders[j].States.Length; k++)
                 {
-                    FullAdderStates[j * FullAdders[j].states.Length + k] = FullAdders[j].states[k];
+                    FullAdderStates[(j * FullAdders[j].States.Length) + k] = FullAdders[j].States[
+                        k
+                    ];
                 }
             }
 
-            PB.finish();
+            PB.Finish();
 
             Profiler.EndSample();
             callback(
                 Util.CombineStates(
                     new AacFlState[] { entry },
                     FullAdderStates,
-                    mov.states,
+                    mov.States,
                     new AacFlState[] { exit }
                 )
             );

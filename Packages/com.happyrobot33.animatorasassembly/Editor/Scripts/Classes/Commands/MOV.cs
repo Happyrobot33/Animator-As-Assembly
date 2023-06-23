@@ -19,7 +19,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public MOV(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, B, Layer, progressWindow);
+            Init(A, B, Layer, progressWindow);
         }
 
         /// <summary> Moves a register to another register </summary>
@@ -28,24 +28,23 @@ namespace AnimatorAsAssembly.Commands
         public MOV(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
+            Init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.B = B;
-            this.Layer = Layer.NewStateGroup("MOV");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("MOV");
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("MOV");
             //entry state
-            AacFlState entry = Layer.NewState("MOV");
-            AacFlState exit = entry;
+            AacFlState entry = _layer.NewState("MOV");
 
             for (int i = 0; i < Register.bits; i++)
             {

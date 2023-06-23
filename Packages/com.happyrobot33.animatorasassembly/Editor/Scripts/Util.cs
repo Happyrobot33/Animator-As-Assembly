@@ -20,7 +20,7 @@ namespace AnimatorAsAssembly
         {
             Profiler.BeginSample("Combine States");
             object[][] arrays = objects
-                .Select(x => x is object[] ? (object[])x : new object[] { x })
+                .Select(x => x is object[] v ? v : new object[] { x })
                 .ToArray();
             Profiler.EndSample();
             return arrays.Aggregate((a, b) => a.Concat(b).ToArray()).Cast<AacFlState>().ToArray();
@@ -43,7 +43,7 @@ namespace AnimatorAsAssembly
                 var subAssets = AssetDatabase.LoadAllAssetsAtPath(path);
 
                 //add a progress bar
-                ProgressBar ourProgressBar = progressBar.registerNewProgressBar(
+                ProgressBar ourProgressBar = progressBar.RegisterNewProgressBar(
                     "Clearing Asset",
                     "Cleaning the Animator Controller Asset"
                 );
@@ -183,11 +183,11 @@ namespace AnimatorAsAssembly
                             //Debug.Log(subAssets[i].name);
                         }
                     }
-                    ourProgressBar.setProgress((float)i / subAssets.Length);
+                    ourProgressBar.SetProgress((float)i / subAssets.Length);
                     yield return null;
                 }
 
-                ourProgressBar.finish();
+                ourProgressBar.Finish();
             }
             finally
             {
@@ -224,7 +224,7 @@ namespace AnimatorAsAssembly
             TRUE = FX.BoolParameter("GLOBALS/TRUE");
             FX.OverrideValue(TRUE, true);
             ONE = new Register("GLOBALS/ONE", FX);
-            ONE.initialize(1);
+            ONE.Initialize(1);
             PROGRAMCOUNTER = FX.IntParameter(PROGRAMCOUNTERSTRING);
         }
     }

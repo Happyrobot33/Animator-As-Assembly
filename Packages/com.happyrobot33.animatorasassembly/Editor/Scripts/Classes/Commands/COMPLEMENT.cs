@@ -17,7 +17,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The Layer that this command is linked to </param>
         public COMPLEMENT(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, Layer, progressWindow);
+            Init(A, Layer, progressWindow);
         }
 
         /// <summary> Calculates the Two's Complement of a register </summary>
@@ -26,41 +26,41 @@ namespace AnimatorAsAssembly.Commands
         public COMPLEMENT(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), Layer, progressWindow);
+            Init(new Register(args[0], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
-            this.Layer = Layer.NewStateGroup("COMPLEMENT");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("COMPLEMENT");
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("COMPLEMENT");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("COMPLEMENT", "");
-            yield return PB.setProgress(0);
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("COMPLEMENT", "");
+            yield return PB.SetProgress(0);
 
-            FLIP flip = new FLIP(A, Layer, progressWindow);
-            yield return flip.compile();
-            yield return PB.setProgress(0.33f);
+            FLIP flip = new FLIP(A, _layer, _progressWindow);
+            yield return flip;
+            yield return PB.SetProgress(0.33f);
 
-            ADD one = new ADD(Globals.ONE, A, Layer, progressWindow);
-            yield return one.compile();
-            yield return PB.setProgress(0.66f);
+            ADD one = new ADD(Globals.ONE, A, _layer, _progressWindow);
+            yield return one;
+            yield return PB.SetProgress(0.66f);
 
-            MOV mov = new MOV(one.SUM, A, Layer, progressWindow);
-            yield return mov.compile();
-            yield return PB.setProgress(1f);
+            MOV mov = new MOV(one.SUM, A, _layer, _progressWindow);
+            yield return mov;
+            yield return PB.SetProgress(1f);
 
-            flip.exit.AutomaticallyMovesTo(one.entry);
-            one.exit.AutomaticallyMovesTo(mov.states[0]);
+            flip.Exit.AutomaticallyMovesTo(one.Entry);
+            one.Exit.AutomaticallyMovesTo(mov.States[0]);
 
-            PB.finish();
+            PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(flip.states, one.states, mov.states));
+            callback(Util.CombineStates(flip.States, one.States, mov.States));
             yield break;
         }
     }

@@ -32,30 +32,30 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this.B = B;
-            this.Layer = Layer.NewStateGroup("HALFADDER");
+            this._layer = Layer.NewStateGroup("HALFADDER");
             SUM = Layer.BoolParameter("INTERNAL/HALFADDER/SUM" + i);
             CARRY = Layer.BoolParameter("INTERNAL/HALFADDER/CARRY" + i);
-            this.progressWindow = progressWindow;
+            this._progressWindow = progressWindow;
         }
 
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("HALFADDER");
             //entry state
-            AacFlState entry = Layer.NewState("HALFADDER");
+            AacFlState entry = _layer.NewState("HALFADDER");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
             //sum calc
-            sumCalc = Layer.NewState("HALFADDER SUM");
+            sumCalc = _layer.NewState("HALFADDER SUM");
             sumCalc.Drives(SUM, true);
 
             //carry calc
-            carryCalc = Layer.NewState("HALFADDER CARRY");
+            carryCalc = _layer.NewState("HALFADDER CARRY");
             carryCalc.Drives(CARRY, true);
 
             //exit state
-            AacFlState exit = Layer.NewState("HALFADDER EXIT");
+            AacFlState exit = _layer.NewState("HALFADDER EXIT");
 
             //entry state
             //XOR A and B to get the sum

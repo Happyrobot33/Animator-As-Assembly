@@ -60,7 +60,7 @@ namespace AnimatorAsAssembly
         }
 
         /// <summary> Set the value of this register upon bootup </summary>
-        public void initialize(int value)
+        public void Initialize(int value)
         {
             for (int i = 0; i < bits; i++)
             {

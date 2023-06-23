@@ -10,7 +10,7 @@ using Lyuma.Av3Emulator.Runtime;
 
 namespace AnimatorAsAssembly
 {
-    public struct simpleRegister
+    public struct SimpleRegister
     {
         public string name;
         public string[] bits;
@@ -19,7 +19,7 @@ namespace AnimatorAsAssembly
 
     public class Debugger : MonoBehaviour
     {
-        public List<simpleRegister> registersList = new List<simpleRegister>();
+        public List<SimpleRegister> registersList = new List<SimpleRegister>();
         AnimatorController ac;
 
         [HideInInspector]
@@ -48,7 +48,7 @@ namespace AnimatorAsAssembly
                 if (split.Length > 1)
                 {
                     string last = split[split.Length - 1];
-                    bool isNumber = int.TryParse(last, out int result);
+                    bool isNumber = int.TryParse(last, out int _);
                     if (isNumber)
                     {
                         //if it is a number, then it is a register bit
@@ -77,15 +77,17 @@ namespace AnimatorAsAssembly
             Debug.Log(registerNames.Count + " registers found");
 
             //convert them to normal registers
-            registersList = new List<simpleRegister>();
+            registersList = new List<SimpleRegister>();
             foreach (string registerName in registerNames)
             {
                 Debug.Log("Register: " + registerName);
                 //get the register
-                simpleRegister register = new simpleRegister();
-                register.name = registerName;
-                register.bits = new string[Register.bits];
-                register.expanded = false;
+                SimpleRegister register = new SimpleRegister()
+                {
+                    name = registerName,
+                    bits = new string[Register.bits],
+                    expanded = false
+                };
                 for (int i = 0; i < Register.bits; i++)
                 {
                     register.bits[i] = registerName + "_" + i;
@@ -115,9 +117,11 @@ namespace AnimatorAsAssembly
                 #region current executing instruction
                 //get the program counter
                 LyumaAv3Runtime.Av3EmuParameterAccess PCparam =
-                    new LyumaAv3Runtime.Av3EmuParameterAccess();
-                PCparam.runtime = debugger.runtime;
-                PCparam.paramName = Globals.PROGRAMCOUNTERSTRING;
+                    new LyumaAv3Runtime.Av3EmuParameterAccess()
+                    {
+                        runtime = debugger.runtime,
+                        paramName = Globals.PROGRAMCOUNTERSTRING
+                    };
                 int PC = PCparam.intVal;
                 EditorGUILayout.LabelField("PC: " + PC);
                 if (PC == 0)
@@ -166,7 +170,7 @@ namespace AnimatorAsAssembly
                 //show the registers
                 for (int i = 0; i < debugger.registersList.Count; i++)
                 {
-                    simpleRegister register = debugger.registersList[i];
+                    SimpleRegister register = debugger.registersList[i];
 
                     register.expanded = EditorGUILayout.BeginFoldoutHeaderGroup(
                         register.expanded,
@@ -185,9 +189,11 @@ namespace AnimatorAsAssembly
                         for (int j = 0; j < Register.bits; j++)
                         {
                             LyumaAv3Runtime.Av3EmuParameterAccess paramAccess =
-                                new LyumaAv3Runtime.Av3EmuParameterAccess();
-                            paramAccess.runtime = debugger.runtime;
-                            paramAccess.paramName = register.bits[j];
+                                new LyumaAv3Runtime.Av3EmuParameterAccess()
+                                {
+                                    runtime = debugger.runtime,
+                                    paramName = register.bits[j]
+                                };
                             registerValues[j] = paramAccess.boolVal;
                         }
                         #endregion
@@ -222,7 +228,6 @@ namespace AnimatorAsAssembly
                         }
                         EditorGUILayout.EndHorizontal();
                         #endregion
-
 
                         EditorGUI.indentLevel--;
                     }

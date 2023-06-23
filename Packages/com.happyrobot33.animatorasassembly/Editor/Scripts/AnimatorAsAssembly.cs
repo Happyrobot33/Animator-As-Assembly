@@ -7,14 +7,15 @@ using AnimatorAsCode.Framework;
 using AnimatorAsCode.Framework.Examples;
 using UnityEngine.Profiling;
 using System;
-using System.Reflection;
 using System.Linq;
 using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
 
 namespace AnimatorAsAssembly
 {
-    //this file converts assembly based commands into AAC commands to generate an avatar that can run CPU level instructions
+    /// <summary>
+    /// this file converts assembly based commands into AAC commands to generate an avatar that can run CPU level instructions
+    /// </summary>
     public class AnimatorAsAssembly : MonoBehaviour
     {
         public VRCAvatarDescriptor avatar;
@@ -64,7 +65,7 @@ namespace AnimatorAsAssembly
             try
             {
                 ComplexProgressBar progressBar = new ComplexProgressBar("Animator As Assembly");
-                ProgressBar mainProgressBar = progressBar.registerNewProgressBar(
+                ProgressBar mainProgressBar = progressBar.RegisterNewProgressBar(
                     "Compiling",
                     "Compiling the code"
                 );
@@ -79,7 +80,7 @@ namespace AnimatorAsAssembly
                     ),
                     this
                 );
-                yield return mainProgressBar.setProgress(0.1f);
+                yield return mainProgressBar.SetProgress(0.1f);
 
                 AssetDatabase.StartAssetEditing();
 
@@ -104,7 +105,7 @@ namespace AnimatorAsAssembly
 
                 //remove comments
                 string CleanedCode = Cleanup(RAWINSTRUCTIONS);
-                yield return mainProgressBar.setProgress(0.33f);
+                yield return mainProgressBar.SetProgress(0.33f);
 
                 //run the display generation code if the user wants it
                 if (useDisplay)
@@ -126,14 +127,14 @@ namespace AnimatorAsAssembly
                     this
                 );
                 //List<Commands.OPCODE> Instructions = CompileMicroCode(CleanedCode, ControllerLayer);
-                yield return mainProgressBar.setProgress(0.66f);
+                yield return mainProgressBar.SetProgress(0.66f);
 
                 //correlate all of the instructions with their paths
                 OrganizeGraph(Instructions, ControllerLayer, CleanedCode);
-                yield return mainProgressBar.setProgress(1f);
+                yield return mainProgressBar.SetProgress(1f);
 
                 //create final connection between default state and the first instruction
-                DefaultState.AutomaticallyMovesTo(Instructions[0].states[0]);
+                _ = DefaultState.AutomaticallyMovesTo(Instructions[0].States[0]);
 
                 //remove all junk sub assets
                 //Util.CleanAnimatorControllerAsset(AssetDatabase.GetAssetPath(assetContainer));
@@ -172,7 +173,7 @@ namespace AnimatorAsAssembly
         /// <param name="registers"> The registers that are used by the CPU </param>
         /// <param name="width"> The width of the display </param>
         /// <param name="height"> The height of the display </param>
-        void GenerateDisplay(
+        private void GenerateDisplay(
             AacFlLayer ControllerLayer,
             Register[] registers,
             int width,
@@ -188,8 +189,7 @@ namespace AnimatorAsAssembly
             AacFlLayer GPU = aac.CreateSupportingFxLayer("GPU");
 
             //remove all previous pixel emitters
-            var tempList = screenRoot.transform.Cast<Transform>().ToList();
-            foreach (var child in tempList)
+            foreach (Transform child in screenRoot.transform.Cast<Transform>().ToList())
             {
                 DestroyImmediate(child.gameObject);
             }
@@ -211,7 +211,7 @@ namespace AnimatorAsAssembly
                 EditorUtility.DisplayProgressBar(
                     "Compiling",
                     "Generating Gameobjects",
-                    ((float)i / (float)PE.Length)
+                    i / (float)PE.Length
                 );
                 int x = i % width;
                 int y = i / width;
@@ -239,7 +239,7 @@ namespace AnimatorAsAssembly
                 EditorUtility.DisplayProgressBar(
                     "Compiling",
                     "Generating Animations",
-                    ((float)i / (float)PE.Length)
+                    i / (float)PE.Length
                 );
                 //clips[i] = aac.NewClip().Toggling(PE[i], true); //takes up 2 frames
                 clips[i] = aac.NewClip()
@@ -255,7 +255,7 @@ namespace AnimatorAsAssembly
             }
 
             //get the children array
-            var children = blendTree.children;
+            ChildMotion[] children = blendTree.children;
             for (int i = 0; i < PE.Length; i++)
             {
                 int x = i % width;
@@ -272,7 +272,7 @@ namespace AnimatorAsAssembly
         /// <remarks> This function is called by the Create() function.
         /// The contact sender layer is a layer that will turn the contact sender gameobject on and off depending on a boolean with the same name as the contact sender itself.</remarks>
         /// <param name="ControllerLayer"> The main FX layer </param>
-        void GenerateContactSenderSystem(AacFlLayer ControllerLayer)
+        private void GenerateContactSenderSystem(AacFlLayer ControllerLayer)
         {
             //progress bar
             EditorUtility.DisplayProgressBar("Compiling", "Generating Contact Sender System", 0.1f);
@@ -298,10 +298,10 @@ namespace AnimatorAsAssembly
 
                 //create a transition from the off state to the on state if the boolean is true
                 AacFlTransition OnTransition = Off.TransitionsTo(On);
-                OnTransition.When(ContactSenderBool.IsGreaterThan(0));
+                _ = OnTransition.When(ContactSenderBool.IsGreaterThan(0));
                 //create a transition from the on state to the off state if the boolean is false
                 AacFlTransition OffTransition = On.TransitionsTo(Off);
-                OffTransition.When(ContactSenderBool.IsEqualTo(0));
+                _ = OffTransition.When(ContactSenderBool.IsEqualTo(0));
 
                 //create the animation for the contact sender to be on
                 AacFlClip OnAnimation = aac.NewClip(sender.name + " On")
@@ -311,7 +311,7 @@ namespace AnimatorAsAssembly
                             .WithFrameCountUnit(keyframes => keyframes.Bool(0, true));
                     });
 
-                On.WithAnimation(OnAnimation);
+                _ = On.WithAnimation(OnAnimation);
             }
 
             EditorUtility.ClearProgressBar();
@@ -323,7 +323,7 @@ namespace AnimatorAsAssembly
         /// Cleanup also removes all new lines from the raw instructions, unless a ; is present. </remarks>
         /// <param name="raw"> The raw instructions </param>
         /// <returns> The cleaned up instruction string</returns>
-        string Cleanup(string raw)
+        private string Cleanup(string raw)
         {
             //progress bar
             /* EditorUtility.DisplayProgressBar("Compiling", "Cleaning up code", 0.1f); */
@@ -344,7 +344,7 @@ namespace AnimatorAsAssembly
                 {
                     //do nothing
                 }
-                else if (line == "" || line == "\r" || line == "\n" || line == " ")
+                else if (line?.Length == 0 || line == "\r" || line == "\n" || line == " ")
                 {
                     //do nothing
                 }
@@ -471,7 +471,7 @@ namespace AnimatorAsAssembly
         /// <param name="Instructions"> The instructions to correlate. X in the 2D array is the instruction number, Y is the individual states that make up that instruction</param>
         /// <param name="ControllerLayer"> The FX layer to correlate </param>
         /// <param name="raw"> The raw program </param>
-        void OrganizeGraph(
+        private void OrganizeGraph(
             List<Commands.OPCODE> Instructions,
             AacFlLayer ControllerLayer,
             string raw
@@ -481,9 +481,6 @@ namespace AnimatorAsAssembly
 
             //progress bar
             EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0);
-
-            //split the instructions into an array
-            string[] instructions = raw.Split('\n');
 
             //place every opcode based on their index in the array
             //[x, y]
@@ -508,7 +505,7 @@ namespace AnimatorAsAssembly
                             y * verticalGraphScale
                         );
                     } */
-                    Instructions[x].Layer.Position =
+                    Instructions[x]._layer.Position =
                         zero + new Vector2(x * horizontalGraphScale, 0);
                     //create a empty state above the instruction to denote what line it is on
                     //AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
@@ -526,7 +523,7 @@ namespace AnimatorAsAssembly
         /// <param name="raw"> The raw instructions to parse. </param>
         /// <param name="ControllerLayer"> The FX layer. </param>
         /// <returns> The parsed instructions. </returns>
-        IEnumerator<EditorCoroutine> CompileMicroCode(
+        private IEnumerator<EditorCoroutine> CompileMicroCode(
             string raw,
             AacFlLayer ControllerLayer,
             ComplexProgressBar progressBar,
@@ -545,7 +542,7 @@ namespace AnimatorAsAssembly
             List<Commands.OPCODE> Instructions = new List<Commands.OPCODE>();
 
             //create a progress bar for the total progress
-            ProgressBar microcodeProgress = progressBar.registerNewProgressBar(
+            ProgressBar microcodeProgress = progressBar.RegisterNewProgressBar(
                 "Compiling MicroCode",
                 "Compiling instructions to state MicroCode"
             );
@@ -574,13 +571,13 @@ namespace AnimatorAsAssembly
                     "Compiling MicroCode {" + instruction + "}",
                     (float)i / (float)instructions.Length
                 ); */
-                yield return microcodeProgress.setProgress((float)i / (float)instructions.Length);
+                yield return microcodeProgress.SetProgress(i / (float)instructions.Length);
 
                 //Initialize Global Variables
-                new Globals(ControllerLayer);
+                _ = new Globals(ControllerLayer);
 
                 //get the Commands namespace
-                string nameSpace = "AnimatorAsAssembly.Commands.";
+                const string nameSpace = "AnimatorAsAssembly.Commands.";
 
                 //create the relevant states based on the instruction type using reflection
                 Type type = Type.GetType(nameSpace + instructionType);
@@ -592,7 +589,7 @@ namespace AnimatorAsAssembly
                     Commands.OPCODE instance =
                         Activator.CreateInstance(type, args: args) as Commands.OPCODE;
 
-                    yield return instance.compile();
+                    yield return instance;
 
                     //add the states to the list
                     Instructions.Add(instance);
@@ -606,7 +603,7 @@ namespace AnimatorAsAssembly
             }
 
             //end the progress bar
-            microcodeProgress.finish();
+            microcodeProgress.Finish();
 
             Profiler.EndSample();
             //end the progress bar
@@ -616,12 +613,11 @@ namespace AnimatorAsAssembly
             LinkMicroCode(Instructions);
 
             callback(Instructions);
-            yield break;
         }
 
         /// <summary> Links the micro code by running each microcodes linker function. </summary>
         /// <param name="Instructions"> The instructions to link. </param>
-        void LinkMicroCode(List<Commands.OPCODE> Instructions)
+        private void LinkMicroCode(List<Commands.OPCODE> Instructions)
         {
             Profiler.BeginSample("LinkMicroCode");
 
@@ -635,7 +631,7 @@ namespace AnimatorAsAssembly
                 EditorUtility.DisplayProgressBar(
                     "Linking MicroCode",
                     "Linking MicroCode",
-                    (float)i / (float)Instructions.Count
+                    i / (float)Instructions.Count
                 );
 
                 //link the states
@@ -648,16 +644,17 @@ namespace AnimatorAsAssembly
         }
     }
 
-    //create a simple inspector window that has a button for init and a button for ReadInProgram
+    /// <summary>
+    /// create a simple inspector window that has a button for init and a button for ReadInProgram
+    /// </summary>
     [CustomEditor(typeof(AnimatorAsAssembly))]
     public class AnimatorAsAssemblyEditor : Editor
     {
-        double lastCompileTime = 0;
+        private double lastCompileTime = 0;
 
         public override void OnInspectorGUI()
         {
             AnimatorAsAssembly myScript = (AnimatorAsAssembly)target;
-            GameObject myObject = myScript.gameObject;
 
             //record the current time
             double currentTime = Time.realtimeSinceStartup;
@@ -669,12 +666,12 @@ namespace AnimatorAsAssembly
             {
                 //run the create function outside of OnInspectorGUI
                 //myScript.Create();
-                EditorCoroutineUtility.StartCoroutineOwnerless(myScript.Create());
+                _ = EditorCoroutineUtility.StartCoroutineOwnerless(myScript.Create());
                 //calculate the time taken to compile the program, rounded to 3 decimal places
-                lastCompileTime = Math.Round((Time.realtimeSinceStartup - currentTime), 3);
+                lastCompileTime = Math.Round(Time.realtimeSinceStartup - currentTime, 3);
             }
 
-            DrawDefaultInspector();
+            _ = DrawDefaultInspector();
         }
     }
 }

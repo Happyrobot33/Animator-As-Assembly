@@ -26,7 +26,7 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public MUL(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            init(A, B, Layer, progressWindow);
+            Init(A, B, Layer, progressWindow);
         }
 
         /// <summary> Multiplies a register by another. Result is stored in A </summary>
@@ -35,18 +35,18 @@ namespace AnimatorAsAssembly.Commands
         public MUL(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
-            init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
+            Init(new Register(args[0], Layer), new Register(args[1], Layer), Layer, progressWindow);
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.A = A;
             this.B = B;
             this.Intermediate = new Register("INTERNAL/MUL/Intermediate", Layer);
             this.Result = new Register("INTERNAL/MUL/Result", Layer);
-            this.Layer = Layer.NewStateGroup("MUL");
-            this.progressWindow = progressWindow;
+            this._layer = Layer.NewStateGroup("MUL");
+            this._progressWindow = progressWindow;
         }
 
         // Binary multiplication is complicated
@@ -60,13 +60,13 @@ namespace AnimatorAsAssembly.Commands
             + 01011000   (this is 1011 x 1, shifted three positions to the left)
               =========
               10011010   (this is binary for decimal 154) */
-        public override IEnumerator<EditorCoroutine> STATES(Action<AacFlState[]> callback)
+        public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("MUL");
-            ProgressBar PB = this.progressWindow.registerNewProgressBar("MUL", "");
-            yield return PB.setProgress(0);
-            AacFlState entry = Layer.NewState("MUL");
-            AacFlState exit = Layer.NewState("MUL_EXIT");
+            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("MUL", "");
+            yield return PB.SetProgress(0);
+            AacFlState entry = _layer.NewState("MUL");
+            AacFlState exit = _layer.NewState("MUL_EXIT");
 
             Result.Set(entry, 0);
 
@@ -76,7 +76,7 @@ namespace AnimatorAsAssembly.Commands
                 Profiler.BeginSample("MUL_INTERMEDIATE_" + i);
                 //create a new intermediate state
                 //this state determines if to add or skip the intermediate result
-                AacFlState interSplit = Layer.NewState("MUL_INTERMEDIATE_" + i + "_SPLIT");
+                AacFlState interSplit = _layer.NewState("MUL_INTERMEDIATE_" + i + "_SPLIT");
                 //link to the one before
                 if (i > 0)
                 {
@@ -87,51 +87,51 @@ namespace AnimatorAsAssembly.Commands
                     entry.AutomaticallyMovesTo(interSplit);
                 }
 
-                AacFlState interExit = Layer.NewState("MUL_INTERMEDIATE_" + i + "_EXIT");
+                AacFlState interExit = _layer.NewState("MUL_INTERMEDIATE_" + i + "_EXIT");
 
                 //define the intermediate register
-                MOV mov = new MOV(A, Intermediate, Layer, progressWindow);
-                yield return mov.compile();
+                MOV mov = new MOV(A, Intermediate, _layer, _progressWindow);
+                yield return mov;
 
                 //shift the intermediate register by i bits
-                SHL shl = new SHL(Intermediate, Layer, progressWindow, i);
-                yield return shl.compile();
+                SHL shl = new SHL(Intermediate, _layer, _progressWindow, i);
+                yield return shl;
 
                 //mov in nothing if the bit is 0
-                AacFlState mul0 = Layer.NewState("MUL_INTERMEDIATE_" + i + "_0");
+                AacFlState mul0 = _layer.NewState("MUL_INTERMEDIATE_" + i + "_0");
                 mul0.AutomaticallyMovesTo(interExit);
                 Intermediate.Set(mul0, 0);
 
                 //add intermediate to the result
-                ADD add = new ADD(Intermediate, Result, Layer, progressWindow);
-                yield return add.compile();
+                ADD add = new ADD(Intermediate, Result, _layer, _progressWindow);
+                yield return add;
 
                 interSplit.TransitionsTo(mul0).When(B[i].IsFalse());
-                interSplit.TransitionsTo(mov.entry).When(B[i].IsTrue());
-                mov.exit.AutomaticallyMovesTo(shl.entry);
-                shl.exit.AutomaticallyMovesTo(add.entry);
-                add.exit.AutomaticallyMovesTo(interExit);
+                interSplit.TransitionsTo(mov.Entry).When(B[i].IsTrue());
+                mov.Exit.AutomaticallyMovesTo(shl.Entry);
+                shl.Exit.AutomaticallyMovesTo(add.Entry);
+                add.Exit.AutomaticallyMovesTo(interExit);
 
                 interstates.Add(interSplit);
                 interstates.Add(mul0);
-                interstates.AddRange(mov.states);
-                interstates.AddRange(shl.states);
-                interstates.AddRange(add.states);
+                interstates.AddRange(mov.States);
+                interstates.AddRange(shl.States);
+                interstates.AddRange(add.States);
                 interstates.Add(interExit);
                 Profiler.EndSample();
 
-                yield return PB.setProgress((float)i / (Register.bits + 1));
+                yield return PB.SetProgress((float)i / (Register.bits + 1));
             }
 
-            MOV movToResult = new MOV(Result, A, Layer, progressWindow);
-            yield return movToResult.compile();
-            yield return PB.setProgress(1);
-            interstates.Last().AutomaticallyMovesTo(movToResult.entry);
-            movToResult.exit.AutomaticallyMovesTo(exit);
+            MOV movToResult = new MOV(Result, A, _layer, _progressWindow);
+            yield return movToResult;
+            yield return PB.SetProgress(1);
+            interstates.Last().AutomaticallyMovesTo(movToResult.Entry);
+            movToResult.Exit.AutomaticallyMovesTo(exit);
 
-            PB.finish();
+            PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, interstates.ToArray(), movToResult.states, exit));
+            callback(Util.CombineStates(entry, interstates.ToArray(), movToResult.States, exit));
             yield break;
         }
     }

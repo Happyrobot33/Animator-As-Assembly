@@ -92,7 +92,7 @@ namespace AnimatorAsAssembly
                 0
             );
 
-            int lineNumberWidth = 30;
+            const int lineNumberWidth = 30;
 
             //create some space on the left for the line numbers by making a text area rect
             Rect textAreaRect = new Rect(
@@ -170,7 +170,7 @@ namespace AnimatorAsAssembly
 
                 var text = EditorGUI.TextArea(
                     textAreaRect,
-                    syntaxHighlight(
+                    SyntaxHighlight(
                         property.stringValue,
                         SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme)
                     ),
@@ -335,7 +335,7 @@ namespace AnimatorAsAssembly
             Profiler.EndSample();
         }
 
-        internal string syntaxHighlight(string text, SyntaxHighlighterSchemes.ColorTheme Theme)
+        internal string SyntaxHighlight(string text, SyntaxHighlighterSchemes.ColorTheme Theme)
         {
             //loop through each line
             string[] lines = text.Split('\n');
@@ -460,7 +460,7 @@ namespace AnimatorAsAssembly
             return text;
         }
 
-        internal string colorize(string text, string color)
+        internal string Colorize(string text, string color)
         {
             if (text.Length > 0)
             {
@@ -469,10 +469,9 @@ namespace AnimatorAsAssembly
             return text;
         }
 
-        internal string colorize(string text, Color color)
+        internal string Colorize(string text, Color color)
         {
-            string colorstring = colorize(text, "#" + ColorUtility.ToHtmlStringRGB(color));
-            return colorstring;
+            return Colorize(text, "#" + ColorUtility.ToHtmlStringRGB(color));
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
