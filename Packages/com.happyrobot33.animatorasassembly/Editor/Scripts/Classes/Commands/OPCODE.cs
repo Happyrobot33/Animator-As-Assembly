@@ -87,7 +87,7 @@ namespace AnimatorAsAssembly.Commands
 
         public override bool Equals(object obj)
         {
-            return obj is OPCODE oPCODE && ID == oPCODE.ID;
+            return obj is OPCODE opCode && ID == opCode.ID;
         }
 
         //implicit conversion to AacFlState[] returns the states array
