@@ -51,6 +51,12 @@ namespace AnimatorAsAssembly
                 //get the animator controller
                 AnimatorController controller = asset as AnimatorController;
 
+                //remove all parameters from the controller
+                foreach (var parameter in controller.parameters)
+                {
+                    controller.RemoveParameter(parameter);
+                }
+
                 for (int i = 0; i < subAssets.Length; i++)
                 {
                     /* EditorUtility.DisplayProgressBar(
@@ -212,20 +218,52 @@ namespace AnimatorAsAssembly
         /// <summary> A permanent reference to the number 1 in Register form </summary>
         public static Register ONE;
 
-        /// <summary> A permanent reference to the program counter variable </summary>
+        /// <summary> The current program counter </summary>
         public static AacFlIntParameter PROGRAMCOUNTER;
         public const string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
 
+        /// <summary> How many elements the stack can hold </summary>
+        public static int _StackSize = 10;
+        /// <summary> The stack parameters </summary>
+        public static AacFlIntParameter[] _Stack;
+        public static AacFlIntParameter[] _StackBuffer;
+        public const string STACKSTRINGPREFIX = "INTERNAL/STACK/";
+
         /// <summary> Create a new Globals object </summary>
-        /// <param name="FX">The AacFlLayer to use</param>
-        public Globals(AacFlLayer FX)
+        /// <param name="Layer">The AacFlLayer to use</param>
+        public Globals(AacFlLayer Layer)
         {
-            FALSE = FX.BoolParameter("GLOBALS/FALSE");
-            TRUE = FX.BoolParameter("GLOBALS/TRUE");
-            FX.OverrideValue(TRUE, true);
-            ONE = new Register("GLOBALS/ONE", FX);
+            FALSE = Layer.BoolParameter("CONSTANT/FALSE");
+            TRUE = Layer.BoolParameter("CONSTANT/TRUE");
+            Layer.OverrideValue(TRUE, true);
+            ONE = new Register("CONSTANT/ONE", Layer);
             ONE.Initialize(1);
-            PROGRAMCOUNTER = FX.IntParameter(PROGRAMCOUNTERSTRING);
+            PROGRAMCOUNTER = Layer.IntParameter(PROGRAMCOUNTERSTRING);
+            CreateStack(Layer);
+        }
+
+        /// <summary> Create a new stack </summary>
+        /// <remarks> All values in the stack are initialized to -1 </remarks>
+        private void CreateStack(AacFlLayer Layer)
+        {
+            AacFlIntParameter[] stack = new AacFlIntParameter[_StackSize];
+            AacFlIntParameter[] stackBuffer = new AacFlIntParameter[_StackSize];
+            for (int i = 0; i < _StackSize; i++)
+            {
+                stack[i] = Layer.IntParameter(STACKSTRINGPREFIX + "REAL/" + i);
+                stackBuffer[i] = Layer.IntParameter(STACKSTRINGPREFIX + "BUFFER/" + i);
+                Layer.OverrideValue(stack[i], -1);
+                Layer.OverrideValue(stackBuffer[i], -1);
+            }
+            _Stack = stack;
+            _StackBuffer = stackBuffer;
+        }
+
+        /// <summary> Set the global stack size </summary>
+        /// <param name="size">The new stack size</param>
+        public static void SetStackSize(int size)
+        {
+            _StackSize = size;
         }
     }
 }

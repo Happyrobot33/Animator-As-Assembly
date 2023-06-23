@@ -33,7 +33,7 @@ namespace AnimatorAsAssembly.Commands
         void Init(string name, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             this.name = name;
-            this._layer = Layer.NewStateGroup("SBR");
+            this._layer = Layer.NewStateGroup("SBR " + name);
             this._progressWindow = progressWindow;
         }
 
@@ -52,7 +52,8 @@ namespace AnimatorAsAssembly.Commands
         //override the linker to do nothing
         public override void Link(List<OPCODE> opcodes)
         {
-            //do nothing
+            //only increment the PC
+            Entry.DrivingIncreases(Globals.PROGRAMCOUNTER, 1);
         }
     }
 }

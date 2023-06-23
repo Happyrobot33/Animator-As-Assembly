@@ -102,7 +102,7 @@ namespace AnimatorAsAssembly.Commands
 
             for (int j = 0; j < Register._bitDepth; j++)
             {
-                Profiler.BeginSample("ADD/FULLADDER " + j);
+                Profiler.BeginSample("INTERNAL/ADD/FULLADDER " + j);
                 /// <summary> The previous carry bit </summary>
                 AacFlBoolParameter prevcarry = Globals.FALSE;
                 if (j > 0)

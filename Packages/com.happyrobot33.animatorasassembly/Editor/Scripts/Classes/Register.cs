@@ -55,7 +55,7 @@ namespace AnimatorAsAssembly
         }
 
         /// <summary> Provide a quick way to get a parameter driver set to a specific value </summary>
-        public EditorCoroutine Set(AacFlState state, int value, ProgressBar progressCallback = null)
+        public IEnumerator<EditorCoroutine> Set(AacFlState state, int value, ProgressBar progressCallback = null)
         {
             CheckOverflow(value);
             for (int i = 0; i < _bitDepth; i++)
@@ -70,10 +70,9 @@ namespace AnimatorAsAssembly
                 }
                 if (progressCallback != null)
                 {
-                    return progressCallback.SetProgress((float)i / _bitDepth);
+                    yield return progressCallback.SetProgress((float)i / _bitDepth);
                 }
             }
-            return null;
         }
 
         /// <summary> Set the value of this register upon bootup </summary>

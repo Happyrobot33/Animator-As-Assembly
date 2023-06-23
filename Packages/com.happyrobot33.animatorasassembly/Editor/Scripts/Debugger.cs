@@ -57,9 +57,9 @@ namespace AnimatorAsAssembly
                             0,
                             parameter.name.Length - last.Length - 1
                         );
-                        //ignore any GLOBALS or INTERNAL registers
+                        //ignore any CONSTANT or INTERNAL registers
                         if (
-                            registerName.StartsWith("GLOBALS/")
+                            registerName.StartsWith("CONSTANT/")
                             || registerName.StartsWith("INTERNAL/")
                         )
                         {
@@ -102,6 +102,7 @@ namespace AnimatorAsAssembly
     [CustomEditor(typeof(Debugger))]
     public class DebuggerEditor : Editor
     {
+        bool callStackShown = true;
         public override void OnInspectorGUI()
         {
             Debugger debugger = (Debugger)target;
@@ -166,7 +167,54 @@ namespace AnimatorAsAssembly
                 EditorGUILayout.EndHorizontal();
                 #endregion
 
+                #region call stack
+                callStackShown = EditorGUILayout.BeginFoldoutHeaderGroup(
+                    callStackShown,
+                    "Call stack"
+                );
+                if (callStackShown)
+                {
+                    EditorGUI.indentLevel++;
+                    //get the stack params
+                    LyumaAv3Runtime.Av3EmuParameterAccess[] stackParams =
+                        new LyumaAv3Runtime.Av3EmuParameterAccess[Globals._StackSize];
+                    int usedStackPositions = 0;
+                    for (int i = 0; i < Globals._StackSize; i++)
+                    {
+                        stackParams[i] =
+                            new LyumaAv3Runtime.Av3EmuParameterAccess()
+                            {
+                                runtime = debugger.runtime,
+                                paramName = Globals.STACKSTRINGPREFIX + "REAL/" + i
+                            };
+                        if (stackParams[i].intVal != -1)
+                        {
+                            usedStackPositions++;
+                        }
+                    }
+                    //display a label for remaining space on the stack
+                    EditorGUILayout.LabelField(
+                        "Stack space remaining: " + (Globals._StackSize - usedStackPositions) + "/" + Globals._StackSize, EditorStyles.miniBoldLabel
+                    );
+
+                    //display the stack raw
+                    foreach (var stackParam in stackParams)
+                    {
+                        if (stackParam.intVal != -1)
+                        {
+                            //resolve the name from the PC value
+                            string name = debugger.aaa.instructionStringList[stackParam.intVal];
+                            EditorGUILayout.LabelField(name);
+                        }
+                    }
+                }
+                EditorGUI.indentLevel--;
+                EditorGUILayout.EndFoldoutHeaderGroup();
+                #endregion
+
                 #region registers
+                //create horizontal divider
+                EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
                 //show the registers
                 for (int i = 0; i < debugger.registersList.Count; i++)
                 {

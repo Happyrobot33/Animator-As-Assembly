@@ -26,12 +26,6 @@ namespace AnimatorAsAssembly
         [HideInInspector]
         public int RegistersUsed = 0;
 
-        [Header("Compiler Options")]
-        [Tooltip(
-            "This is used to determine the maximum size of the stack. If you are using a lot of PUSH, POP or subroutine commands, you may need to increase this."
-        )]
-        public int stackSize = 5;
-
         [Header("Graph Options")]
         public bool organizeGraph = true;
         public int horizontalGraphScale = 1;
@@ -490,28 +484,20 @@ namespace AnimatorAsAssembly
             {
                 EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0f);
                 Vector2 zero = new Vector2(2, 5);
-                for (int x = 0; x < Instructions.Count; x++)
+                Vector2 offset = new Vector2(0, 0);
+                for (int index = 0; index < Instructions.Count; index++)
                 {
-                    //the Y may not be the same for every X, so we need to check for null
-                    /* for (int y = 0; y < Instructions[x].Length; y++)
+                    //detect if we hit a SBR instruction, and if so reset the x of the offset
+                    if (Instructions[index] is Commands.SBR)
                     {
-                        if (Instructions[x][y] == null)
-                        {
-                            //go to the next X
-                            break;
-                        }
-                        //shift the instruction to the correct position
-                        Instructions[x][y].Shift(
-                            zero,
-                            (x * horizontalGraphScale),
-                            y * verticalGraphScale
-                        );
-                    } */
-                    Instructions[x]._layer.Position =
-                        zero + new Vector2(x * horizontalGraphScale, 0);
-                    //create a empty state above the instruction to denote what line it is on
-                    //AacFlState LineIndicator = ControllerLayer.NewState("Line: " + x);
-                    //LineIndicator.Over(Instructions[x][0]);
+                        offset.x = 0;
+                        offset.y += verticalGraphScale;
+                    }
+
+                    offset += new Vector2(horizontalGraphScale, 0);
+
+                    Instructions[index]._layer.Position =
+                        zero + offset;
                 }
                 EditorUtility.ClearProgressBar();
             }
@@ -663,9 +649,19 @@ namespace AnimatorAsAssembly
                 EditorCoroutineUtility.StartCoroutineOwnerless(myScript.Create());
             }
 
+            //create settings header
+            GUILayout.Label("Global Compiler Settings", EditorStyles.boldLabel);
+
             //show the bit depth as a field
             GUIContent bitDepthLabel = new GUIContent("Bit Depth", "The bit depth of the register. This is static for compilers in the unity editor.");
             Register.SetBitDepth(EditorGUILayout.IntField(bitDepthLabel, Register._bitDepth));
+
+            //show the stack size as a field
+            GUIContent stackSizeLabel = new GUIContent("Stack Size", "The size of the stack. This is static for compilers in the unity editor.");
+            Globals.SetStackSize(EditorGUILayout.IntField(stackSizeLabel, Globals._StackSize));
+
+            //create horizontal divider
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
 
             DrawDefaultInspector();
         }

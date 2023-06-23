@@ -46,7 +46,7 @@ namespace AnimatorAsAssembly.Commands
             ProgressBar PB = this._progressWindow.RegisterNewProgressBar("LD", "");
             AacFlState entry = _layer.NewState("LD");
 
-            yield return A.Set(entry, value, PB);
+            yield return EditorCoroutineUtility.StartCoroutineOwnerless(A.Set(entry, value, PB));
 
             PB.Finish();
             Profiler.EndSample();

@@ -42,14 +42,14 @@ https://www.matthewherber.com/Animator-As-Assembly/
 - [x] `DIV`: Divides the contents of the first register by the contents of the second register and stores the result in the third register (rounds up). The remainder is stored in DAC2 if needed. Note that if you use the remainder, the result will be 1 larger than it should be.
 - [ ] `NOCONNECT`: Does nothing, but does not connect the previous instruction to itself
 - [ ] `SWAP`: Swaps the contents of the first register with the contents of the second register
-- [ ] `JSR`: Jumps to a subroutine (syntax: `JSR SUBROUTINE_NAME`). Stores the return address in PC
-- [ ] `RTS`: Returns from a subroutine (syntax: `RTS`). Jumps to the address stored in PC
-- [ ] `PUT`: Pushes a register onto the stack, moving the stack up
-- [ ] `POP`: Pops a register from the stack, putting it into the specified register
+- [x] `JSR`: Jumps to a subroutine (syntax: `JSR SUBROUTINE_NAME`). Stores the return address in PC
+- [x] `RTS`: Returns from a subroutine (syntax: `RTS`). Jumps to the address stored in PC
+- [x] `PUSH`: Pushes a int onto the stack, moving the stack up
+- [x] `POP`: Pops a int from the stack
 - [ ] `DOUBLE`: Doubles the contents of the register
 - [ ] `HALVE`: Halves the contents of the register
-- [ ] `SHL`: Shifts the contents of the register left once
-- [ ] `SHR`: Shifts the contents of the register right once
+- [x] `SHL`: Shifts the contents of the register left once
+- [x] `SHR`: Shifts the contents of the register right once
 - [ ] `BOOLTOINT`: Drives a register to a value if a VRC Contact Receiver is set to 1 (syntax: `BOOLTOINT CONTACT_REGISTER RECEIVING_REGISTER VALUE`)
 - [ ] `SEGINT`: Converts up to an 8-digit integer into two 4-digit integers (syntax: `SEGINT REGISTER REGISTER REGISTER`)
 - [ ] `DELAY`: Waits for the specified number of frames
