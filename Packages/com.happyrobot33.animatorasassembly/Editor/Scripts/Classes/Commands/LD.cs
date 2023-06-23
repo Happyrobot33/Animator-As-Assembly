@@ -35,8 +35,7 @@ namespace AnimatorAsAssembly.Commands
         {
             this.A = A;
             this._layer = Layer.NewStateGroup("LD");
-            //truncate the value to fit in the register's bit count
-            this.value = value & ((1 << Register._bitDepth) - 1);
+            this.value = value;
             this._progressWindow = progressWindow;
             //states = STATES();
         }
@@ -46,17 +45,12 @@ namespace AnimatorAsAssembly.Commands
             Profiler.BeginSample("LD");
             ProgressBar PB = this._progressWindow.RegisterNewProgressBar("LD", "");
             AacFlState entry = _layer.NewState("LD");
-            for (int i = 0; i < Register._bitDepth; i++)
-            {
-                bool bitValue = (value & (1 << i)) != 0;
-                entry.Drives(A[i], bitValue);
-                yield return PB.SetProgress((float)i / Register._bitDepth);
-            }
+
+            yield return A.Set(entry, value, PB);
+
             PB.Finish();
             Profiler.EndSample();
             callback(new AacFlState[] { entry });
-            yield break;
-            //return new AacFlState[] { entry };
         }
     }
 }

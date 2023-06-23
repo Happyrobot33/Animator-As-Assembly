@@ -10,6 +10,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
+using System.Threading;
 
 namespace AnimatorAsAssembly
 {
@@ -64,19 +65,20 @@ namespace AnimatorAsAssembly
         {
             try
             {
-                ComplexProgressBar progressBar = new ComplexProgressBar("Animator As Assembly");
-                ProgressBar mainProgressBar = progressBar.RegisterNewProgressBar(
+                ComplexProgressBar progressWindow = ScriptableObject.CreateInstance<ComplexProgressBar>();
+                progressWindow.titleContent = new GUIContent("Animator As Assembly");
+                ProgressBar mainProgressBar = progressWindow.RegisterNewProgressBar(
                     "Compiling",
                     "Compiling the code"
                 );
-                progressBar.ShowUtility();
+                progressWindow.ShowUtility();
                 yield return null;
 
                 //remove all junk sub assets
                 yield return EditorCoroutineUtility.StartCoroutine(
                     Util.CleanAnimatorControllerAsset(
                         AssetDatabase.GetAssetPath(assetContainer),
-                        progressBar
+                        progressWindow
                     ),
                     this
                 );
@@ -121,7 +123,7 @@ namespace AnimatorAsAssembly
                     CompileMicroCode(
                         CleanedCode,
                         ControllerLayer,
-                        progressBar,
+                        progressWindow,
                         (List<Commands.OPCODE> instructions) => Instructions = instructions
                     ),
                     this
@@ -141,7 +143,7 @@ namespace AnimatorAsAssembly
 
                 //save the asset
                 Profiler.EndSample();
-                progressBar.Close();
+                progressWindow.Close();
             }
             /*             catch (Exception e)
                         {
@@ -650,28 +652,22 @@ namespace AnimatorAsAssembly
     [CustomEditor(typeof(AnimatorAsAssembly))]
     public class AnimatorAsAssemblyEditor : Editor
     {
-        private double lastCompileTime = 0;
-
         public override void OnInspectorGUI()
         {
             AnimatorAsAssembly myScript = (AnimatorAsAssembly)target;
 
-            //record the current time
-            double currentTime = Time.realtimeSinceStartup;
-            //display a label with the time taken to compile the program last time
-            EditorGUILayout.LabelField("Time taken to compile: " + lastCompileTime + "s");
-            //display the ammount of registers used
-            EditorGUILayout.LabelField("Registers used: " + myScript.RegistersUsed);
             if (GUILayout.Button("Create"))
             {
                 //run the create function outside of OnInspectorGUI
                 //myScript.Create();
-                _ = EditorCoroutineUtility.StartCoroutineOwnerless(myScript.Create());
-                //calculate the time taken to compile the program, rounded to 3 decimal places
-                lastCompileTime = Math.Round(Time.realtimeSinceStartup - currentTime, 3);
+                EditorCoroutineUtility.StartCoroutineOwnerless(myScript.Create());
             }
 
-            _ = DrawDefaultInspector();
+            //show the bit depth as a field
+            GUIContent bitDepthLabel = new GUIContent("Bit Depth", "The bit depth of the register. This is static for compilers in the unity editor.");
+            Register.SetBitDepth(EditorGUILayout.IntField(bitDepthLabel, Register._bitDepth));
+
+            DrawDefaultInspector();
         }
     }
 }

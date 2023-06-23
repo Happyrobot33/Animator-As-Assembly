@@ -1,5 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using AnimatorAsCode.Framework;
+using Unity.EditorCoroutines.Editor;
+using UnityEngine;
 
 namespace AnimatorAsAssembly
 {
@@ -28,6 +32,13 @@ namespace AnimatorAsAssembly
             this.boolParams = GenerateRegisterNames(name);
         }
 
+        /// <summary> Define the bit depth of the registers </summary>
+        /// <param name="bitDepth"> The bit depth of the registers </param>
+        public static void SetBitDepth(int bitDepth)
+        {
+            _bitDepth = bitDepth;
+        }
+
         /// <summary> Get the individual bits of this register </summary>
         /// <param name="i"> The index of the bit to get </param>
         /// <returns> The AacFlBoolParameter that represents the bit at the given index </returns>
@@ -44,8 +55,9 @@ namespace AnimatorAsAssembly
         }
 
         /// <summary> Provide a quick way to get a parameter driver set to a specific value </summary>
-        public void Set(AacFlState state, int value)
+        public EditorCoroutine Set(AacFlState state, int value, ProgressBar progressCallback = null)
         {
+            CheckOverflow(value);
             for (int i = 0; i < _bitDepth; i++)
             {
                 if ((value & (1 << i)) != 0)
@@ -56,12 +68,18 @@ namespace AnimatorAsAssembly
                 {
                     state.Drives(boolParams[i], false);
                 }
+                if (progressCallback != null)
+                {
+                    return progressCallback.SetProgress((float)i / _bitDepth);
+                }
             }
+            return null;
         }
 
         /// <summary> Set the value of this register upon bootup </summary>
         public void Initialize(int value)
         {
+            CheckOverflow(value);
             for (int i = 0; i < _bitDepth; i++)
             {
                 if ((value & (1 << i)) != 0)
@@ -73,6 +91,45 @@ namespace AnimatorAsAssembly
                     FX.OverrideValue(boolParams[i], false);
                 }
             }
+        }
+
+        /// <summary> Check to see if the given value will overflow the register </summary>
+        /// <param name="value"> The value to check </param>
+        /// <throws> An exception if the value will overflow the register </throws>
+        void CheckOverflow(int value)
+        {
+            int max = (int)Math.Pow(2, _bitDepth);
+            if (value >= max)
+            {
+                Debug.LogWarning(IntegerOverflowException(value, max));
+            }
+        }
+
+        /// <summary> Create an exception for an integer overflow </summary>
+        internal string IntegerOverflowException(int value, int max)
+        {
+            string originalBinary = Convert.ToString(value, 2);
+            string truncatedBinary = Convert.ToString(Truncate(value), 2);
+
+            //add spaces to the truncated binary so that it lines up with the original binary
+            int difference = originalBinary.Length - truncatedBinary.Length;
+            string gapFill = "";
+            for (int i = 0; i < difference; i++)
+            {
+                gapFill += "?";
+            }
+            truncatedBinary = gapFill + truncatedBinary;
+
+            return String.Format("The value {0} is too large for a register of bit depth {1}. The maximum value is {2}. The value will be truncated to {3}.\n{4}\n{5}", value, _bitDepth, max, Truncate(value), originalBinary, truncatedBinary);
+        }
+
+        /// <summary> Truncate the given value to the bit depth of this register </summary>
+        /// <param name="value"> The value to truncate </param>
+        /// <returns> The truncated value </returns>
+        private int Truncate(int value)
+        {
+            //return what the value would be if the extra bits were dropped
+            return value & ((int)Math.Pow(2, _bitDepth) - 1);
         }
 
         AacFlBoolParameter[] GenerateRegisterNames(string name)

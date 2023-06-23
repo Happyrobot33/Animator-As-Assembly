@@ -10,12 +10,6 @@ namespace AnimatorAsAssembly
     public class ComplexProgressBar : EditorWindow
     {
         private readonly List<ProgressBar> progressBars = new List<ProgressBar>();
-        public string windowTitle;
-
-        public ComplexProgressBar(string windowTitle)
-        {
-            titleContent = new GUIContent(windowTitle);
-        }
 
         public void OnGUI()
         {
@@ -29,6 +23,7 @@ namespace AnimatorAsAssembly
             if (progressBars.Count == 0)
             {
                 Close();
+                DestroyImmediate(this);
             }
 
             //this is hardcoded because I don't know how to get the height of the title bar
