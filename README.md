@@ -20,7 +20,7 @@ https://www.matthewherber.com/Animator-As-Assembly/
 - [ ] `SHIFTSCREENDOWN`: Shifts the screen down by the specified amount (syntax: `SHIFTSCREENDOWN AMOUNT`)
 - [ ] `CLEARSCREEN`: Clears the entire VRAM, essentially clearing the screen. ***Does not initiate a redraw***
 - [ ] `DRAWCHARCODE`: Draws a character to the screen based on a register, determining the character based on the ASCII standard {DRAWCHARCODE INT_CODE}
-- [ ] `PIXEL` - Draws a pixel to the screen {PIXEL X Y}
+- [x] `PIXEL` - Draws a pixel to the screen {PIXEL X Y}
 
 ### Opcodes:
 - [x] `INC`: Increments the register by 1
