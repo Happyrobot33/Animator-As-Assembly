@@ -46,8 +46,6 @@ https://www.matthewherber.com/Animator-As-Assembly/
 - [x] `RTS`: Returns from a subroutine (syntax: `RTS`). Jumps to the address stored in PC
 - [x] `PUSH`: Pushes a int onto the stack, moving the stack up
 - [x] `POP`: Pops a int from the stack
-- [ ] `DOUBLE`: Doubles the contents of the register
-- [ ] `HALVE`: Halves the contents of the register
 - [x] `SHL`: Shifts the contents of the register left once
 - [x] `SHR`: Shifts the contents of the register right once
 - [ ] `BOOLTOINT`: Drives a register to a value if a VRC Contact Receiver is set to 1 (syntax: `BOOLTOINT CONTACT_REGISTER RECEIVING_REGISTER VALUE`)
