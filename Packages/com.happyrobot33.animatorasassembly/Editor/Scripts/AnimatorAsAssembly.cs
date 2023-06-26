@@ -103,7 +103,7 @@ namespace AnimatorAsAssembly
                 //run the display generation code if the user wants it
                 if (useDisplay)
                 {
-                    GenerateDisplay(ControllerLayer, registers, displayWidth, displayHeight);
+                    GenerateDisplay(ControllerLayer, displayWidth, displayHeight);
                 }
 
                 GenerateContactSenderSystem(ControllerLayer);
@@ -123,7 +123,7 @@ namespace AnimatorAsAssembly
                 yield return mainProgressBar.SetProgress(0.66f);
 
                 //correlate all of the instructions with their paths
-                OrganizeGraph(Instructions, ControllerLayer, CleanedCode);
+                OrganizeGraph(Instructions);
                 yield return mainProgressBar.SetProgress(1f);
 
                 //create final connection between default state and the first instruction
@@ -157,7 +157,6 @@ namespace AnimatorAsAssembly
         /// <param name="height"> The height of the display </param>
         private void GenerateDisplay(
             AacFlLayer ControllerLayer,
-            Register[] registers,
             int width,
             int height
         )
@@ -350,13 +349,8 @@ namespace AnimatorAsAssembly
         /// <summary> Organizes the graph of the program </summary>
         /// <remarks> This organizes the graph if enabled, adding a dummy state above each instruction to show what line it is on </remarks>
         /// <param name="Instructions"> The instructions to correlate. X in the 2D array is the instruction number, Y is the individual states that make up that instruction</param>
-        /// <param name="ControllerLayer"> The FX layer to correlate </param>
-        /// <param name="raw"> The raw program </param>
         private void OrganizeGraph(
-            List<Commands.OPCODE> Instructions,
-            AacFlLayer ControllerLayer,
-            string raw
-        )
+            List<Commands.OPCODE> Instructions)
         {
             Profiler.BeginSample("Path Correlation");
 
