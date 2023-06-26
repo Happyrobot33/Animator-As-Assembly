@@ -37,6 +37,7 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        // TODO: Make this faster by instead of using ADD, implement a custom setup that ends early when it can
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("INC");
