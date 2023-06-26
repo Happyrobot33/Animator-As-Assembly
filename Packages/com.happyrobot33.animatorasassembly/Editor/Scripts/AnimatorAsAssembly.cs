@@ -428,31 +428,31 @@ namespace AnimatorAsAssembly
                 //create the relevant states based on the instruction type using reflection
                 Type type = Type.GetType(nameSpace + instructionType);
 
+                if (type == null)
+                {
+                    //replace it with a NOP
+                    type = Type.GetType(nameSpace + "NOP");
+                    Debug.LogError("Instruction type " + instructionType + " not found, replaced with NOP");
+                }
+
                 //create a new instance of the type
-                if (type != null)
+                object[] args = { instructionArgs, ControllerLayer, progressBar };
+                Commands.OPCODE instance =
+                    Activator.CreateInstance(type, args: args) as Commands.OPCODE;
+
+                //this calls GenerateStates() on the instance
+                yield return instance;
+
+                //make every state in the instance increase the clock
+                foreach (AacFlState state in instance.States)
                 {
-                    object[] args = { instructionArgs, ControllerLayer, progressBar };
-                    Commands.OPCODE instance =
-                        Activator.CreateInstance(type, args: args) as Commands.OPCODE;
-
-                    //this calls GenerateStates() on the instance
-                    yield return instance;
-
-                    //make every state in the instance increase the clock
-                    foreach (AacFlState state in instance.States)
-                    {
-                        state.DrivingIncreases(Globals._Clock, 1);
-                    }
-
-                    //add the states to the list
-                    Instructions.Add(instance);
-
-                    instructionStringList.Add(instruction);
+                    state.DrivingIncreases(Globals._Clock, 1);
                 }
-                else
-                {
-                    Debug.LogError("Instruction type " + instructionType + " not found");
-                }
+
+                //add the states to the list
+                Instructions.Add(instance);
+
+                instructionStringList.Add(instruction);
             }
 
             //end the progress bar
