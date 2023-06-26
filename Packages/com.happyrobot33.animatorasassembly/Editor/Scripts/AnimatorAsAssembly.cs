@@ -360,14 +360,10 @@ namespace AnimatorAsAssembly
         {
             Profiler.BeginSample("Path Correlation");
 
-            //progress bar
-            EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0);
-
             //place every opcode based on their index in the array
             //[x, y]
             if (organizeGraph)
             {
-                EditorUtility.DisplayProgressBar("Organizing Graph", "Organizing Graph", 0f);
                 Vector2 zero = new Vector2(2, 5);
                 Vector2 offset = new Vector2(0, 0);
                 for (int index = 0; index < Instructions.Count; index++)
@@ -384,11 +380,7 @@ namespace AnimatorAsAssembly
                     Instructions[index]._layer.Position =
                         zero + offset;
                 }
-                EditorUtility.ClearProgressBar();
             }
-
-            //end the progress bar
-            EditorUtility.ClearProgressBar();
             Profiler.EndSample();
         }
 
@@ -453,7 +445,14 @@ namespace AnimatorAsAssembly
                     Commands.OPCODE instance =
                         Activator.CreateInstance(type, args: args) as Commands.OPCODE;
 
+                    //this calls GenerateStates() on the instance
                     yield return instance;
+
+                    //make every state in the instance increase the clock
+                    foreach (AacFlState state in instance.States)
+                    {
+                        state.DrivingIncreases(Globals.CLOCK, 1);
+                    }
 
                     //add the states to the list
                     Instructions.Add(instance);
@@ -483,19 +482,9 @@ namespace AnimatorAsAssembly
         {
             Profiler.BeginSample("LinkMicroCode");
 
-            //begin a progress bar
-            EditorUtility.DisplayProgressBar("Linking MicroCode", "Linking MicroCode", 0);
-
             //loop through the instructions, linking the relevant states based on the instruction
             for (int i = 0; i < Instructions.Count; i++)
             {
-                //progress bar
-                EditorUtility.DisplayProgressBar(
-                    "Linking MicroCode",
-                    "Linking MicroCode",
-                    i / (float)Instructions.Count
-                );
-
                 //link the states
                 Instructions[i].Link(Instructions);
             }

@@ -222,6 +222,9 @@ namespace AnimatorAsAssembly
         public static AacFlIntParameter PROGRAMCOUNTER;
         public const string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
 
+        public static AacFlIntParameter CLOCK;
+        public const string CLOCKSTRING = "INTERNAL/CLOCK";
+
         /// <summary> How many elements the stack can hold </summary>
         public static int _StackSize = 10;
         /// <summary> The stack parameters </summary>
@@ -240,6 +243,7 @@ namespace AnimatorAsAssembly
             ONE.Initialize(1);
             PROGRAMCOUNTER = Layer.IntParameter(PROGRAMCOUNTERSTRING);
             CreateStack(Layer);
+            CLOCK = Layer.IntParameter(CLOCKSTRING);
         }
 
         /// <summary> Create a new stack </summary>

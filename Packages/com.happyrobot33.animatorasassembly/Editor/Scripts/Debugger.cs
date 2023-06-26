@@ -103,6 +103,11 @@ namespace AnimatorAsAssembly
     public class DebuggerEditor : Editor
     {
         bool callStackShown = true;
+
+        //keep track of the last time the clock was updated and the last clock value
+        float lastClockTime = 0;
+        int lastClockValue = 0;
+        float HZ = 0;
         public override void OnInspectorGUI()
         {
             Debugger debugger = (Debugger)target;
@@ -135,6 +140,45 @@ namespace AnimatorAsAssembly
                         "Current instruction: " + debugger.aaa.instructionStringList[PC - 1]
                     );
                 }
+                #endregion
+
+                #region total clock
+                //get the program counter
+                LyumaAv3Runtime.Av3EmuParameterAccess ClockParam =
+                    new LyumaAv3Runtime.Av3EmuParameterAccess()
+                    {
+                        runtime = debugger.runtime,
+                        paramName = Globals.CLOCKSTRING
+                    };
+                int CLOCK = ClockParam.intVal;
+                EditorGUILayout.LabelField("Clock Cycle: " + CLOCK);
+
+                //estimate the HZ of the processor using the clock
+                if (lastClockValue != CLOCK)
+                {
+                    //get the time difference
+                    float timeDifference = Time.time - lastClockTime;
+                    //get the clock difference
+                    int clockDifference = CLOCK - lastClockValue;
+                    //calculate the HZ
+                    HZ = (float)clockDifference / timeDifference;
+                    //round it to 2 decimal places
+                    HZ = Mathf.Round(HZ * 100) / 100;
+
+                    //update the last clock time
+                    lastClockTime = Time.time;
+                }
+                EditorGUILayout.LabelField("Estimated HZ: " + HZ);
+                //compare to a C64 6510 CPU
+                EditorGUILayout.LabelField("C64 6510 HZ (NTSC): 1.023 MHz");
+                const float C64HZ = 1023000;
+                float C64HZDifference = Mathf.Abs(C64HZ - HZ);
+                float slowerByPercent = (1 - (C64HZDifference / C64HZ)) * 100;
+                EditorGUILayout.LabelField(
+                    "Slower by " + C64HZDifference + " HZ (" + slowerByPercent + "%)"
+                );
+
+                lastClockValue = CLOCK;
                 #endregion
 
                 #region time stepping

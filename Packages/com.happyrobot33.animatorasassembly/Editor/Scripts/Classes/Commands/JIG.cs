@@ -12,15 +12,15 @@ namespace AnimatorAsAssembly.Commands
     {
         public Register A;
         public Register B;
-        Register Compare;
+        private Register _compare;
         public string LBLname;
-        AacFlState JumpAway;
-        SUB sub;
+        private AacFlState _jumpAway;
+        private SUB _sub;
 
         /// <summary> Jumps to a LBL if A >= B </summary>
         /// <param name="A"> </param>
         /// <param name="B"> </param>
-        /// <param name="LBL"> The LBL to jump to </param>
+        /// <param name="lblname"> The LBL to jump to </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public JIG(
             Register A,
@@ -67,7 +67,7 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.LBLname = lblname;
-            this.Compare = new Register("INTERNAL/JIG/Compare", Layer);
+            this._compare = new Register("INTERNAL/JIG/Compare", Layer);
             this._layer = Layer.NewStateGroup("JIG");
             this._progressWindow = progressWindow;
         }
@@ -79,24 +79,24 @@ namespace AnimatorAsAssembly.Commands
             yield return PB.SetProgress(0);
             AacFlState entry = _layer.NewState("JIG");
             AacFlState exit = _layer.NewState("JIG_EXIT");
-            JumpAway = _layer.NewState("JIG_JUMPAWAY");
+            _jumpAway = _layer.NewState("JIG_JUMPAWAY");
 
             //if A >= B, jump to LBL
             //do this by checking if A - B is negative
             //if it is, then A < B
             //if it isn't, then A >= B
-            sub = new SUB(A, B, Compare, _layer, _progressWindow);
-            yield return sub;
+            _sub = new SUB(A, B, _compare, _layer, _progressWindow);
+            yield return _sub;
             yield return PB.SetProgress(0.5f);
-            entry.AutomaticallyMovesTo(sub.Entry);
+            entry.AutomaticallyMovesTo(_sub.Entry);
 
             //if the highest bit is 1, then A < B
-            sub.Exit.TransitionsTo(JumpAway).When(Compare[Register._bitDepth - 1].IsFalse());
-            sub.Exit.AutomaticallyMovesTo(exit);
+            _sub.Exit.TransitionsTo(_jumpAway).When(_compare[Register._bitDepth - 1].IsFalse());
+            _sub.Exit.AutomaticallyMovesTo(exit);
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, sub.States, JumpAway, exit));
+            callback(Util.CombineStates(entry, _sub.States, _jumpAway, exit));
             yield break;
         }
 
@@ -111,10 +111,10 @@ namespace AnimatorAsAssembly.Commands
                     if (lbl.name == LBLname)
                     {
                         //transition to the LBL
-                        JumpAway.AutomaticallyMovesTo(lbl.Entry);
+                        _jumpAway.AutomaticallyMovesTo(lbl.Entry);
 
                         //set the program counter to the index of the LBL
-                        JumpAway.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(lbl));
+                        _jumpAway.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(lbl));
                         break;
                     }
                 }
@@ -125,7 +125,7 @@ namespace AnimatorAsAssembly.Commands
 
         public void Link(AacFlState destination)
         {
-            JumpAway.AutomaticallyMovesTo(destination);
+            _jumpAway.AutomaticallyMovesTo(destination);
         }
     }
 }
