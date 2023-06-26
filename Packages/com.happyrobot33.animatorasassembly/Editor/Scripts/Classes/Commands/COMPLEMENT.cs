@@ -47,7 +47,7 @@ namespace AnimatorAsAssembly.Commands
             yield return flip;
             yield return PB.SetProgress(0.33f);
 
-            ADD one = new ADD(Globals.ONE, A, _layer, _progressWindow);
+            ADD one = new ADD(Globals._One, A, _layer, _progressWindow);
             yield return one;
             yield return PB.SetProgress(0.66f);
 

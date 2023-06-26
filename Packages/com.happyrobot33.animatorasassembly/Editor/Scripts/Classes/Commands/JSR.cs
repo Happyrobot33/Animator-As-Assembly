@@ -42,13 +42,13 @@ namespace AnimatorAsAssembly.Commands
         {
             Profiler.BeginSample("JSR");
 
-            PUSH push = new PUSH(Globals.PROGRAMCOUNTER, _layer, _progressWindow);
+            PUSH push = new PUSH(Globals._ProgramCounter, _layer, _progressWindow);
             yield return push;
 
             //enter state
             jumpState = _layer.NewState("JSR " + name);
             AacFlState exitState = _layer.NewState("JSR " + name + " Return Vector");
-            exitState.DrivingIncreases(Globals.PROGRAMCOUNTER, 1);
+            exitState.DrivingIncreases(Globals._ProgramCounter, 1);
 
             push.Exit.AutomaticallyMovesTo(jumpState);
 
@@ -82,7 +82,7 @@ namespace AnimatorAsAssembly.Commands
                         jumpState.AutomaticallyMovesTo(sbr.Entry);
 
                         //set the program counter to the index of the LBL
-                        jumpState.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(sbr));
+                        jumpState.Drives(Globals._ProgramCounter, opcodes.IndexOf(sbr));
                         break;
                     }
                 }

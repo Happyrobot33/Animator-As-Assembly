@@ -42,7 +42,7 @@ namespace AnimatorAsAssembly.Commands
             yield return pop;
 
             AacFlState jumpState = _layer.NewState("RTS PC");
-            jumpState.DrivingCopies(pop.value, Globals.PROGRAMCOUNTER);
+            jumpState.DrivingCopies(pop.value, Globals._ProgramCounter);
 
             pop.Exit.AutomaticallyMovesTo(jumpState);
 
@@ -86,7 +86,7 @@ namespace AnimatorAsAssembly.Commands
                     {
                         int jsrIndex = opcodes.FindIndex(x => x.ID == jsr.ID);
                         //transition to the SBR if the PC equals the index of the JSR
-                        Exit.TransitionsTo(jsr.Exit).When(Globals.PROGRAMCOUNTER.IsEqualTo(jsrIndex));
+                        Exit.TransitionsTo(jsr.Exit).When(Globals._ProgramCounter.IsEqualTo(jsrIndex));
                     }
                 }
             }

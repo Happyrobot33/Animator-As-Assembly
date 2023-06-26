@@ -104,7 +104,7 @@ namespace AnimatorAsAssembly.Commands
             {
                 Profiler.BeginSample("INTERNAL/ADD/FULLADDER " + j);
                 /// <summary> The previous carry bit </summary>
-                AacFlBoolParameter prevcarry = Globals.FALSE;
+                AacFlBoolParameter prevcarry = Globals._False;
                 if (j > 0)
                 {
                     //copy prevcarry into our own register so it isnt cleared

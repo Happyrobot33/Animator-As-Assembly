@@ -68,7 +68,7 @@ namespace AnimatorAsAssembly.Commands
             }
 
             //ensure the program counter increments
-            Entry.DrivingIncreases(Globals.PROGRAMCOUNTER, 1);
+            Entry.DrivingIncreases(Globals._ProgramCounter, 1);
         }
 
         internal void Init(params object[] args)

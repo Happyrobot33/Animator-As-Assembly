@@ -43,7 +43,7 @@ namespace AnimatorAsAssembly.Commands
             ProgressBar PB = this._progressWindow.RegisterNewProgressBar("INC", "");
             yield return PB.SetProgress(0);
             //add 1 to the register
-            ADD add = new ADD(Globals.ONE, A, _layer, _progressWindow);
+            ADD add = new ADD(Globals._One, A, _layer, _progressWindow);
             yield return add;
             yield return PB.SetProgress(1);
 

@@ -53,7 +53,7 @@ namespace AnimatorAsAssembly.Commands
         public override void Link(List<OPCODE> opcodes)
         {
             //only increment the PC
-            Entry.DrivingIncreases(Globals.PROGRAMCOUNTER, 1);
+            Entry.DrivingIncreases(Globals._ProgramCounter, 1);
         }
     }
 }

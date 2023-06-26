@@ -114,7 +114,7 @@ namespace AnimatorAsAssembly.Commands
                         _jumpAway.AutomaticallyMovesTo(lbl.Entry);
 
                         //set the program counter to the index of the LBL
-                        _jumpAway.Drives(Globals.PROGRAMCOUNTER, opcodes.IndexOf(lbl));
+                        _jumpAway.Drives(Globals._ProgramCounter, opcodes.IndexOf(lbl));
                         break;
                     }
                 }

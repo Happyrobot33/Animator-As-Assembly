@@ -91,7 +91,8 @@ namespace AnimatorAsAssembly
 
                 AacFlLayer ControllerLayer = aac.CreateMainFxLayer();
 
-                Register[] registers = new Register[0];
+                //Initialize Global Variables
+                new Globals(ControllerLayer);
 
                 //create a dummy default state
                 AacFlState DefaultState = ControllerLayer.NewState("Default");
@@ -103,7 +104,7 @@ namespace AnimatorAsAssembly
                 //run the display generation code if the user wants it
                 if (useDisplay)
                 {
-                    GenerateDisplay(ControllerLayer, displayWidth, displayHeight);
+                    yield return EditorCoroutineUtility.StartCoroutine(GenerateDisplay(ControllerLayer, displayWidth, displayHeight, progressWindow), this);
                 }
 
                 GenerateContactSenderSystem(ControllerLayer);
@@ -152,17 +153,21 @@ namespace AnimatorAsAssembly
         /// The display is a 2d array of boolean values.
         /// All GPU registers use a * prefix to differentiate them from the CPU registers.</remarks>
         /// <param name="ControllerLayer"> The main FX layer </param>
-        /// <param name="registers"> The registers that are used by the CPU </param>
         /// <param name="width"> The width of the display </param>
         /// <param name="height"> The height of the display </param>
-        private void GenerateDisplay(
+        private IEnumerator<EditorCoroutine> GenerateDisplay(
             AacFlLayer ControllerLayer,
             int width,
-            int height
+            int height,
+            ComplexProgressBar progressWindow
         )
         {
             //progress bar
-            EditorUtility.DisplayProgressBar("Compiling", "Generating Display", 0.1f);
+            ProgressBar PB = progressWindow.RegisterNewProgressBar(
+                "Compiling",
+                "Generating Display"
+            );
+            yield return PB.SetProgress(0f);
 
             Profiler.BeginSample("GenerateDisplay");
 
@@ -175,25 +180,22 @@ namespace AnimatorAsAssembly
                 DestroyImmediate(child.gameObject);
             }
 
-            AacFlFloatParameter[] VRAM = new AacFlFloatParameter[width * height];
+            Globals._PixelBuffer = new AacFlFloatParameter[width * height];
+            Globals._PixelBufferSize = new Vector2Int(width, height);
 
             //create the registers for the VRAM
-            for (int i = 0; i < VRAM.Length; i++)
+            for (int i = 0; i < Globals._PixelBuffer.Length; i++)
             {
                 int x = i % width;
                 int y = i / width;
-                VRAM[i] = ControllerLayer.FloatParameter("*VRAM_" + x + "," + y);
+                Globals._PixelBuffer[i] = ControllerLayer.FloatParameter(Globals.PIXELBUFFERSTRINGPREFIX + x + "," + y);
             }
 
             //create a gameobject for each pixel in the display
             GameObject[] PE = new GameObject[width * height];
             for (int i = 0; i < PE.Length; i++)
             {
-                EditorUtility.DisplayProgressBar(
-                    "Compiling",
-                    "Generating Gameobjects",
-                    i / (float)PE.Length
-                );
+                yield return PB.SetProgress(((float)i / PE.Length) / 2);
                 int x = i % width;
                 int y = i / width;
                 PE[i] = Instantiate(pixelPrefab, screenRoot.transform);
@@ -217,11 +219,7 @@ namespace AnimatorAsAssembly
             AacFlClip[] clips = new AacFlClip[PE.Length];
             for (int i = 0; i < PE.Length; i++)
             {
-                EditorUtility.DisplayProgressBar(
-                    "Compiling",
-                    "Generating Animations",
-                    i / (float)PE.Length
-                );
+                yield return PB.SetProgress(0.5f + ((float)i / PE.Length) / 2);
                 //clips[i] = aac.NewClip().Toggling(PE[i], true); //takes up 2 frames
                 clips[i] = aac.NewClip()
                     .Animating(clip =>
@@ -242,11 +240,12 @@ namespace AnimatorAsAssembly
                 int x = i % width;
                 int y = i / width;
                 //set the blendtree child's parameter to the VRAM register
-                children[i].directBlendParameter = "*VRAM_" + x + "," + y;
+                children[i].directBlendParameter = Globals.PIXELBUFFERSTRINGPREFIX + x + "," + y;
             }
             blendTree.children = children;
 
-            EditorUtility.ClearProgressBar();
+            //finish the progress bar
+            PB.Finish();
         }
 
         /// <summary> Generates a contact sender layer for each contact sender </summary>
@@ -423,9 +422,6 @@ namespace AnimatorAsAssembly
 
                 yield return microcodeProgress.SetProgress(i / (float)instructions.Length);
 
-                //Initialize Global Variables
-                _ = new Globals(ControllerLayer);
-
                 //get the Commands namespace
                 const string nameSpace = "AnimatorAsAssembly.Commands.";
 
@@ -445,7 +441,7 @@ namespace AnimatorAsAssembly
                     //make every state in the instance increase the clock
                     foreach (AacFlState state in instance.States)
                     {
-                        state.DrivingIncreases(Globals.CLOCK, 1);
+                        state.DrivingIncreases(Globals._Clock, 1);
                     }
 
                     //add the states to the list

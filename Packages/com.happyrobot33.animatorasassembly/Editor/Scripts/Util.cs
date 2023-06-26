@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEditor.Animations;
 using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
+using System.Numerics;
 
 namespace AnimatorAsAssembly
 {
@@ -24,6 +25,16 @@ namespace AnimatorAsAssembly
                 .ToArray();
             Profiler.EndSample();
             return arrays.Aggregate((a, b) => a.Concat(b).ToArray()).Cast<AacFlState>().ToArray();
+        }
+
+        /// <summary> Reverses a string </summary>
+        /// <param name="s">The string to reverse</param>
+        /// <returns>The reversed string</returns>
+        public static string ReverseString(string s)
+        {
+            char[] charArray = s.ToCharArray();
+            Array.Reverse(charArray);
+            return new string(charArray);
         }
 
         /// <summary> Cleans a animator controller by removing all unreferenced sub assets </summary>
@@ -210,19 +221,20 @@ namespace AnimatorAsAssembly
     public class Globals
     {
         /// <summary> A permanent reference to a false boolean value </summary>
-        public static AacFlBoolParameter FALSE;
+        public static AacFlBoolParameter _False;
 
         /// <summary> A permanent reference to a true boolean value </summary>
-        public static AacFlBoolParameter TRUE;
+        public static AacFlBoolParameter _True;
 
         /// <summary> A permanent reference to the number 1 in Register form </summary>
-        public static Register ONE;
+        public static Register _One;
 
         /// <summary> The current program counter </summary>
-        public static AacFlIntParameter PROGRAMCOUNTER;
+        public static AacFlIntParameter _ProgramCounter;
         public const string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
 
-        public static AacFlIntParameter CLOCK;
+        /// <summary> The current clock. Incrementes with each state </summary>
+        public static AacFlIntParameter _Clock;
         public const string CLOCKSTRING = "INTERNAL/CLOCK";
 
         /// <summary> How many elements the stack can hold </summary>
@@ -232,18 +244,22 @@ namespace AnimatorAsAssembly
         public static AacFlIntParameter[] _StackBuffer;
         public const string STACKSTRINGPREFIX = "INTERNAL/STACK/";
 
+        public static AacFlFloatParameter[] _PixelBuffer;
+        public static Vector2Int _PixelBufferSize = new Vector2Int(0, 0);
+        public const string PIXELBUFFERSTRINGPREFIX = "INTERNAL/GPU/";
+
         /// <summary> Create a new Globals object </summary>
         /// <param name="Layer">The AacFlLayer to use</param>
         public Globals(AacFlLayer Layer)
         {
-            FALSE = Layer.BoolParameter("CONSTANT/FALSE");
-            TRUE = Layer.BoolParameter("CONSTANT/TRUE");
-            Layer.OverrideValue(TRUE, true);
-            ONE = new Register("CONSTANT/ONE", Layer);
-            ONE.Initialize(1);
-            PROGRAMCOUNTER = Layer.IntParameter(PROGRAMCOUNTERSTRING);
+            _False = Layer.BoolParameter("CONSTANT/FALSE");
+            _True = Layer.BoolParameter("CONSTANT/TRUE");
+            Layer.OverrideValue(_True, true);
+            _One = new Register("CONSTANT/ONE", Layer);
+            _One.Initialize(1);
+            _ProgramCounter = Layer.IntParameter(PROGRAMCOUNTERSTRING);
             CreateStack(Layer);
-            CLOCK = Layer.IntParameter(CLOCKSTRING);
+            _Clock = Layer.IntParameter(CLOCKSTRING);
         }
 
         /// <summary> Create a new stack </summary>
