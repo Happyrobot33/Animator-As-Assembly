@@ -291,9 +291,19 @@ namespace AnimatorAsAssembly
                         int startClock = GetParam(profilingObject + "/START").intVal;
                         int stopClock = GetParam(profilingObject + "/STOP").intVal;
                         string name = profilingObject.Split('/')[1];
-                        EditorGUILayout.LabelField(
-                            name + ": " + (stopClock - startClock) + " cycles"
-                        );
+                        int value = stopClock - startClock;
+                        if (value > 0)
+                        {
+                            EditorGUILayout.LabelField(
+                                name + ": " + (stopClock - startClock) + " cycles"
+                            );
+                        }
+                        else
+                        {
+                            EditorGUILayout.LabelField(
+                                name + ": " + "IN PROGRESS"
+                            );
+                        }
                     }
                     EditorGUI.indentLevel--;
                 }

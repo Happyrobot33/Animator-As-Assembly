@@ -12,10 +12,8 @@ namespace AnimatorAsAssembly.Commands
     {
         public Register A;
         public Register B;
-        private Register _compare;
         public string LBLname;
         private AacFlState _jumpAway;
-        private SUB _sub;
 
         /// <summary> Jumps to a LBL if A >= B </summary>
         /// <param name="A"> </param>
@@ -67,11 +65,16 @@ namespace AnimatorAsAssembly.Commands
             this.A = A;
             this.B = B;
             this.LBLname = lblname;
-            this._compare = new Register("INTERNAL/JIG/Compare", Layer);
             this._layer = Layer.NewStateGroup("JIG");
             this._progressWindow = progressWindow;
         }
 
+        // there is a check state for each bit pair
+        // if A.bit == 1 and B.bit == 0, then A > B
+        // if A.bit == 0 and B.bit == 1, then A < B
+        // if A.bit == B.bit, then check the next bit
+        // we can compare the two bits to eachother by checking
+        // A.bit == true && B.bit == true OR A.bit == false && B.bit == false
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("JIG");
@@ -81,22 +84,40 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JIG_EXIT");
             _jumpAway = _layer.NewState("JIG_JUMPAWAY");
 
-            //if A >= B, jump to LBL
-            //do this by checking if A - B is negative
-            //if it is, then A < B
-            //if it isn't, then A >= B
-            _sub = new SUB(A, B, _compare, _layer, _progressWindow);
-            yield return _sub;
-            yield return PB.SetProgress(0.5f);
-            entry.AutomaticallyMovesTo(_sub.Entry);
+            AacFlState[] states = new AacFlState[Register._bitDepth];
+            for (int i = 0; i < Register._bitDepth; i++)
+            {
+                states[i] = _layer.NewState("JIG_" + i);
+            }
+            for (int i = 0; i < Register._bitDepth; i++)
+            {
+                AacFlState nextState = exit;
+                if (i < Register._bitDepth - 1)
+                {
+                    nextState = states[i + 1];
+                }
 
-            //if the highest bit is 1, then A < B
-            _sub.Exit.TransitionsTo(_jumpAway).When(_compare[Register._bitDepth - 1].IsFalse());
-            _sub.Exit.AutomaticallyMovesTo(exit);
+                //transition to this state if the conditions defined above are true
+                AacFlTransition next = states[i].TransitionsTo(nextState);
+                AacFlTransition jump = states[i].TransitionsTo(_jumpAway);
+                AacFlTransition end = states[i].TransitionsTo(exit);
+
+                //if A.bit == 1 and B.bit == 0, then A > B
+                jump.When(A[i].IsTrue()).And(B[i].IsFalse());
+                //if A.bit == 0 and B.bit == 1, then A < B
+                end.When(A[i].IsFalse()).And(B[i].IsTrue());
+                //if A.bit == B.bit, then check the next bit
+                next.When(A[i].IsTrue()).And(B[i].IsTrue()).Or().When(A[i].IsFalse()).And(B[i].IsFalse());
+
+                PB.SetProgress((float)i / Register._bitDepth);
+            }
+
+            //connect the entry to the first state
+            entry.AutomaticallyMovesTo(states[0]);
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, _sub.States, _jumpAway, exit));
+            callback(Util.CombineStates(entry, states, _jumpAway, exit));
             yield break;
         }
 
