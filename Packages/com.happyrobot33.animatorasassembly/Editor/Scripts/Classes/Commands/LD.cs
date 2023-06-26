@@ -26,8 +26,30 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public LD(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            //split the args into the register and the value
-            Init(new Register(args[0], Layer), int.Parse(args[1]), Layer, progressWindow);
+            string type = "";
+            if (args.Length >= 3)
+            {
+                type = args[2];
+            }
+            else
+            {
+                type = "uint";
+            }
+
+            switch (type)
+            {
+                case "int":
+                    //offset the value by half the maximum unsigned int value
+                    int maxValue = (int)Math.Pow(2, Register._bitDepth);
+                    int value = int.Parse(args[1]) + (maxValue / 2);
+                    Init(new Register(args[0], Layer), value, Layer, progressWindow);
+                    break;
+                case "uint":
+                    Init(new Register(args[0], Layer), int.Parse(args[1]), Layer, progressWindow);
+                    break;
+                default:
+                    throw new Exception("Invalid type for LD command");
+            }
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>

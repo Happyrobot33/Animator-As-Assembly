@@ -356,21 +356,27 @@ namespace AnimatorAsAssembly
                         #endregion
 
                         #region display decimal
-                        //show the register values in decimal
-                        int decimalValue = 0;
+                        //show the register values in decimal both int and uint
+                        int decimalValue_uint = 0;
                         for (int j = 0; j < Register._bitDepth; j++)
                         {
                             if (registerValues[j])
                             {
-                                decimalValue += (int)Mathf.Pow(2, j);
+                                decimalValue_uint += (int)Mathf.Pow(2, j);
                             }
                         }
-                        EditorGUILayout.LabelField("Decimal: " + decimalValue);
+                        int decimalValue_int = decimalValue_uint;
+                        if (decimalValue_int > Mathf.Pow(2, Register._bitDepth - 1))
+                        {
+                            decimalValue_int -= (int)Mathf.Pow(2, Register._bitDepth);
+                        }
+                        EditorGUILayout.LabelField("Decimal (uint): " + decimalValue_uint);
+                        EditorGUILayout.LabelField("Decimal (int): " + decimalValue_int);
                         #endregion
 
                         #region display hex
                         //show the register values in hex
-                        string hexValue = decimalValue.ToString("X");
+                        string hexValue = decimalValue_uint.ToString("X");
                         EditorGUILayout.LabelField("Hex: " + hexValue);
                         #endregion
 
