@@ -108,6 +108,31 @@ namespace AnimatorAsAssembly
         float lastClockTime = 0;
         int lastClockValue = 0;
         float HZ = 0;
+
+        LyumaAv3Runtime.Av3EmuParameterAccess PCparam;
+        LyumaAv3Runtime.Av3EmuParameterAccess ClockParam;
+
+        //create a on start method
+        public void OnEnable()
+        {
+            //get the debugger
+            Debugger debugger = (Debugger)target;
+            //get the program counter
+            PCparam =
+                new LyumaAv3Runtime.Av3EmuParameterAccess()
+                {
+                    runtime = debugger.runtime,
+                    paramName = Globals.PROGRAMCOUNTERSTRING
+                };
+
+            ClockParam =
+                    new LyumaAv3Runtime.Av3EmuParameterAccess()
+                    {
+                        runtime = debugger.runtime,
+                        paramName = Globals.CLOCKSTRING
+                    };
+        }
+
         public override void OnInspectorGUI()
         {
             Debugger debugger = (Debugger)target;
@@ -122,12 +147,6 @@ namespace AnimatorAsAssembly
                 }
                 #region current executing instruction
                 //get the program counter
-                LyumaAv3Runtime.Av3EmuParameterAccess PCparam =
-                    new LyumaAv3Runtime.Av3EmuParameterAccess()
-                    {
-                        runtime = debugger.runtime,
-                        paramName = Globals.PROGRAMCOUNTERSTRING
-                    };
                 int PC = PCparam.intVal;
                 EditorGUILayout.LabelField("PC: " + PC);
                 if (PC == 0)
@@ -143,13 +162,6 @@ namespace AnimatorAsAssembly
                 #endregion
 
                 #region total clock
-                //get the program counter
-                LyumaAv3Runtime.Av3EmuParameterAccess ClockParam =
-                    new LyumaAv3Runtime.Av3EmuParameterAccess()
-                    {
-                        runtime = debugger.runtime,
-                        paramName = Globals.CLOCKSTRING
-                    };
                 int CLOCK = ClockParam.intVal;
                 EditorGUILayout.LabelField("Clock Cycle: " + CLOCK);
 
