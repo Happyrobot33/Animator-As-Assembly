@@ -136,17 +136,6 @@ namespace AnimatorAsAssembly
                 Profiler.EndSample();
                 progressWindow.Close();
             }
-            /*             catch (Exception e)
-                        {
-                            EditorUtility.ClearProgressBar();
-                            Debug.LogError(e);
-                            //show a dialog box with the error
-                            EditorUtility.DisplayDialog(
-                                "Error",
-                                "An internal error occured while compiling the code. Please check the console for more information.",
-                                "OK"
-                            );
-                        } */
             finally
             {
                 //By adding a call to StopAssetEditing inside
@@ -318,9 +307,6 @@ namespace AnimatorAsAssembly
         /// <returns> The cleaned up instruction string</returns>
         private string Cleanup(string raw)
         {
-            //progress bar
-            /* EditorUtility.DisplayProgressBar("Compiling", "Cleaning up code", 0.1f); */
-
             Profiler.BeginSample("Cleanup");
             string[] lines = raw.Split('\n');
 
@@ -348,102 +334,6 @@ namespace AnimatorAsAssembly
                 }
             }
 
-            //Handle the RTS instruction
-            //this is complicated, as it needs to know the line number of all the JSR instructions that reference the subroutine it is in
-            //first we need to find the subroutine that the RTS is in
-            //then we need to find all the JSR instructions that reference that subroutine
-            //then we need to append to the RTS every single line number of the JSR instructions
-            /*             for (int i = 0; i < output.Split('\n').Length; i++)
-                        {
-                            string line = output.Split('\n')[i];
-            
-                            if (line == "RTS")
-                            {
-                                //find the subroutine that the RTS is in
-                                //subroutines are denoted by ;
-                                for (int j = i; j >= 0; j--)
-                                {
-                                    string line2 = output.Split('\n')[j];
-            
-                                    if (line2.StartsWith(";"))
-                                    {
-                                        //we have found the subroutine
-                                        //now we need to find all the JSR instructions that reference this subroutine
-                                        for (int k = 0; k < output.Split('\n').Length; k++)
-                                        {
-                                            string line3 = output.Split('\n')[k];
-            
-                                            if (line3.StartsWith("JSR " + line2))
-                                            {
-                                                //we have found a JSR instruction that references the subroutine
-                                                //append the line number to the RTS
-                                                line += " " + k;
-                                            }
-                                        }
-            
-                                        //modify the relevant JSR instructions to point to the subroutine
-                                        for (int k = 0; k < output.Split('\n').Length; k++)
-                                        {
-                                            string line3 = output.Split('\n')[k];
-            
-                                            if (line3.StartsWith("JSR " + line2))
-                                            {
-                                                //we have found a JSR instruction that references the subroutine
-                                                //modify the JSR instruction to point to the subroutine instead of the identifier
-                                                //dont use replace as it is messy
-                                                output =
-                                                    output.Substring(0, output.IndexOf(line3))
-                                                    + "JSR "
-                                                    + j
-                                                    + output.Substring(
-                                                        output.IndexOf(line3) + 4 + line2.Length
-                                                    );
-                                            }
-                                        }
-            
-                                        //we have found the subroutine, break out of the loop
-                                        break;
-                                    }
-                                }
-            
-                                //replace the RTS with the new RTS. we cant use replace as it will replace all instances of RTS
-                                //we also need to make sure we are ONLY replacing the RTS instruction at line i
-                                for (int j = 0; j < output.Split('\n').Length; j++)
-                                {
-                                    string line2 = output.Split('\n')[j];
-            
-                                    if (line2 == "RTS")
-                                    {
-                                        if (j == i)
-                                        {
-                                            //replace the RTS with the new RTS
-                                            //split, replace, join
-                                            string[] split = output.Split('\n');
-                                            split[j] = line;
-                                            output = string.Join("\n", split);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-            
-                        //handle subroutines, denoted by ; they should be replaced with NOCONNECT
-                        for (int i = 0; i < lines.Length; i++)
-            {
-                string line = lines[i];
-
-                if (line.StartsWith(";"))
-                {
-                    //replace the ; with NOCONNECT
-                    //dont use replace as it is messy
-                    output =
-                        output.Substring(0, output.IndexOf(line))
-                        + "NOCONNECT"
-                        + output.Substring(output.IndexOf(line) + line.Length);
-                }
-            }
-            */
-
             //remove the last \n
             output = output.Substring(0, output.Length - 1);
 
@@ -454,8 +344,6 @@ namespace AnimatorAsAssembly
             }
 
             Profiler.EndSample();
-            //end the progress bar
-            /* EditorUtility.ClearProgressBar(); */
             return output;
         }
 
@@ -517,9 +405,6 @@ namespace AnimatorAsAssembly
         {
             Profiler.BeginSample("CompileMicroCode");
 
-            //begin a progress bar
-            /* EditorUtility.DisplayProgressBar("Compiling MicroCode", "Compiling MicroCode", 0); */
-
             //split the instructions into an array
             string[] instructions = raw.Split('\n');
 
@@ -550,12 +435,6 @@ namespace AnimatorAsAssembly
                 //get the instruction type
                 string instructionType = instructionParts[0];
 
-                //progress bar
-                /* EditorUtility.DisplayProgressBar(
-                    "Compiling MicroCode",
-                    "Compiling MicroCode {" + instruction + "}",
-                    (float)i / (float)instructions.Length
-                ); */
                 yield return microcodeProgress.SetProgress(i / (float)instructions.Length);
 
                 //Initialize Global Variables
@@ -591,8 +470,6 @@ namespace AnimatorAsAssembly
             microcodeProgress.Finish();
 
             Profiler.EndSample();
-            //end the progress bar
-            /* EditorUtility.ClearProgressBar(); */
 
             //Link the microcode
             LinkMicroCode(Instructions);
