@@ -83,15 +83,16 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JEQ_EXIT");
             _jumpAway = _layer.NewState("JEQ_JUMPAWAY");
 
-            AacFlTransition transition = entry.TransitionsTo(_jumpAway);
+            AacFlTransition transitionTrue = entry.TransitionsTo(_jumpAway);
+            AacFlTransition transitionFalse = entry.TransitionsTo(_jumpAway);
 
             for (int i = 0; i < Register._bitDepth; i++)
             {
                 //if A.bit == TRUE && B.bit == TRUE, OR
                 //if A.bit == FALSE && B.bit == FALSE, THEN A.bit == B.bit
                 //if both of these fail, automatically jump to the exit state
-                transition.When(A[i].IsTrue()).And(B[i].IsTrue());
-                transition.When(A[i].IsFalse()).And(B[i].IsFalse());
+                transitionTrue.When(A[i].IsTrue()).And(B[i].IsTrue());
+                transitionFalse.When(A[i].IsFalse()).And(B[i].IsFalse());
                 yield return PB.SetProgress((float)i / Register._bitDepth);
             }
 
