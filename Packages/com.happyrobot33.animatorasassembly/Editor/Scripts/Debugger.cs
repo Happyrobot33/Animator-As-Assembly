@@ -20,6 +20,7 @@ namespace AnimatorAsAssembly
     public class Debugger : MonoBehaviour
     {
         public List<SimpleRegister> registersList = new List<SimpleRegister>();
+        public List<string> profilers = new List<string>();
         AnimatorController ac;
 
         [HideInInspector]
@@ -72,6 +73,15 @@ namespace AnimatorAsAssembly
                         }
                     }
                 }
+
+                //add profiler data
+                if (parameter.name.StartsWith("PROFILING/"))
+                {
+                    //only add the PROFILING/NAME part
+                    string profilerName = parameter.name.Split('/')[1];
+                    if (!profilers.Contains("PROFILING/" + profilerName))
+                        profilers.Add("PROFILING/" + profilerName);
+                }
             }
 
             Debug.Log(registerNames.Count + " registers found");
@@ -103,6 +113,7 @@ namespace AnimatorAsAssembly
     public class DebuggerEditor : Editor
     {
         bool callStackShown = true;
+        bool profilingShown = true;
 
         //keep track of the last time the clock was updated and the last clock value
         float lastClockTime = 0;
@@ -133,9 +144,11 @@ namespace AnimatorAsAssembly
                     };
         }
 
+        Debugger debugger = null;
+
         public override void OnInspectorGUI()
         {
-            Debugger debugger = (Debugger)target;
+            debugger = (Debugger)target;
 
             //detect if in play mode
             if (Application.isPlaying)
@@ -237,12 +250,7 @@ namespace AnimatorAsAssembly
                     int usedStackPositions = 0;
                     for (int i = 0; i < Globals._StackSize; i++)
                     {
-                        stackParams[i] =
-                            new LyumaAv3Runtime.Av3EmuParameterAccess()
-                            {
-                                runtime = debugger.runtime,
-                                paramName = Globals.STACKSTRINGPREFIX + "REAL/" + i
-                            };
+                        stackParams[i] = GetParam(Globals.STACKSTRINGPREFIX + "REAL/" + i);
                         if (stackParams[i].intVal != -1)
                         {
                             usedStackPositions++;
@@ -265,6 +273,30 @@ namespace AnimatorAsAssembly
                     }
                 }
                 EditorGUI.indentLevel--;
+                EditorGUILayout.EndFoldoutHeaderGroup();
+                #endregion
+
+                #region Profiling
+                profilingShown = EditorGUILayout.BeginFoldoutHeaderGroup(
+                    profilingShown,
+                    "Profiling"
+                );
+                if (profilingShown)
+                {
+                    EditorGUI.indentLevel++;
+                    //loop through each profiling object
+                    foreach (string profilingObject in debugger.profilers)
+                    {
+                        //get both start and stop clock time
+                        int startClock = GetParam(profilingObject + "/START").intVal;
+                        int stopClock = GetParam(profilingObject + "/STOP").intVal;
+                        string name = profilingObject.Split('/')[1];
+                        EditorGUILayout.LabelField(
+                            name + ": " + (stopClock - startClock) + " cycles"
+                        );
+                    }
+                    EditorGUI.indentLevel--;
+                }
                 EditorGUILayout.EndFoldoutHeaderGroup();
                 #endregion
 
@@ -292,13 +324,7 @@ namespace AnimatorAsAssembly
                         bool[] registerValues = new bool[Register._bitDepth];
                         for (int j = 0; j < Register._bitDepth; j++)
                         {
-                            LyumaAv3Runtime.Av3EmuParameterAccess paramAccess =
-                                new LyumaAv3Runtime.Av3EmuParameterAccess()
-                                {
-                                    runtime = debugger.runtime,
-                                    paramName = register.bits[j]
-                                };
-                            registerValues[j] = paramAccess.boolVal;
+                            registerValues[j] = GetParam(register.bits[j]).boolVal;
                         }
                         #endregion
 
@@ -348,5 +374,14 @@ namespace AnimatorAsAssembly
                 );
             }
         }
+        private LyumaAv3Runtime.Av3EmuParameterAccess GetParam(string paramName)
+        {
+            return new LyumaAv3Runtime.Av3EmuParameterAccess()
+            {
+                runtime = debugger.runtime,
+                paramName = paramName
+            };
+        }
+
     }
 }
