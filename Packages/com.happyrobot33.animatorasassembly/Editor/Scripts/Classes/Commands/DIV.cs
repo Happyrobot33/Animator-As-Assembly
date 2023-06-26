@@ -10,8 +10,8 @@ namespace AnimatorAsAssembly.Commands
 {
     public class DIV : OPCODE
     {
-        public Register A;
-        public Register B;
+        public Register Numerator;
+        public Register Denominator;
         public Register Remainder;
 
         /// <summary> The final result of the multiplication, after adding all intermediates </summary>
@@ -38,8 +38,8 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
         void Init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            this.A = A;
-            this.B = B;
+            this.Numerator = A;
+            this.Denominator = B;
             this.Remainder = new Register("INTERNAL/DIV/REMAINDER", Layer);
             this.Quotient = new Register("INTERNAL/DIV/QUOTIENT", Layer);
             this._layer = Layer.NewStateGroup("DIV");
@@ -69,7 +69,7 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("DIV_EXIT");
 
             //copy the numerator into the remainder
-            MOV mov = new MOV(A, Remainder, _layer, _progressWindow);
+            MOV mov = new MOV(Numerator, Remainder, _layer, _progressWindow);
             yield return mov;
             yield return PB.SetProgress(0.1f);
 
@@ -79,7 +79,7 @@ namespace AnimatorAsAssembly.Commands
             entry.AutomaticallyMovesTo(mov.Entry);
 
             #region WHILE R >= D
-            SUB sub = new SUB(Remainder, B, Remainder, _layer, _progressWindow);
+            SUB sub = new SUB(Remainder, Denominator, Remainder, _layer, _progressWindow);
             yield return sub;
             yield return PB.SetProgress(0.2f);
 
@@ -88,26 +88,26 @@ namespace AnimatorAsAssembly.Commands
             yield return PB.SetProgress(0.3f);
 
             //while R >= D
-            JIG jig = new JIG(Remainder, B, _layer, _progressWindow);
-            yield return jig;
+            JIGE jige = new JIGE(Remainder, Denominator, _layer, _progressWindow);
+            yield return jige;
             yield return PB.SetProgress(0.4f);
-            jig.Link(sub.Entry);
+            jige.Link(sub.Entry);
 
             sub.Exit.AutomaticallyMovesTo(inc.Entry);
-            inc.Exit.AutomaticallyMovesTo(jig.Entry);
+            inc.Exit.AutomaticallyMovesTo(jige.Entry);
             #endregion
 
-            mov.Exit.AutomaticallyMovesTo(jig.Entry);
+            mov.Exit.AutomaticallyMovesTo(jige.Entry);
 
-            MOV returnQ = new MOV(Quotient, A, _layer, _progressWindow);
+            MOV returnQ = new MOV(Quotient, Numerator, _layer, _progressWindow);
             yield return returnQ;
             yield return PB.SetProgress(0.7f);
 
-            MOV returnR = new MOV(Remainder, B, _layer, _progressWindow);
+            MOV returnR = new MOV(Remainder, Denominator, _layer, _progressWindow);
             yield return returnR;
             yield return PB.SetProgress(1f);
 
-            jig.Exit.AutomaticallyMovesTo(returnQ.Entry);
+            jige.Exit.AutomaticallyMovesTo(returnQ.Entry);
             returnQ.Exit.AutomaticallyMovesTo(returnR.Entry);
             returnR.Exit.AutomaticallyMovesTo(exit);
 
@@ -119,7 +119,7 @@ namespace AnimatorAsAssembly.Commands
                     mov.States,
                     sub.States,
                     inc.States,
-                    jig.States,
+                    jige.States,
                     returnQ.States,
                     returnR.States,
                     exit

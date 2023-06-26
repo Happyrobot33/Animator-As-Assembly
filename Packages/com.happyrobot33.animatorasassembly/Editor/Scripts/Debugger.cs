@@ -20,6 +20,7 @@ namespace AnimatorAsAssembly
     public class Debugger : MonoBehaviour
     {
         public List<SimpleRegister> registersList = new List<SimpleRegister>();
+        [HideInInspector]
         public List<string> profilers = new List<string>();
         AnimatorController ac;
 
@@ -292,17 +293,33 @@ namespace AnimatorAsAssembly
                         int stopClock = GetParam(profilingObject + "/STOP").intVal;
                         string name = profilingObject.Split('/')[1];
                         int value = stopClock - startClock;
+                        float seconds = (float)value / HZ;
+                        //round the seconds to 2 decimal places
+                        seconds = Mathf.Round(seconds * 100) / 100;
                         if (value > 0)
                         {
                             EditorGUILayout.LabelField(
-                                name + ": " + (stopClock - startClock) + " cycles"
+                                name + ": " + (stopClock - startClock) + " cycles (" + seconds + " seconds)"
                             );
                         }
                         else
                         {
-                            EditorGUILayout.LabelField(
-                                name + ": " + "IN PROGRESS"
-                            );
+                            //check to see if it has begun
+                            if (startClock == 0)
+                            {
+                                //not started yet
+                                EditorGUILayout.LabelField(
+                                    name + ": not started"
+                                );
+                            }
+                            else
+                            {
+                                //assume the stop clock is the current clock value
+                                value = CLOCK - startClock;
+                                EditorGUILayout.LabelField(
+                                    name + ": " + value + " cycles (still running)"
+                                );
+                            }
                         }
                     }
                     EditorGUI.indentLevel--;

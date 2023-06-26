@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
 using AnimatorAsAssembly;
 using UnityEngine.Profiling;
+using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -15,7 +16,7 @@ namespace AnimatorAsAssembly.Commands
         public string LBLname;
         private AacFlState _jumpAway;
 
-        /// <summary> Jumps to a LBL if A >= B </summary>
+        /// <summary> Jumps to a LBL if A > B </summary>
         /// <param name="A"> </param>
         /// <param name="B"> </param>
         /// <param name="lblname"> The LBL to jump to </param>
@@ -31,14 +32,14 @@ namespace AnimatorAsAssembly.Commands
             Init(A, B, lblname, Layer, progressWindow);
         }
 
-        /// <summary> Jumps to a state if A >= B </summary>
+        /// <summary> Jumps to a state if A > B </summary>
         /// <remarks> This is used for internal jumps. After initializing this, Link(state) MUST be called </remarks>
         public JIG(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             Init(A, B, "INTERNAL", Layer, progressWindow);
         }
 
-        /// <summary> Jumps to a LBL if A >= B </summary>
+        /// <summary> Jumps to a LBL if A > B </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public JIG(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
@@ -85,16 +86,18 @@ namespace AnimatorAsAssembly.Commands
             _jumpAway = _layer.NewState("JIG_JUMPAWAY");
 
             AacFlState[] states = new AacFlState[Register._bitDepth];
-            for (int i = 0; i < Register._bitDepth; i++)
+            for (int i = Register._bitDepth - 1; i >= 0; i--)
             {
                 states[i] = _layer.NewState("JIG_" + i);
             }
-            for (int i = 0; i < Register._bitDepth; i++)
+
+            //go top down through the bits due to endianness
+            for (int i = Register._bitDepth - 1; i >= 0; i--)
             {
                 AacFlState nextState = exit;
-                if (i < Register._bitDepth - 1)
+                if (i != 0)
                 {
-                    nextState = states[i + 1];
+                    nextState = states[i - 1];
                 }
 
                 //transition to this state if the conditions defined above are true
@@ -113,7 +116,7 @@ namespace AnimatorAsAssembly.Commands
             }
 
             //connect the entry to the first state
-            entry.AutomaticallyMovesTo(states[0]);
+            entry.AutomaticallyMovesTo(states[Register._bitDepth - 1]);
 
             PB.Finish();
             Profiler.EndSample();
