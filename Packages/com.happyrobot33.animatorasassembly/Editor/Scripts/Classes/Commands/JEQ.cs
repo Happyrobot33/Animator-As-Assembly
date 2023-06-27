@@ -69,6 +69,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "register", "label" };
+        }
+
         // this entire method is a crazy hack, but essentially if we do a parallel comparison between both bits to see if both are true or both are false, we can see if both bits are equal
         // IF A.bit == TRUE && B.bit == TRUE, OR
         // IF A.bit == FALSE && B.bit == FALSE, THEN A.bit == B.bit

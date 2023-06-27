@@ -51,6 +51,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "label" };
+        }
+
         // 2s complement makes this easy, literally just check if the MSB is 1
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {

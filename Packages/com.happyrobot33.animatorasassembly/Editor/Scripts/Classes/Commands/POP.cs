@@ -36,6 +36,11 @@ namespace AnimatorAsAssembly.Commands
             this.value = Layer.IntParameter("INTERNAL/POP/Value");
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction" };
+        }
+
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("POP");

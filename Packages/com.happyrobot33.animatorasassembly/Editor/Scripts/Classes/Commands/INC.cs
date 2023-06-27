@@ -37,6 +37,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register" };
+        }
+
         // TODO: Make this faster by instead of using ADD, implement a custom setup that ends early when it can
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {

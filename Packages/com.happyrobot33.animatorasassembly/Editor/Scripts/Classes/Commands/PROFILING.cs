@@ -58,6 +58,11 @@ namespace AnimatorAsAssembly.Commands
             this._clockStop = Layer.IntParameter("PROFILING/" + name + "/STOP");
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "command", "profilerName" };
+        }
+
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("PROFILING");

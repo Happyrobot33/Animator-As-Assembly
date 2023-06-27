@@ -84,6 +84,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "register", "register" };
+        }
+
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("ADD");

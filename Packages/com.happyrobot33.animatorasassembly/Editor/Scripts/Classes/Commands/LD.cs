@@ -37,7 +37,11 @@ namespace AnimatorAsAssembly.Commands
             this._layer = Layer.NewStateGroup("LD");
             this.value = value;
             this._progressWindow = progressWindow;
-            //states = STATES();
+        }
+
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "number" };
         }
 
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)

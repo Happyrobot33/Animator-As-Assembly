@@ -70,6 +70,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "register", "label" };
+        }
+
         // there is a check state for each bit pair
         // if A.bit == 1 and B.bit == 0, then A > B
         // if A.bit == 0 and B.bit == 1, then A < B

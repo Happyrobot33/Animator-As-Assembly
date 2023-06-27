@@ -46,6 +46,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "register" };
+        }
+
         /*
         Nieve implementation of division, using repeated subtraction
         Could be faster by using a different algorithm

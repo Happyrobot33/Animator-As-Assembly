@@ -49,6 +49,11 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        public static string[] GetColoration()
+        {
+            return new string[] { "instruction", "register", "register", "register" };
+        }
+
         // Binary multiplication is complicated
         // Essentially, for each bit in A, we multiply it by each bit in B
         /*        1011   (this is binary for decimal 11)

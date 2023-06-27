@@ -1,11 +1,17 @@
-﻿//#define RICHTEXT
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Profiling;
+using System.Reflection;
+using System;
+using UnityEngine.Assertions.Must;
+using AnimatorAsAssembly.Commands;
+using UnityEditor.Experimental.TerrainAPI;
+using UnityEngine.EventSystems;
+using UnityEditor.EventSystems;
 
 namespace AnimatorAsAssembly
 {
@@ -58,11 +64,16 @@ namespace AnimatorAsAssembly
             }
             codeStyleRead.font = font;
             codeStyleWrite.font = font;
-#if RICHTEXT
             codeStyleWrite.richText = true;
-#endif
             lineStyleRead.font = font;
             lineStyleWrite.font = font;
+
+            //font size
+            const int size = 14;
+            codeStyleRead.fontSize = size;
+            codeStyleWrite.fontSize = size;
+            lineStyleRead.fontSize = size;
+            lineStyleWrite.fontSize = size;
             //Debug.Log(font);
         }
     }
@@ -80,6 +91,7 @@ namespace AnimatorAsAssembly
             .Enum
             .Forest;
 
+        // TODO: Figure out why TF this renders differently on a vertical monitor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             //get a reference to the attribute
@@ -161,14 +173,23 @@ namespace AnimatorAsAssembly
                 fillTexture.SetPixel(
                     0,
                     0,
-                    SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme).base00
+                    SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme).background
                 );
                 fillTexture.Apply();
 
                 codeAreaAttribute.codeStyleWrite.normal.background = fillTexture;
-                codeAreaAttribute.lineStyleWrite.normal.background = fillTexture;
+                codeAreaAttribute.codeStyleWrite.hover.background = fillTexture;
+                codeAreaAttribute.codeStyleWrite.active.background = fillTexture;
+                codeAreaAttribute.codeStyleWrite.focused.background = fillTexture;
 
-                var text = EditorGUI.TextArea(
+                codeAreaAttribute.lineStyleWrite.normal.background = fillTexture;
+                codeAreaAttribute.lineStyleWrite.hover.background = fillTexture;
+                codeAreaAttribute.lineStyleWrite.active.background = fillTexture;
+                codeAreaAttribute.lineStyleWrite.focused.background = fillTexture;
+
+                //ALL of this mess essentially just makes a label behind the text area the user interacts with that is highlighted.
+                //The box the user is actually typing into is completely invisible
+                EditorGUI.LabelField(
                     textAreaRect,
                     SyntaxHighlight(
                         property.stringValue,
@@ -176,139 +197,25 @@ namespace AnimatorAsAssembly
                     ),
                     codeAreaAttribute.codeStyleWrite
                 );
-
-#if RICHTEXT
-                //get the active text editor
-                TextEditor tEditor =
-                    typeof(EditorGUI)
-                        .GetField("activeEditor", BindingFlags.Static | BindingFlags.NonPublic)
-                        .GetValue(null) as TextEditor;
-                //check if the selected text editor is the one we are using
-                if (tEditor != null)
-                {
-                    //check if the text editor is this one
-                    if (tEditor.text == text)
-                    {
-                        //if multi selecting, dont do anything
-                        if (tEditor.cursorIndex == tEditor.selectIndex)
-                        {
-                            //determine if the user cursor is in a rich text tag
-                            int cursorIndex = tEditor.cursorIndex;
-
-                            //check if the cursor is in a rich text tag
-                            string textBeforeCursor = tEditor.text.Substring(0, cursorIndex);
-
-                            bool inRichTextTag = true;
-                            int tagStartIndex = 0;
-                            int tagEndIndex = 0;
-                            //check if the cursor is in a rich text tag, and if it is, find the start and end of the tag
-                            for (int i = textBeforeCursor.Length - 1; i >= 0; i--)
-                            {
-                                if (textBeforeCursor[i] == '<')
-                                {
-                                    tagStartIndex = i;
-                                    for (int j = cursorIndex; j < text.Length; j++)
-                                    {
-                                        if (text[j] == '>')
-                                        {
-                                            tagEndIndex = j + 1;
-                                            break;
-                                        }
-                                    }
-                                    break;
-                                }
-                                else if (textBeforeCursor[i] == '>')
-                                {
-                                    inRichTextTag = false;
-                                    break;
-                                }
-                            }
-
-                            //determine the cursor index in the current line
-                            int cursorIndexInLine = 0;
-                            for (int i = cursorIndex - 1; i >= 0; i--)
-                            {
-                                if (text[i] == '\n')
-                                {
-                                    break;
-                                }
-                                else
-                                {
-                                    cursorIndexInLine++;
-                                }
-                            }
-
-                            //check if the line the cursor is on is the same as the line the cursor was on before
-                            bool inSameLine = false;
-                            int currentLine = 0;
-                            int previousLine = 0;
-                            for (int i = 0; i < cursorIndex; i++)
-                            {
-                                if (text[i] == '\n')
-                                {
-                                    currentLine++;
-                                }
-                            }
-                            for (int i = 0; i < previousCursorIndex; i++)
-                            {
-                                if (text[i] == '\n')
-                                {
-                                    previousLine++;
-                                }
-                            }
-                            if (currentLine == previousLine)
-                            {
-                                inSameLine = true;
-                            }
-
-                            //if in a rich text tag, move the cursor to the closest end of the tag
-                            if (inRichTextTag)
-                            {
-                                if (cursorIndex - tagStartIndex > tagEndIndex - cursorIndex)
-                                {
-                                    //move the cursor to the start of the tag
-                                    tEditor.cursorIndex = tagStartIndex;
-                                    tEditor.selectIndex = tagStartIndex;
-                                    //if the cursor was at the end of the tag, move it left one
-                                    if (cursorIndex + 1 == tagEndIndex && inSameLine)
-                                    {
-                                        tEditor.cursorIndex--;
-                                        tEditor.selectIndex--;
-                                    }
-                                }
-                                else
-                                {
-                                    //remember where the cursor was before moving it
-                                    int tempCursor = tEditor.cursorIndex;
-                                    //move the cursor to the end of the tag, dont drag select
-                                    tEditor.cursorIndex = tagEndIndex;
-                                    tEditor.selectIndex = tagEndIndex;
-                                    //if the cursor was at the start of the tag, move it right one
-                                    if (tempCursor - 1 == tagStartIndex && inSameLine)
-                                    {
-                                        tEditor.cursorIndex++;
-                                        tEditor.selectIndex++;
-                                    }
-                                }
-                                /* Debug.Log(
-                                    tagStartIndex
-                                        + " "
-                                        + cursorIndex
-                                        + " "
-                                        + tagEndIndex
-                                        + " "
-                                        + closerIndex
-                                ); */
-                            }
-
-                            previousCursorIndex = tEditor.cursorIndex;
-                        }
-                    }
-                }
-                //remove all rich color tags
-                //use this regex \<[^\>]+\>
-                text = System.Text.RegularExpressions.Regex.Replace(text, @"\<[^\>]+\>", "");
-#endif
+                GUIStyle invis = new GUIStyle(codeAreaAttribute.codeStyleWrite);
+                //create a invisible texture
+                Texture2D invisTexture = new Texture2D(1, 1);
+                invisTexture.SetPixel(0, 0, Color.clear);
+                invisTexture.Apply();
+                invis.normal.background = invisTexture;
+                invis.hover.background = invisTexture;
+                invis.active.background = invisTexture;
+                invis.focused.background = invisTexture;
+                Color clear = Color.clear;
+                invis.normal.textColor = clear;
+                invis.hover.textColor = clear;
+                invis.active.textColor = clear;
+                invis.focused.textColor = clear;
+                string text = EditorGUI.TextArea(
+                    textAreaRect,
+                    property.stringValue,
+                    invis
+                );
 
                 //remove any zero width spaces
                 text = text.Replace("\u200B", "");
@@ -339,7 +246,6 @@ namespace AnimatorAsAssembly
         {
             //loop through each line
             string[] lines = text.Split('\n');
-#if RICHTEXT
             for (int i = 0; i <= lines.Length - 1; i++)
             {
                 string line = lines[i];
@@ -353,69 +259,54 @@ namespace AnimatorAsAssembly
                     {
                         //split the code part into parts, the opcode and the operands
                         string[] codeSplit = commentSplit[0].Split(' ');
-                        //if there is an opcode part, color it
+                        //if there is an opcode part, use reflection to get it
                         if (codeSplit.Length > 0)
                         {
-                            //color the opcode part
-                            codeSplit[0] = colorize(codeSplit[0], Theme.base0C);
-                            //if there is operands, color them
-                            if (codeSplit.Length > 1)
+                            //get the opcode
+                            string opcode = codeSplit[0];
+                            //get the Commands namespace
+                            const string nameSpace = "AnimatorAsAssembly.Commands.";
+
+                            //create the relevant states based on the instruction type using reflection
+                            Type type = Type.GetType(nameSpace + opcode);
+                            if (type != null)
                             {
-                                for (int j = 1; j <= codeSplit.Length - 1; j++)
+                                //call the static method GetColoration
+                                MethodInfo method = type.GetMethod("GetColoration");
+                                if (method != null)
                                 {
-                                    //check to see if the string has any length
-                                    if (codeSplit[j].Length == 0)
+                                    //get the coloration
+                                    string[] coloration = (string[])method.Invoke(null, null);
+                                    //colorize each part of the code
+                                    for (int j = 0; j <= codeSplit.Length - 1; j++)
                                     {
-                                        continue;
+                                        //color index
+                                        string color = "";
+                                        try
+                                        {
+                                            color = coloration[j];
+                                        }
+                                        catch (IndexOutOfRangeException e)
+                                        {
+                                            //color it as error
+                                            color = "error";
+                                        }
+                                        //get the color itself
+                                        Color colorValue = (Color)Theme.GetType().GetField(color).GetValue(Theme);
+                                        //if the color is null, color it as error
+                                        if (colorValue == null)
+                                        {
+                                            colorValue = Theme.error;
+                                        }
+                                        codeSplit[j] = Colorize(codeSplit[j], colorValue);
                                     }
-                                    //switch based on the first character of the operand
-                                    switch (codeSplit[j][0])
+                                }
+                                else
+                                {
+                                    for (int j = 0; j <= codeSplit.Length - 1; j++)
                                     {
-                                        //if the first character is a number, color it as a number
-                                        case '$':
-                                            codeSplit[j] = colorize(codeSplit[j], Theme.base08);
-                                            break;
-                                        case '%':
-                                            codeSplit[j] = colorize(codeSplit[j], Theme.base09);
-                                            break;
-                                        case '&':
-                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0A);
-                                            break;
-                                        case '!':
-                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0B);
-                                            break;
-                                        case '*':
-                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0D);
-                                            break;
-                                        case ';':
-                                            codeSplit[j] = colorize(codeSplit[j], Theme.base0E);
-                                            break;
-                                        default:
-                                            // check if it is a number
-                                            if (codeSplit[j][0] >= '0' && codeSplit[j][0] <= '9')
-                                            {
-                                                codeSplit[j] = colorize(codeSplit[j], Theme.base06);
-                                            }
-                                            else
-                                            {
-                                                //check if it is a string
-                                                if (codeSplit[j][0] == '"')
-                                                {
-                                                    codeSplit[j] = colorize(
-                                                        codeSplit[j],
-                                                        Theme.base0F
-                                                    );
-                                                }
-                                                else
-                                                {
-                                                    //color it as an operand
-                                                    codeSplit[j] = colorize(
-                                                        codeSplit[j],
-                                                        Theme.base07
-                                                    );
-                                                }
-                                            }
-                                            break;
+                                        //colorize them as error
+                                        codeSplit[j] = Colorize(codeSplit[j], Theme.error);
                                     }
                                 }
                             }
@@ -433,7 +324,7 @@ namespace AnimatorAsAssembly
                     if (commentSplit.Length > 1)
                     {
                         //color the comment part
-                        commentSplit[1] = colorize("#" + commentSplit[1], Theme.base03);
+                        commentSplit[1] = Colorize("#" + commentSplit[1], Theme.comment);
                     }
 
                     //recombine the comment parts
@@ -446,8 +337,6 @@ namespace AnimatorAsAssembly
                 //replace the line with the colored line
                 lines[i] = line;
             }
-
-#endif
 
             //recombine the lines
             text = "";
