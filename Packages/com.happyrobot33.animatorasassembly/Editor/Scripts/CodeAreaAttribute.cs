@@ -306,6 +306,14 @@ namespace AnimatorAsAssembly
                                     }
                                 }
                             }
+                            else
+                            {
+                                for (int j = 0; j <= codeSplit.Length - 1; j++)
+                                {
+                                    //colorize them as error
+                                    codeSplit[j] = Colorize(codeSplit[j], Theme.error);
+                                }
+                            }
                         }
                         //recombine the code parts
                         commentSplit[0] = "";

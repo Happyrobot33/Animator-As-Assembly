@@ -439,6 +439,7 @@ namespace AnimatorAsAssembly
                 object[] args = { instructionArgs, ControllerLayer, progressBar };
                 Commands.OPCODE instance =
                     Activator.CreateInstance(type, args: args) as Commands.OPCODE;
+                instance._base = aac;
 
                 //this calls GenerateStates() on the instance
                 yield return instance;

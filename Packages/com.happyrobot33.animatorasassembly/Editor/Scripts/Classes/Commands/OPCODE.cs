@@ -41,6 +41,7 @@ namespace AnimatorAsAssembly.Commands
 
         /// <summary> The FX layer that this command is linked to </summary>
         internal AacFlLayer _layer;
+        internal AacFlBase _base;
 
         /// <summary> The entry state for this opcode </summary>
         public AacFlState Entry

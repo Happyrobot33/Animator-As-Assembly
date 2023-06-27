@@ -272,8 +272,8 @@ namespace AnimatorAsAssembly
                             EditorGUILayout.LabelField(name);
                         }
                     }
+                    EditorGUI.indentLevel--;
                 }
-                EditorGUI.indentLevel--;
                 EditorGUILayout.EndFoldoutHeaderGroup();
                 #endregion
 
