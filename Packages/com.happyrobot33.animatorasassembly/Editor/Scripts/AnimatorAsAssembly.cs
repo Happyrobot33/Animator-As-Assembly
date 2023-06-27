@@ -195,7 +195,7 @@ namespace AnimatorAsAssembly
             GameObject[] PE = new GameObject[width * height];
             for (int i = 0; i < PE.Length; i++)
             {
-                yield return PB.SetProgress(((float)i / PE.Length) / 2);
+                yield return PB.SetProgress((float)i / PE.Length / 2);
                 int x = i % width;
                 int y = i / width;
                 PE[i] = Instantiate(pixelPrefab, screenRoot.transform);
@@ -219,7 +219,7 @@ namespace AnimatorAsAssembly
             AacFlClip[] clips = new AacFlClip[PE.Length];
             for (int i = 0; i < PE.Length; i++)
             {
-                yield return PB.SetProgress(0.5f + ((float)i / PE.Length) / 2);
+                yield return PB.SetProgress(0.5f + ((float)i / PE.Length / 2));
                 //clips[i] = aac.NewClip().Toggling(PE[i], true); //takes up 2 frames
                 clips[i] = aac.NewClip()
                     .Animating(clip =>

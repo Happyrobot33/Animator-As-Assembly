@@ -1,17 +1,9 @@
 ﻿#if UNITY_EDITOR
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor;
 using UnityEngine.Profiling;
-using System.Reflection;
 using System;
-using UnityEngine.Assertions.Must;
-using AnimatorAsAssembly.Commands;
-using UnityEditor.Experimental.TerrainAPI;
-using UnityEngine.EventSystems;
-using UnityEditor.EventSystems;
 
 namespace AnimatorAsAssembly
 {
@@ -84,7 +76,6 @@ namespace AnimatorAsAssembly
     public class CodeAreaDrawer : PropertyDrawer
     {
         int totalLines = 0;
-        int previousCursorIndex = 0;
 
         SyntaxHighlighterSchemes.Themes.Enum currentSelectedTheme = SyntaxHighlighterSchemes
             .Themes
@@ -281,22 +272,27 @@ namespace AnimatorAsAssembly
                                     for (int j = 0; j <= codeSplit.Length - 1; j++)
                                     {
                                         //color index
-                                        string color = "";
+                                        string color;
                                         try
                                         {
                                             color = coloration[j];
                                         }
-                                        catch (IndexOutOfRangeException e)
+                                        catch (IndexOutOfRangeException)
                                         {
                                             //color it as error
                                             color = "error";
                                         }
                                         //get the color itself
-                                        Color colorValue = (Color)Theme.GetType().GetField(color).GetValue(Theme);
+                                        object value = Theme.GetType().GetField(color).GetValue(Theme);
+                                        Color colorValue;
                                         //if the color is null, color it as error
-                                        if (colorValue == null)
+                                        if (value == null)
                                         {
                                             colorValue = Theme.error;
+                                        }
+                                        else
+                                        {
+                                            colorValue = (Color)value;
                                         }
                                         codeSplit[j] = Colorize(codeSplit[j], colorValue);
                                     }
@@ -345,8 +341,7 @@ namespace AnimatorAsAssembly
                 text += line + "\n";
             }
             //exclude the last newline
-            text = text.Substring(0, text.Length - 1);
-            return text;
+            return text.Substring(0, text.Length - 1);
         }
 
         internal string Colorize(string text, string color)

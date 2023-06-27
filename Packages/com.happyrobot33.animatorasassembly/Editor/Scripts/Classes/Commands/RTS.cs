@@ -20,11 +20,13 @@ namespace AnimatorAsAssembly.Commands
         /// <summary> Returns from subroutine </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
+#pragma warning disable RCS1163, IDE0060 // Unused parameter.
         public RTS(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             //split the args into the register and the value
             Init(Layer, progressWindow);
         }
+#pragma warning restore RCS1163, IDE0060 // Unused parameter.
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
         void Init(AacFlLayer Layer, ComplexProgressBar progressWindow)
