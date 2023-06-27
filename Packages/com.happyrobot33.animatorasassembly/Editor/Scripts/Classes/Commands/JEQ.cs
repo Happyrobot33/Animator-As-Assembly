@@ -88,25 +88,38 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JEQ_EXIT");
             _jumpAway = _layer.NewState("JEQ_JUMPAWAY");
 
-            AacFlTransition transitionTrue = entry.TransitionsTo(_jumpAway);
-            AacFlTransition transitionFalse = entry.TransitionsTo(_jumpAway);
+
+            AacFlState[] states = new AacFlState[Register._bitDepth];
+            for (int i = 0; i < Register._bitDepth; i++)
+            {
+                states[i] = _layer.NewState("JEQ_" + i);
+            }
 
             for (int i = 0; i < Register._bitDepth; i++)
             {
+                AacFlState next = _jumpAway;
+                if (i < Register._bitDepth - 1)
+                {
+                    next = states[i + 1];
+                }
+
+                AacFlTransition transitionFalse = states[i].TransitionsTo(next);
+                AacFlTransition transitionTrue = states[i].TransitionsTo(next);
+
                 //if A.bit == TRUE && B.bit == TRUE, OR
                 //if A.bit == FALSE && B.bit == FALSE, THEN A.bit == B.bit
                 //if both of these fail, automatically jump to the exit state
                 transitionTrue.When(A[i].IsTrue()).And(B[i].IsTrue());
                 transitionFalse.When(A[i].IsFalse()).And(B[i].IsFalse());
+                states[i].AutomaticallyMovesTo(exit);
                 yield return PB.SetProgress((float)i / Register._bitDepth);
             }
 
-            yield return PB.SetProgress(0.5f);
-            entry.AutomaticallyMovesTo(exit);
+            entry.AutomaticallyMovesTo(states[0]);
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, _jumpAway, exit));
+            callback(Util.CombineStates(entry, states, _jumpAway, exit));
             yield break;
         }
 
