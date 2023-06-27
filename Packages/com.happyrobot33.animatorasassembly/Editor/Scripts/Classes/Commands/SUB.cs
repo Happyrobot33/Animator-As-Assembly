@@ -113,7 +113,7 @@ namespace AnimatorAsAssembly.Commands
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(mov.States, flip.States, add.States));
+            callback(Util.CombineStates(mov, flip, add));
             yield break;
         }
     }

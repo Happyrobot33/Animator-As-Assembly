@@ -90,8 +90,8 @@ namespace AnimatorAsAssembly.Commands
             callback(
                 Util.CombineStates(
                     entry,
-                    firstHalfAdder.States,
-                    secondHalfAdder.States,
+                    firstHalfAdder,
+                    secondHalfAdder,
                     carryCalc,
                     exit
                 )

@@ -145,29 +145,15 @@ namespace AnimatorAsAssembly.Commands
             FullAdders[Register._bitDepth - 1].Exit.AutomaticallyMovesTo(mov.Entry);
             mov.Exit.AutomaticallyMovesTo(exit);
 
-            //convert the FullAdder states into a single array
-            AacFlState[] FullAdderStates = new AacFlState[
-                Register._bitDepth * FullAdders[0].States.Length
-            ];
-            for (int j = 0; j < Register._bitDepth; j++)
-            {
-                for (int k = 0; k < FullAdders[j].States.Length; k++)
-                {
-                    FullAdderStates[(j * FullAdders[j].States.Length) + k] = FullAdders[j].States[
-                        k
-                    ];
-                }
-            }
-
             PB.Finish();
 
             Profiler.EndSample();
             callback(
                 Util.CombineStates(
-                    new AacFlState[] { entry },
-                    FullAdderStates,
-                    mov.States,
-                    new AacFlState[] { exit }
+                    entry,
+                    FullAdders,
+                    mov,
+                    exit
                 )
             );
             yield break;

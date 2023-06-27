@@ -77,7 +77,7 @@ namespace AnimatorAsAssembly.Commands
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(mov.States, emptyBuffer));
+            callback(Util.CombineStates(mov, emptyBuffer));
             yield break;
         }
     }

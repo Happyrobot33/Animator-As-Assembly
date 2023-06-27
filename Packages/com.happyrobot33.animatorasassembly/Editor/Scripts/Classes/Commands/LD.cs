@@ -54,7 +54,7 @@ namespace AnimatorAsAssembly.Commands
 
             PB.Finish();
             Profiler.EndSample();
-            callback(new AacFlState[] { entry });
+            callback(Util.CombineStates(entry));
         }
     }
 }

@@ -46,7 +46,7 @@ namespace AnimatorAsAssembly.Commands
 
             yield return null;
             Profiler.EndSample();
-            callback(new AacFlState[] { entry });
+            callback(Util.CombineStates(entry));
         }
     }
 }

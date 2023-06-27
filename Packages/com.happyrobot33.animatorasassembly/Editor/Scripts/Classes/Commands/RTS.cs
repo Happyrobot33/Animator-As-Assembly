@@ -54,7 +54,7 @@ namespace AnimatorAsAssembly.Commands
             pop.Exit.AutomaticallyMovesTo(jumpState);
 
             Profiler.EndSample();
-            callback(Util.CombineStates(pop.States, jumpState));
+            callback(Util.CombineStates(pop, jumpState));
             yield break;
         }
 

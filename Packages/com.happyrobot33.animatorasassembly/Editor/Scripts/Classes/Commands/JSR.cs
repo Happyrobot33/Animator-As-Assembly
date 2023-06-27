@@ -58,7 +58,7 @@ namespace AnimatorAsAssembly.Commands
             push.Exit.AutomaticallyMovesTo(jumpState);
 
             Profiler.EndSample();
-            callback(Util.CombineStates(push.States, jumpState, exitState));
+            callback(Util.CombineStates(push, jumpState, exitState));
             yield break;
         }
 

@@ -136,7 +136,7 @@ namespace AnimatorAsAssembly.Commands
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, interstates.ToArray(), movToResult.States, exit));
+            callback(Util.CombineStates(entry, interstates.ToArray(), movToResult, exit));
             yield break;
         }
     }

@@ -88,7 +88,6 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JEQ_EXIT");
             _jumpAway = _layer.NewState("JEQ_JUMPAWAY");
 
-
             AacFlState[] states = new AacFlState[Register._bitDepth];
             for (int i = 0; i < Register._bitDepth; i++)
             {

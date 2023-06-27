@@ -121,12 +121,12 @@ namespace AnimatorAsAssembly.Commands
             callback(
                 Util.CombineStates(
                     entry,
-                    mov.States,
-                    sub.States,
-                    inc.States,
-                    jige.States,
-                    returnQ.States,
-                    returnR.States,
+                    mov,
+                    sub,
+                    inc,
+                    jige,
+                    returnQ,
+                    returnR,
                     exit
                 )
             );

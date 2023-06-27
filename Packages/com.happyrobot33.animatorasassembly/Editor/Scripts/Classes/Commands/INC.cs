@@ -55,7 +55,7 @@ namespace AnimatorAsAssembly.Commands
 
             PB.Finish();
             Profiler.EndSample();
-            callback(add.States);
+            callback(add);
             yield break;
         }
     }

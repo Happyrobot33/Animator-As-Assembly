@@ -50,7 +50,7 @@ namespace AnimatorAsAssembly.Commands
             AacFlState state = _layer.NewState("SBR " + name);
 
             Profiler.EndSample();
-            callback(new AacFlState[] { state });
+            callback(Util.CombineStates(state));
             yield break;
         }
 
