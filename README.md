@@ -48,7 +48,6 @@ https://www.matthewherber.com/Animator-As-Assembly/
 - [x] `SHR`: Shifts the contents of the register right
 - [x] `DELAY`: Waits for the specified number of seconds
 - [ ] `RANDOM`: generates a random number between a min and max {RANDOM MIN MAX REGISTER_NUMBER}
-- [x] `COMPLEMENT`: Turns the register into the 2s complement of itself
 - [x] `FLIP`: Does a bitwise flip of the register
 - [x] `PROFILING`: Allows you to profile sections of your code
   - [x] `START`: Starts profiling, with the given name

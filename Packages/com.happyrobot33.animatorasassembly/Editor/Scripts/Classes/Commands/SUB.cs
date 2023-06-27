@@ -95,22 +95,25 @@ namespace AnimatorAsAssembly.Commands
             MOV mov = new MOV(B, Btemp, _layer, _progressWindow);
             yield return mov;
 
-            //calculate the complement of B
-            COMPLEMENT complement = new COMPLEMENT(Btemp, _layer, _progressWindow);
-            yield return complement;
+            //flip B
+            FLIP flip = new FLIP(Btemp, _layer, _progressWindow);
+            yield return flip;
             yield return PB.SetProgress(0.5f);
 
             //do the subtraction
-            ADD add = new ADD(A, complement.A, C, _layer, _progressWindow);
+            ADD add = new ADD(A, flip.A, C, _layer, _progressWindow)
+            {
+                CARRYIN = Globals._True
+            };
             yield return add;
             yield return PB.SetProgress(1f);
 
-            mov.Exit.AutomaticallyMovesTo(complement.Entry);
-            complement.Exit.AutomaticallyMovesTo(add.Entry);
+            mov.Exit.AutomaticallyMovesTo(flip.Entry);
+            flip.Exit.AutomaticallyMovesTo(add.Entry);
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(mov.States, complement.States, add.States));
+            callback(Util.CombineStates(mov.States, flip.States, add.States));
             yield break;
         }
     }

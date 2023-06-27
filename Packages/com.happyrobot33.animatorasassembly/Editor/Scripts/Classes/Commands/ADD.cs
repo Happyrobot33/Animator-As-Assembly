@@ -13,7 +13,8 @@ namespace AnimatorAsAssembly.Commands
         public Register A;
         public Register B;
         public Register C;
-        public AacFlBoolParameter CARRY;
+        public AacFlBoolParameter CARRYOUT;
+        public AacFlBoolParameter CARRYIN;
         public Register SUM;
 
         /// <summary> Adds two registers </summary>
@@ -79,9 +80,10 @@ namespace AnimatorAsAssembly.Commands
             this.B = B;
             this.C = C ?? B;
             this._layer = Layer.NewStateGroup("ADD");
-            CARRY = Layer.BoolParameter("INTERNAL/ADD/CARRY");
+            CARRYOUT = Layer.BoolParameter("INTERNAL/ADD/CARRY");
             SUM = new Register("INTERNAL/ADD/SUM", Layer);
             this._progressWindow = progressWindow;
+            this.CARRYIN = Globals._False;
         }
 
         public static string[] GetColoration()
@@ -97,7 +99,7 @@ namespace AnimatorAsAssembly.Commands
             //entry state
             AacFlState entry = _layer.NewState("EIGHTBITADDER");
             //clear sum and carry registers
-            entry.Drives(CARRY, false);
+            entry.Drives(CARRYOUT, false);
             SUM.Set(entry, 0);
 
             //exit state
@@ -109,7 +111,7 @@ namespace AnimatorAsAssembly.Commands
             {
                 Profiler.BeginSample("INTERNAL/ADD/FULLADDER " + j);
                 /// <summary> The previous carry bit </summary>
-                AacFlBoolParameter prevcarry = Globals._False;
+                AacFlBoolParameter prevcarry = CARRYIN;
                 if (j > 0)
                 {
                     //copy prevcarry into our own register so it isnt cleared
@@ -128,7 +130,7 @@ namespace AnimatorAsAssembly.Commands
             }
 
             //set the carry bit if the last FullAdder has a carry bit
-            FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRY, true);
+            FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRYOUT, true);
 
             //use a MOV to copy the sum register to the C register
             MOV mov = new MOV(SUM, C, _layer, _progressWindow);
