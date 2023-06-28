@@ -415,6 +415,5 @@ namespace AnimatorAsAssembly
                 paramName = paramName
             };
         }
-
     }
 }

@@ -22,10 +22,6 @@ namespace AnimatorAsAssembly
         public VRCAvatarDescriptor avatar;
         public AnimatorController assetContainer;
         public string assetKey;
-
-        [HideInInspector]
-        public int RegistersUsed = 0;
-
         [Header("Graph Options")]
         public bool organizeGraph = true;
         public int horizontalGraphScale = 1;
@@ -78,7 +74,6 @@ namespace AnimatorAsAssembly
                 AssetDatabase.StartAssetEditing();
 
                 Profiler.BeginSample("Compile");
-                RegistersUsed = 0;
                 instructionStringList = new List<string>();
 
                 aac = AacExample.AnimatorAsCode(
@@ -334,12 +329,6 @@ namespace AnimatorAsAssembly
 
             //remove the last \n
             output = output.Substring(0, output.Length - 1);
-
-            //if there is a JSR instruction at the end of the program, add a NOP to the end of the program
-            if (output.Split('\n')[output.Split('\n').Length - 1].StartsWith("JSR"))
-            {
-                output += "\nNOP";
-            }
 
             Profiler.EndSample();
             return output;
