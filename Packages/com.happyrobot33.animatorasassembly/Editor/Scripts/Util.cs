@@ -80,6 +80,18 @@ namespace AnimatorAsAssembly
             return new string(charArray);
         }
 
+        public static void EmptyController(AnimatorController controller)
+        {
+            //completely empty the controller except for the base information
+            AnimatorController newController = new AnimatorController();
+
+            //overwrite the asset
+            EditorUtility.CopySerialized(newController, controller);
+
+            //save the asset
+            AssetDatabase.SaveAssets();
+        }
+
         /// <summary> Cleans a animator controller by removing all unreferenced sub assets </summary>
         public static IEnumerator<EditorCoroutine> CleanAnimatorControllerAsset(
             string path,
@@ -253,6 +265,7 @@ namespace AnimatorAsAssembly
             {
                 AssetDatabase.StopAssetEditing();
                 AssetDatabase.SaveAssets();
+                AssetDatabase.ImportAsset(path);
                 AssetDatabase.Refresh();
                 /* EditorUtility.ClearProgressBar(); */
             }

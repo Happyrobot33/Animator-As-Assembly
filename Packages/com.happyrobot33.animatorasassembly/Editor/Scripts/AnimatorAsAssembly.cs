@@ -61,15 +61,7 @@ namespace AnimatorAsAssembly
                 progressWindow.ShowUtility();
                 yield return null;
 
-                //remove all junk sub assets
-                yield return EditorCoroutineUtility.StartCoroutine(
-                    Util.CleanAnimatorControllerAsset(
-                        AssetDatabase.GetAssetPath(assetContainer),
-                        progressWindow
-                    ),
-                    this
-                );
-                yield return mainProgressBar.SetProgress(0.1f);
+                Util.EmptyController(assetContainer);
 
                 AssetDatabase.StartAssetEditing();
 
@@ -85,6 +77,7 @@ namespace AnimatorAsAssembly
                 );
 
                 AacFlLayer ControllerLayer = aac.CreateMainFxLayer();
+                yield return mainProgressBar.SetProgress(0.1f);
 
                 //Initialize Global Variables
                 new Globals(ControllerLayer);
