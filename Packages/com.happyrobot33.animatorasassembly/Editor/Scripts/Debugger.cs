@@ -246,7 +246,7 @@ namespace AnimatorAsAssembly
                 #region Display Emulation
                 // emulate the on-avatar display
                 // create a x y grid of boxes
-                int pixelSize = 12;
+                const int pixelSize = 12;
                 EditorGUILayout.BeginVertical(GUILayout.Height(pixelSize));
                 for (int y = 0; y < debugger.aaa.displayHeight; y++)
                 {
