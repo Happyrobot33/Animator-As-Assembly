@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using AnimatorAsCode.Framework;
 using Unity.EditorCoroutines.Editor;
+using UnityEditor;
 using UnityEngine;
 
 namespace AnimatorAsAssembly
@@ -17,7 +18,12 @@ namespace AnimatorAsAssembly
         public string Name;
 
         /// <summary> The bit count per register </summary>
-        public static int _bitDepth = 8;
+        //store in editor prefs
+        public static int BitDepth
+        {
+            get { return EditorPrefs.GetInt("AAA_BIT_DEPTH", 8); }
+            set { EditorPrefs.SetInt("AAA_BIT_DEPTH", value); }
+        }
 
         /// <summary> The FX controller that this register is linked to </summary>
         public AacFlLayer FX;
@@ -36,7 +42,7 @@ namespace AnimatorAsAssembly
         /// <param name="bitDepth"> The bit depth of the registers </param>
         public static void SetBitDepth(int bitDepth)
         {
-            _bitDepth = bitDepth;
+            BitDepth = bitDepth;
         }
 
         /// <summary> Get the individual bits of this register </summary>
@@ -58,7 +64,7 @@ namespace AnimatorAsAssembly
         public IEnumerator<EditorCoroutine> Set(AacFlState state, int value, ProgressBar progressCallback = null)
         {
             CheckOverflow(value);
-            for (int i = 0; i < _bitDepth; i++)
+            for (int i = 0; i < BitDepth; i++)
             {
                 if ((value & (1 << i)) != 0)
                 {
@@ -70,7 +76,7 @@ namespace AnimatorAsAssembly
                 }
                 if (progressCallback != null)
                 {
-                    yield return progressCallback.SetProgress((float)i / _bitDepth);
+                    yield return progressCallback.SetProgress((float)i / BitDepth);
                 }
             }
         }
@@ -79,7 +85,7 @@ namespace AnimatorAsAssembly
         public void Initialize(int value)
         {
             CheckOverflow(value);
-            for (int i = 0; i < _bitDepth; i++)
+            for (int i = 0; i < BitDepth; i++)
             {
                 if ((value & (1 << i)) != 0)
                 {
@@ -97,7 +103,7 @@ namespace AnimatorAsAssembly
         /// <throws> An exception if the value will overflow the register </throws>
         void CheckOverflow(int value)
         {
-            int max = (int)Math.Pow(2, _bitDepth);
+            int max = (int)Math.Pow(2, BitDepth);
             if (value >= max)
             {
                 Debug.LogWarning(IntegerOverflowException(value, max));
@@ -119,7 +125,7 @@ namespace AnimatorAsAssembly
             }
             truncatedBinary = gapFill + truncatedBinary;
 
-            return String.Format("The value {0} is too large for a register of bit depth {1}. The maximum value is {2}. The value will be truncated to {3}.\n{4}\n{5}", value, _bitDepth, max, Truncate(value), originalBinary, truncatedBinary);
+            return String.Format("The value {0} is too large for a register of bit depth {1}. The maximum value is {2}. The value will be truncated to {3}.\n{4}\n{5}", value, BitDepth, max, Truncate(value), originalBinary, truncatedBinary);
         }
 
         /// <summary> Truncate the given value to the bit depth of this register </summary>
@@ -128,19 +134,19 @@ namespace AnimatorAsAssembly
         private int Truncate(int value)
         {
             //return what the value would be if the extra bits were dropped
-            return value & ((int)Math.Pow(2, _bitDepth) - 1);
+            return value & ((int)Math.Pow(2, BitDepth) - 1);
         }
 
         AacFlBoolParameter[] GenerateRegisterNames(string name)
         {
-            string[] names = new string[_bitDepth];
-            for (int i = 0; i < _bitDepth; i++)
+            string[] names = new string[BitDepth];
+            for (int i = 0; i < BitDepth; i++)
             {
                 names[i] = name + "_" + i;
             }
 
-            AacFlBoolParameter[] boolParams = new AacFlBoolParameter[_bitDepth];
-            for (int i = 0; i < _bitDepth; i++)
+            AacFlBoolParameter[] boolParams = new AacFlBoolParameter[BitDepth];
+            for (int i = 0; i < BitDepth; i++)
             {
                 boolParams[i] = FX.BoolParameter(names[i]);
             }

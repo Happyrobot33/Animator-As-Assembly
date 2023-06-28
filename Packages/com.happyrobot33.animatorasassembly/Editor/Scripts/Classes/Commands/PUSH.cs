@@ -60,10 +60,10 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("PUSH");
 
             //copy from the stack to the buffer in the entry state
-            for (int i = 0; i < Globals._StackSize - 1; i++)
+            for (int i = 0; i < Globals.StackSize - 1; i++)
             {
                 entry.DrivingCopies(Globals._Stack[i], Globals._StackBuffer[i + 1]);
-                yield return PB.SetProgress((float)i / (Globals._StackSize - 1) / 2);
+                yield return PB.SetProgress((float)i / (Globals.StackSize - 1) / 2);
             }
 
             //copy the value to the stack
@@ -77,10 +77,10 @@ namespace AnimatorAsAssembly.Commands
             }
 
             //copy from the buffer to the stack in the exit state
-            for (int i = 0; i < Globals._StackSize - 1; i++)
+            for (int i = 0; i < Globals.StackSize - 1; i++)
             {
                 exit.DrivingCopies(Globals._StackBuffer[i], Globals._Stack[i]);
-                yield return PB.SetProgress(0.5f + ((float)i / (Globals._StackSize - 1) / 2));
+                yield return PB.SetProgress(0.5f + ((float)i / (Globals.StackSize - 1) / 2));
             }
 
             entry.AutomaticallyMovesTo(exit);

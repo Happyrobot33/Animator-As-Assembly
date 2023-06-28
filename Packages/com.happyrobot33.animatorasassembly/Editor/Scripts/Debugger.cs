@@ -96,10 +96,10 @@ namespace AnimatorAsAssembly
                 SimpleRegister register = new SimpleRegister()
                 {
                     name = registerName,
-                    bits = new string[Register._bitDepth],
+                    bits = new string[Register.BitDepth],
                     expanded = false
                 };
-                for (int i = 0; i < Register._bitDepth; i++)
+                for (int i = 0; i < Register.BitDepth; i++)
                 {
                     register.bits[i] = registerName + "_" + i;
                 }
@@ -247,9 +247,9 @@ namespace AnimatorAsAssembly
                     EditorGUI.indentLevel++;
                     //get the stack params
                     LyumaAv3Runtime.Av3EmuParameterAccess[] stackParams =
-                        new LyumaAv3Runtime.Av3EmuParameterAccess[Globals._StackSize];
+                        new LyumaAv3Runtime.Av3EmuParameterAccess[Globals.StackSize];
                     int usedStackPositions = 0;
-                    for (int i = 0; i < Globals._StackSize; i++)
+                    for (int i = 0; i < Globals.StackSize; i++)
                     {
                         stackParams[i] = GetParam(Globals.STACKSTRINGPREFIX + "REAL/" + i);
                         if (stackParams[i].intVal != -1)
@@ -259,7 +259,7 @@ namespace AnimatorAsAssembly
                     }
                     //display a label for remaining space on the stack
                     EditorGUILayout.LabelField(
-                        "Stack space remaining: " + (Globals._StackSize - usedStackPositions) + "/" + Globals._StackSize, EditorStyles.miniBoldLabel
+                        "Stack space remaining: " + (Globals.StackSize - usedStackPositions) + "/" + Globals.StackSize, EditorStyles.miniBoldLabel
                     );
 
                     //display the stack raw
@@ -348,8 +348,8 @@ namespace AnimatorAsAssembly
 
                         #region get the register bits
                         //get the register values as bools
-                        bool[] registerValues = new bool[Register._bitDepth];
-                        for (int j = 0; j < Register._bitDepth; j++)
+                        bool[] registerValues = new bool[Register.BitDepth];
+                        for (int j = 0; j < Register.BitDepth; j++)
                         {
                             registerValues[j] = GetParam(register.bits[j]).boolVal;
                         }
@@ -358,7 +358,7 @@ namespace AnimatorAsAssembly
                         #region display decimal
                         //show the register values in decimal both int and uint
                         int decimalValue_uint = 0;
-                        for (int j = 0; j < Register._bitDepth; j++)
+                        for (int j = 0; j < Register.BitDepth; j++)
                         {
                             if (registerValues[j])
                             {
@@ -366,9 +366,9 @@ namespace AnimatorAsAssembly
                             }
                         }
                         int decimalValue_int = decimalValue_uint;
-                        if (decimalValue_int > Mathf.Pow(2, Register._bitDepth - 1))
+                        if (decimalValue_int > Mathf.Pow(2, Register.BitDepth - 1))
                         {
-                            decimalValue_int -= (int)Mathf.Pow(2, Register._bitDepth);
+                            decimalValue_int -= (int)Mathf.Pow(2, Register.BitDepth);
                         }
                         EditorGUILayout.LabelField("Decimal (uint): " + decimalValue_uint);
                         EditorGUILayout.LabelField("Decimal (int): " + decimalValue_int);
@@ -385,7 +385,7 @@ namespace AnimatorAsAssembly
                         EditorGUILayout.BeginHorizontal();
                         GUIContent label = new GUIContent("Binary:");
                         EditorGUILayout.LabelField(label);
-                        for (int j = Register._bitDepth - 1; j >= 0; j--)
+                        for (int j = Register.BitDepth - 1; j >= 0; j--)
                         {
                             registerValues[j] = EditorGUILayout.Toggle(registerValues[j]);
                         }

@@ -490,11 +490,11 @@ namespace AnimatorAsAssembly
 
             //show the bit depth as a field
             GUIContent bitDepthLabel = new GUIContent("Bit Depth", "The bit depth of the register. This is static for compilers in the unity editor.");
-            Register.SetBitDepth(EditorGUILayout.IntField(bitDepthLabel, Register._bitDepth));
+            Register.SetBitDepth(EditorGUILayout.IntField(bitDepthLabel, Register.BitDepth));
 
             //show the stack size as a field
             GUIContent stackSizeLabel = new GUIContent("Stack Size", "The size of the stack. This is static for compilers in the unity editor.");
-            Globals.SetStackSize(EditorGUILayout.IntField(stackSizeLabel, Globals._StackSize));
+            Globals.SetStackSize(EditorGUILayout.IntField(stackSizeLabel, Globals.StackSize));
 
             //create horizontal divider
             EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);

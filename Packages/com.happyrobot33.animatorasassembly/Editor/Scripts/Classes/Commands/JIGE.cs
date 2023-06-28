@@ -89,14 +89,14 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JIGE_EXIT");
             _jumpAway = _layer.NewState("JIGE_JUMPAWAY");
 
-            AacFlState[] states = new AacFlState[Register._bitDepth];
-            for (int i = Register._bitDepth - 1; i >= 0; i--)
+            AacFlState[] states = new AacFlState[Register.BitDepth];
+            for (int i = Register.BitDepth - 1; i >= 0; i--)
             {
                 states[i] = _layer.NewState("JIGE_" + i);
             }
 
             //go top down through the bits due to endianness
-            for (int i = Register._bitDepth - 1; i >= 0; i--)
+            for (int i = Register.BitDepth - 1; i >= 0; i--)
             {
                 AacFlState nextState = _jumpAway; //this is different from JIG to make it check for equal
                 if (i != 0)
@@ -116,11 +116,11 @@ namespace AnimatorAsAssembly.Commands
                 //if A.bit == B.bit, then check the next bit
                 next.When(A[i].IsTrue()).And(B[i].IsTrue()).Or().When(A[i].IsFalse()).And(B[i].IsFalse());
 
-                PB.SetProgress((float)i / Register._bitDepth);
+                PB.SetProgress((float)i / Register.BitDepth);
             }
 
             //connect the entry to the first state
-            entry.AutomaticallyMovesTo(states[Register._bitDepth - 1]);
+            entry.AutomaticallyMovesTo(states[Register.BitDepth - 1]);
 
             PB.Finish();
             Profiler.EndSample();

@@ -88,16 +88,16 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JEQ_EXIT");
             _jumpAway = _layer.NewState("JEQ_JUMPAWAY");
 
-            AacFlState[] states = new AacFlState[Register._bitDepth];
-            for (int i = 0; i < Register._bitDepth; i++)
+            AacFlState[] states = new AacFlState[Register.BitDepth];
+            for (int i = 0; i < Register.BitDepth; i++)
             {
                 states[i] = _layer.NewState("JEQ_" + i);
             }
 
-            for (int i = 0; i < Register._bitDepth; i++)
+            for (int i = 0; i < Register.BitDepth; i++)
             {
                 AacFlState next = _jumpAway;
-                if (i < Register._bitDepth - 1)
+                if (i < Register.BitDepth - 1)
                 {
                     next = states[i + 1];
                 }
@@ -111,7 +111,7 @@ namespace AnimatorAsAssembly.Commands
                 transitionTrue.When(A[i].IsTrue()).And(B[i].IsTrue());
                 transitionFalse.When(A[i].IsFalse()).And(B[i].IsFalse());
                 states[i].AutomaticallyMovesTo(exit);
-                yield return PB.SetProgress((float)i / Register._bitDepth);
+                yield return PB.SetProgress((float)i / Register.BitDepth);
             }
 
             entry.AutomaticallyMovesTo(states[0]);

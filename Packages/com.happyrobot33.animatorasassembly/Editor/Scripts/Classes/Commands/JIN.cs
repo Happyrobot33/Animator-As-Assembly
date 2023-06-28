@@ -66,8 +66,8 @@ namespace AnimatorAsAssembly.Commands
             AacFlState exit = _layer.NewState("JIN_EXIT");
             _jumpAway = _layer.NewState("JIN_JUMPAWAY");
 
-            entry.TransitionsTo(exit).When(A[Register._bitDepth - 1].IsFalse());
-            entry.TransitionsTo(_jumpAway).When(A[Register._bitDepth - 1].IsTrue());
+            entry.TransitionsTo(exit).When(A[Register.BitDepth - 1].IsFalse());
+            entry.TransitionsTo(_jumpAway).When(A[Register.BitDepth - 1].IsTrue());
 
             PB.Finish();
             Profiler.EndSample();

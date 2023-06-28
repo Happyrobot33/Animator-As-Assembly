@@ -76,7 +76,7 @@ namespace AnimatorAsAssembly.Commands
             Result.Set(entry, 0);
 
             List<AacFlState> interstates = new List<AacFlState>();
-            for (int i = 0; i < Register._bitDepth; i++)
+            for (int i = 0; i < Register.BitDepth; i++)
             {
                 Profiler.BeginSample("MUL_INTERMEDIATE_" + i);
                 //create a new intermediate state
@@ -125,7 +125,7 @@ namespace AnimatorAsAssembly.Commands
                 interstates.Add(interExit);
                 Profiler.EndSample();
 
-                yield return PB.SetProgress((float)i / (Register._bitDepth + 1));
+                yield return PB.SetProgress((float)i / (Register.BitDepth + 1));
             }
 
             MOV movToResult = new MOV(Result, A, _layer, _progressWindow);

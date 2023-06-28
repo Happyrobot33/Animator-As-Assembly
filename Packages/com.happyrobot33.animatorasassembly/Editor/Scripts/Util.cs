@@ -294,7 +294,17 @@ namespace AnimatorAsAssembly
         public const string CLOCKSTRING = "INTERNAL/CLOCK";
 
         /// <summary> How many elements the stack can hold </summary>
-        public static int _StackSize = 10;
+        public static int StackSize
+        {
+            get
+            {
+                return EditorPrefs.GetInt("AAA_STACKSIZE", 10);
+            }
+            set
+            {
+                EditorPrefs.SetInt("AAA_STACKSIZE", value);
+            }
+        }
         /// <summary> The stack parameters </summary>
         public static AacFlIntParameter[] _Stack;
         public static AacFlIntParameter[] _StackBuffer;
@@ -322,9 +332,9 @@ namespace AnimatorAsAssembly
         /// <remarks> All values in the stack are initialized to -1 </remarks>
         private void CreateStack(AacFlLayer Layer)
         {
-            AacFlIntParameter[] stack = new AacFlIntParameter[_StackSize];
-            AacFlIntParameter[] stackBuffer = new AacFlIntParameter[_StackSize];
-            for (int i = 0; i < _StackSize; i++)
+            AacFlIntParameter[] stack = new AacFlIntParameter[StackSize];
+            AacFlIntParameter[] stackBuffer = new AacFlIntParameter[StackSize];
+            for (int i = 0; i < StackSize; i++)
             {
                 stack[i] = Layer.IntParameter(STACKSTRINGPREFIX + "REAL/" + i);
                 stackBuffer[i] = Layer.IntParameter(STACKSTRINGPREFIX + "BUFFER/" + i);
@@ -339,7 +349,7 @@ namespace AnimatorAsAssembly
         /// <param name="size">The new stack size</param>
         public static void SetStackSize(int size)
         {
-            _StackSize = size;
+            StackSize = size;
         }
     }
 }

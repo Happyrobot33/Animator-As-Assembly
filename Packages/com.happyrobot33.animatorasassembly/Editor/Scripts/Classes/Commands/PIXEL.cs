@@ -72,14 +72,14 @@ namespace AnimatorAsAssembly.Commands
 
                 //transition from entry to here if the X and Y registers match the current pixel
                 //we need to convert the X and Y of the pixel of this state to a binary array
-                string xBinary = Convert.ToString(x, 2).PadLeft(Register._bitDepth, '0');
-                string yBinary = Convert.ToString(y, 2).PadLeft(Register._bitDepth, '0');
+                string xBinary = Convert.ToString(x, 2).PadLeft(Register.BitDepth, '0');
+                string yBinary = Convert.ToString(y, 2).PadLeft(Register.BitDepth, '0');
 
                 //make a transition from entry to here if each bit of the X and Y registers match the current pixel
                 AacFlTransition transition = entry.TransitionsTo(states[i]);
-                for (int j = 0; j < Register._bitDepth; j++)
+                for (int j = 0; j < Register.BitDepth; j++)
                 {
-                    int inverseJ = Register._bitDepth - j - 1;
+                    int inverseJ = Register.BitDepth - j - 1;
                     bool checkBitX = xBinary[inverseJ] == '1';
                     bool checkBitY = yBinary[inverseJ] == '1';
 

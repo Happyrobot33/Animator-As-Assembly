@@ -61,7 +61,7 @@ namespace AnimatorAsAssembly.Commands
 
             //copy them back
             AacFlState emptyBuffer = _layer.NewState("SHR");
-            for (int i = 0; i < Register._bitDepth - shift; i++)
+            for (int i = 0; i < Register.BitDepth - shift; i++)
             {
                 emptyBuffer.DrivingCopies(BUFFER[i + shift], A[i]);
             }
@@ -69,7 +69,7 @@ namespace AnimatorAsAssembly.Commands
 
             for (int i = 0; i < shift; i++)
             {
-                emptyBuffer.Drives(A[Register._bitDepth - i - 1], false);
+                emptyBuffer.Drives(A[Register.BitDepth - i - 1], false);
             }
             yield return PB.SetProgress(0.6f);
 
