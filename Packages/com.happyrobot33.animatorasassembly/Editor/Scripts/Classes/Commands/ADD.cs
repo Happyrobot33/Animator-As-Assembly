@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
 using AnimatorAsAssembly;
 using UnityEngine.Profiling;
+using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -130,7 +131,8 @@ namespace AnimatorAsAssembly.Commands
             }
 
             //set the carry bit if the last FullAdder has a carry bit
-            FullAdders[FullAdders.Length - 1].carryCalc.Drives(CARRYOUT, true);
+            FullAdders[FullAdders.Length - 1].carry.Drives(CARRYOUT, true);
+            FullAdders[FullAdders.Length - 1].sumAndCarry.Drives(CARRYOUT, true);
 
             //use a MOV to copy the sum register to the C register
             MOV mov = new MOV(SUM, C, _layer, _progressWindow);
@@ -146,7 +148,6 @@ namespace AnimatorAsAssembly.Commands
             mov.Exit.AutomaticallyMovesTo(exit);
 
             PB.Finish();
-
             Profiler.EndSample();
             callback(
                 Util.CombineStates(

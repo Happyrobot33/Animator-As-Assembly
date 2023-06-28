@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
 using AnimatorAsAssembly;
 using UnityEngine.Profiling;
+using UnityEngine;
 
 namespace AnimatorAsAssembly.Commands
 {
@@ -15,8 +16,8 @@ namespace AnimatorAsAssembly.Commands
         public AacFlBoolParameter C;
         public AacFlBoolParameter SUM;
         public AacFlBoolParameter CARRY;
-        public AacFlState carryCalc;
-        public AacFlState sumCalc;
+        public AacFlState carry;
+        public AacFlState sumAndCarry;
 
         /// <summary> Adds two bits and a carry bit </summary>
         /// <param name="A"> The first bit to add </param>
@@ -40,59 +41,59 @@ namespace AnimatorAsAssembly.Commands
             this._progressWindow = progressWindow;
         }
 
+        // previous iterations of this microcode used individual half adders
+        // this new version hardcodes the truth table for a full adder as it actually saves cycles, and isnt too complicated
+        //
+        // A   B   C   SUM CARRY
+        // 0   0   0   0   0
+        // 0   0   1   1   0
+        // 0   1   0   1   0
+        // 0   1   1   0   1
+        // 1   0   0   1   0
+        // 1   0   1   0   1
+        // 1   1   0   0   1
+        // 1   1   1   1   1
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("FULLADDER");
-            ProgressBar PB = this._progressWindow.RegisterNewProgressBar("FULLADDER", "");
-            yield return PB.SetProgress(0f);
             //entry state
             AacFlState entry = _layer.NewState("FULLADDER");
+            AacFlState exit = _layer.NewState("FULLADDER/EXIT");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);
 
-            //first half adder
-            HALFADDER firstHalfAdder = new HALFADDER(A, B, _layer, _progressWindow, 0);
-            yield return firstHalfAdder;
-            yield return PB.SetProgress(0.5f);
+            AacFlState sum = _layer.NewState("FULLADDER/SUM");
+            sum.Drives(SUM, true);
+            this.carry = _layer.NewState("FULLADDER/CARRY");
+            carry.Drives(CARRY, true);
+            this.sumAndCarry = _layer.NewState("FULLADDER/SUMANDCARRY");
+            sumAndCarry.Drives(SUM, true).Drives(CARRY, true);
 
-            //second half adder
-            HALFADDER secondHalfAdder = new HALFADDER(
-                firstHalfAdder.SUM,
-                C,
-                _layer,
-                _progressWindow,
-                1
-            );
-            yield return secondHalfAdder;
-            yield return PB.SetProgress(1f);
+            //A = 0, B = 0, C = 0
+            entry.TransitionsTo(exit).When(A.IsFalse()).And(B.IsFalse()).And(C.IsFalse());
+            //SUM
+            entry.TransitionsTo(sum).When(A.IsFalse()).And(B.IsFalse()).And(C.IsTrue());
+            entry.TransitionsTo(sum).When(A.IsFalse()).And(B.IsTrue()).And(C.IsFalse());
+            entry.TransitionsTo(sum).When(A.IsTrue()).And(B.IsFalse()).And(C.IsFalse());
+            //CARRY
+            entry.TransitionsTo(carry).When(A.IsFalse()).And(B.IsTrue()).And(C.IsTrue());
+            entry.TransitionsTo(carry).When(A.IsTrue()).And(B.IsFalse()).And(C.IsTrue());
+            entry.TransitionsTo(carry).When(A.IsTrue()).And(B.IsTrue()).And(C.IsFalse());
+            //SUM AND CARRY
+            entry.AutomaticallyMovesTo(sumAndCarry);
 
-            //set carry based on either half adders carry flag
-            carryCalc = _layer.NewState("FULLADDER CARRY");
-            carryCalc.Drives(CARRY, true);
-
-            //exit state
-            AacFlState exit = _layer.NewState("FULLADDER EXIT");
-            exit.DrivingCopies(secondHalfAdder.SUM, SUM);
-
-            //entry state
-            entry.AutomaticallyMovesTo(firstHalfAdder.States[0]);
-            firstHalfAdder.Exit.AutomaticallyMovesTo(secondHalfAdder.Entry);
-            secondHalfAdder.Exit
-                .TransitionsTo(carryCalc)
-                .When(firstHalfAdder.CARRY.IsTrue())
-                .Or()
-                .When(secondHalfAdder.CARRY.IsTrue());
-            carryCalc.AutomaticallyMovesTo(exit);
-            secondHalfAdder.Exit.AutomaticallyMovesTo(exit);
-            PB.Finish();
+            //transitions out
+            sum.AutomaticallyMovesTo(exit);
+            carry.AutomaticallyMovesTo(exit);
+            sumAndCarry.AutomaticallyMovesTo(exit);
 
             Profiler.EndSample();
             callback(
                 Util.CombineStates(
                     entry,
-                    firstHalfAdder,
-                    secondHalfAdder,
-                    carryCalc,
+                    sum,
+                    carry,
+                    sumAndCarry,
                     exit
                 )
             );

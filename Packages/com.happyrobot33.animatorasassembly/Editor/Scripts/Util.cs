@@ -8,6 +8,7 @@ using UnityEditor.Animations;
 using System.Collections.Generic;
 using Unity.EditorCoroutines.Editor;
 using System.Numerics;
+using AnimatorAsAssembly.Commands;
 
 namespace AnimatorAsAssembly
 {
@@ -19,12 +20,54 @@ namespace AnimatorAsAssembly
         /// <returns>The concatenated array</returns>
         public static AacFlState[] CombineStates(params object[] objects)
         {
-            Profiler.BeginSample("Combine States");
-            object[][] arrays = objects
-                .Select(x => x is object[] v ? v : new object[] { x })
-                .ToArray();
-            Profiler.EndSample();
-            return arrays.Aggregate((a, b) => a.Concat(b).ToArray()).Cast<AacFlState>().ToArray();
+            // this will combine any combination of these objects into a single AacFlState array
+            // AacFlState
+            // AacFlState[]
+            // OPCODE
+            // OPCODE[]
+            // any objects that derive from OPCODE will first need to be casted to OPCODE then to AacFlState[]
+
+            //create a list to store the states
+            List<AacFlState> states = new List<AacFlState>();
+
+            //iterate through all the objects
+            foreach (var obj in objects)
+            {
+                //if the object is a state
+                if (obj is AacFlState)
+                {
+                    //add the state to the list
+                    states.Add(obj as AacFlState);
+                }
+                //if the object is an array of states
+                else if (obj is AacFlState[])
+                {
+                    //add all the states to the list
+                    states.AddRange(obj as AacFlState[]);
+                }
+                //if the object is an opcode
+                else if (obj is OPCODE)
+                {
+                    //add the opcode's states array to the list
+                    states.AddRange((obj as OPCODE)?.States);
+                }
+                //if the object is an array of opcodes
+                else if (obj is OPCODE[])
+                {
+                    //add all the opcode's states to the list
+                    foreach (var opcode in obj as OPCODE[])
+                    {
+                        states.AddRange(opcode.States);
+                    }
+                }
+                //if the object is anything else
+                else
+                {
+                    //throw an error
+                    throw new Exception("Invalid object type");
+                }
+            }
+            return states.ToArray();
         }
 
         /// <summary> Reverses a string </summary>

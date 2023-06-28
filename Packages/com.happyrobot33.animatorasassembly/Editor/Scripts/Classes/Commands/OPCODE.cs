@@ -92,6 +92,7 @@ namespace AnimatorAsAssembly.Commands
         }
 
         //implicit conversion to AacFlState[] returns the states array
+        /// <summary> Implicit conversion to AacFlState[] returns the states array </summary>
         public static implicit operator AacFlState[](OPCODE opCode)
         {
             if (opCode.States == null)
@@ -99,6 +100,15 @@ namespace AnimatorAsAssembly.Commands
                 throw new Exception("States have not been compiled yet!");
             }
             return opCode.States;
+        }
+
+        public static implicit operator List<AacFlState>(OPCODE opCode)
+        {
+            if (opCode.States == null)
+            {
+                throw new Exception("States have not been compiled yet!");
+            }
+            return opCode.States.ToList();
         }
 
         //implicit conversion to a EditorCoroutine starts a coroutine to compile the opcode
