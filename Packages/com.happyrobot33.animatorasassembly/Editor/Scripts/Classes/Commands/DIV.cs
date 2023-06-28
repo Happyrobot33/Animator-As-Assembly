@@ -10,6 +10,8 @@ namespace AnimatorAsAssembly.Commands
 {
     public class DIV : OPCODE
     {
+        public Register ReturnQuotient;
+        public Register ReturnRemainder;
         public Register Numerator;
         public Register Denominator;
         public Register Remainder;
@@ -21,9 +23,9 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="A"> The register to multiply </param>
         /// <param name="B"> The register to multiply by </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
-        public DIV(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        public DIV(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow, Register ReturnQuotient = null, Register ReturnRemainder = null)
         {
-            Init(A, B, Layer, progressWindow);
+            Init(A, B, Layer, progressWindow, ReturnQuotient, ReturnRemainder);
         }
 
         /// <summary> Divides a register by another. Quotient is stored in A, remainder is stored in B </summary>
@@ -36,10 +38,14 @@ namespace AnimatorAsAssembly.Commands
         }
 
         /// <summary> Initialize the variables. This is seperate so multiple constructors can use the same init functionality </summary>
-        void Init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow)
+        void Init(Register A, Register B, AacFlLayer Layer, ComplexProgressBar progressWindow, Register ReturnQuotient = null, Register ReturnRemainder = null)
         {
             this.Numerator = A;
             this.Denominator = B;
+
+            //set these to A and B if they are null
+            this.ReturnQuotient = ReturnQuotient ?? A;
+            this.ReturnRemainder = ReturnRemainder ?? B;
             this.Remainder = new Register("INTERNAL/DIV/REMAINDER", Layer);
             this.Quotient = new Register("INTERNAL/DIV/QUOTIENT", Layer);
             this._layer = Layer.NewStateGroup("DIV");
@@ -104,11 +110,11 @@ namespace AnimatorAsAssembly.Commands
 
             mov.Exit.AutomaticallyMovesTo(jige.Entry);
 
-            MOV returnQ = new MOV(Quotient, Numerator, _layer, _progressWindow);
+            MOV returnQ = new MOV(Quotient, ReturnQuotient, _layer, _progressWindow);
             yield return returnQ;
             yield return PB.SetProgress(0.7f);
 
-            MOV returnR = new MOV(Remainder, Denominator, _layer, _progressWindow);
+            MOV returnR = new MOV(Remainder, ReturnRemainder, _layer, _progressWindow);
             yield return returnR;
             yield return PB.SetProgress(1f);
 

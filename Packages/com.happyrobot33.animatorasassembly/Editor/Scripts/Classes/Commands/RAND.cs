@@ -21,7 +21,6 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public RAND(Register min, Register max, Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            throw new NotImplementedException("Not complete yet");
             Init(min, max, A, Layer, progressWindow);
         }
 
@@ -30,7 +29,6 @@ namespace AnimatorAsAssembly.Commands
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public RAND(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
-            throw new NotImplementedException("Not complete yet");
             //split the args into the register and the value
             if (args.Length == 3)
             {
@@ -63,44 +61,41 @@ namespace AnimatorAsAssembly.Commands
             return new string[] { "instruction", "register", "register", "register" };
         }
 
+        //possible implementation
+        // (random % (max - min)) + min
         public override IEnumerator<EditorCoroutine> GenerateStates(Action<AacFlState[]> callback)
         {
             Profiler.BeginSample("RAND");
             ProgressBar PB = this._progressWindow.RegisterNewProgressBar("RAND", "");
             AacFlState entry = _layer.NewState("RAND");
-            AacFlState exit = _layer.NewState("EXIT");
 
-            //clamping
-            MOV clampMin = new MOV(min, A, _layer, _progressWindow);
-            yield return clampMin;
-            clampMin.Exit.AutomaticallyMovesTo(exit);
-            MOV clampMax = new MOV(max, A, _layer, _progressWindow);
-            yield return clampMax;
-            clampMax.Exit.AutomaticallyMovesTo(exit);
-
+            //create a random number
             for (int i = 0; i < Register.BitDepth; i++)
             {
                 entry.DrivingRandomizes(A[i], 0.5f);
             }
 
-            //if A is less than min, set A to min
-            JIG minCheck = new JIG(A, min, _layer, _progressWindow);
-            yield return minCheck;
+            Register subtractionResult = new Register("INTERNAL/RAND/SUB", _layer);
+            SUB calcSubtraction = new SUB(max, min, subtractionResult, _layer, _progressWindow);
+            yield return calcSubtraction;
+            yield return PB.SetProgress(0.33f);
 
-            //if A is greater than max, set A to max
-            JIG maxCheck = new JIG(A, max, _layer, _progressWindow);
-            yield return maxCheck;
+            DIV calcModulo = new DIV(A, subtractionResult, _layer, _progressWindow);
+            yield return calcModulo;
+            yield return PB.SetProgress(0.66f);
 
-            minCheck.Link(maxCheck.Entry);
-            minCheck.Exit.AutomaticallyMovesTo(clampMin.Entry);
-            maxCheck.Link(clampMax.Entry);
-            maxCheck.Exit.AutomaticallyMovesTo(exit);
+            //for some context, subtractionResult now has the remainder of the division
+            ADD calcAddition = new ADD(subtractionResult, min, A, _layer, _progressWindow);
+            yield return calcAddition;
+            yield return PB.SetProgress(1f);
 
-            entry.AutomaticallyMovesTo(minCheck.Entry);
+            entry.AutomaticallyMovesTo(calcSubtraction.Entry);
+            calcSubtraction.Exit.AutomaticallyMovesTo(calcModulo.Entry);
+            calcModulo.Exit.AutomaticallyMovesTo(calcAddition.Entry);
 
             PB.Finish();
             Profiler.EndSample();
-            callback(Util.CombineStates(entry, clampMin, clampMax, minCheck, maxCheck, exit));
+            callback(Util.CombineStates(entry, calcSubtraction, calcModulo, calcAddition));
         }
     }
 }

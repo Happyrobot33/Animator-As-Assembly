@@ -285,6 +285,9 @@ namespace AnimatorAsAssembly
         /// <summary> A permanent reference to the number 1 in Register form </summary>
         public static Register _One;
 
+        /// <summary> A dummy register used for discarding values </summary>
+        public static Register _Discard;
+
         /// <summary> The current program counter </summary>
         public static AacFlIntParameter _ProgramCounter;
         public const string PROGRAMCOUNTERSTRING = "INTERNAL/PC";
@@ -326,6 +329,7 @@ namespace AnimatorAsAssembly
             _ProgramCounter = Layer.IntParameter(PROGRAMCOUNTERSTRING);
             CreateStack(Layer);
             _Clock = Layer.IntParameter(CLOCKSTRING);
+            _Discard = new Register("INTERNAL/DISCARD", Layer);
         }
 
         /// <summary> Create a new stack </summary>

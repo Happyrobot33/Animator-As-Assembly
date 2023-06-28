@@ -147,6 +147,11 @@ namespace AnimatorAsAssembly
 
         Debugger debugger = null;
 
+        public override bool RequiresConstantRepaint()
+        {
+            return true;
+        }
+
         public override void OnInspectorGUI()
         {
             debugger = (Debugger)target;
@@ -155,10 +160,11 @@ namespace AnimatorAsAssembly
             if (Application.isPlaying)
             {
                 //repaint if not paused
-                if (!EditorApplication.isPaused)
+                /* if (!EditorApplication.isPaused)
                 {
+                    //repaint just self
                     Repaint();
-                }
+                } */
                 #region current executing instruction
                 //get the program counter
                 int PC = PCparam.intVal;
@@ -235,6 +241,40 @@ namespace AnimatorAsAssembly
                     EditorApplication.isPaused = false;
                 }
                 EditorGUILayout.EndHorizontal();
+                #endregion
+
+                #region Display Emulation
+                // emulate the on-avatar display
+                // create a x y grid of boxes
+                int pixelSize = 12;
+                EditorGUILayout.BeginVertical(GUILayout.Height(pixelSize));
+                for (int y = 0; y < debugger.aaa.displayHeight; y++)
+                {
+                    EditorGUILayout.BeginHorizontal(GUILayout.Width(pixelSize * debugger.aaa.displayWidth));
+                    for (int x = 0; x < debugger.aaa.displayWidth; x++)
+                    {
+                        //create a filled box
+                        Color color = new Color();
+                        //get if the pixel bool is on
+                        LyumaAv3Runtime.Av3EmuParameterAccess pixelBool =
+                            new LyumaAv3Runtime.Av3EmuParameterAccess()
+                            {
+                                runtime = debugger.runtime,
+                                paramName = Globals.PIXELBUFFERSTRINGPREFIX + x + "," + y
+                            };
+                        color.r = pixelBool.boolVal ? 1 : 0;
+                        color.g = color.r;
+                        color.b = color.r;
+                        color.a = 1;
+                        //draw the box
+                        EditorGUI.DrawRect(
+                            GUILayoutUtility.GetRect(pixelSize, pixelSize),
+                            color
+                        );
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                EditorGUILayout.EndVertical();
                 #endregion
 
                 #region call stack
