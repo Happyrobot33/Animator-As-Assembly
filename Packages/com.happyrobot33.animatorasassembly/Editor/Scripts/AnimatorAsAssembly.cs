@@ -303,6 +303,9 @@ namespace AnimatorAsAssembly
             {
                 string line = lines[i];
 
+                //trim spaces from the start of the line
+                line = line.TrimStart(' ');
+
                 //remove comments
                 //completely remove them from the output
                 if (line.StartsWith("#"))

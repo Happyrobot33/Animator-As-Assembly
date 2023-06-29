@@ -180,6 +180,7 @@ namespace AnimatorAsAssembly
             for (int i = 0; i <= totalLines - 1; i++)
             {
                 string line = lines[i];
+                line = line.TrimStart(' ');
                 //only count and add a line number if the line does not have a #, or is not empty
                 if (line.Length > 0 && line[0] != '#')
                 {
@@ -243,6 +244,11 @@ namespace AnimatorAsAssembly
             {
                 Profiler.BeginSample("Line Highlighting");
                 string line = lines[i];
+                string trimmedLine = line.TrimStart(' ');
+                //trim any spaces from the start, remembering the amount trimmed
+                int spacesTrimmed = line.Length - trimmedLine.Length;
+                line = trimmedLine;
+
                 //if the line is not empty
                 if (line.Length > 0)
                 {
@@ -344,6 +350,7 @@ namespace AnimatorAsAssembly
                     }
                 }
                 //replace the line with the colored line
+                line = line.PadLeft(line.Length + spacesTrimmed, ' ');
                 lines[i] = line;
                 Profiler.EndSample();
             }
