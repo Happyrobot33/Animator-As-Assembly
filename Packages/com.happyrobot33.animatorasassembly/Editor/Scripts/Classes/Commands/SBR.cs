@@ -55,10 +55,9 @@ namespace AnimatorAsAssembly.Commands
         }
 
         //override the linker to do nothing
-        public override void Link(List<OPCODE> opcodes)
+        public override void Linker()
         {
-            //only increment the PC
-            Entry.DrivingIncreases(Globals._ProgramCounter, 1);
+            DriveProgramCounter();
         }
     }
 }

@@ -59,39 +59,32 @@ namespace AnimatorAsAssembly.Commands
         }
 
         //override the linker to jump back to the JSR instead
-        public override void Link(List<OPCODE> opcodes)
+        public override void Linker()
         {
-            //find self in list using the ID
-            int index = opcodes.FindIndex(x => x.ID == this.ID);
-
-            //link the previous opcode to this one
-            //skip if this is the first opcode
-            if (index != 0)
-            {
-                opcodes[index - 1].Exit.AutomaticallyMovesTo(Entry);
-            }
+            DriveProgramCounter();
+            LinkToPrevious();
 
             //find our subroutine name by looking for the previous SBR
             string name = "";
-            for (int i = index - 1; i >= 0; i--)
+            for (int i = FindSelfInProgram() - 1; i >= 0; i--)
             {
-                if (opcodes[i].GetType() == typeof(SBR))
+                if (ReferenceProgram[i].GetType() == typeof(SBR))
                 {
-                    SBR sbr = (SBR)opcodes[i];
+                    SBR sbr = (SBR)ReferenceProgram[i];
                     name = sbr.name;
                     break;
                 }
             }
 
             //find all JSR opcodes that link to this RTS
-            foreach (OPCODE opcode in opcodes)
+            foreach (OPCODE opcode in ReferenceProgram)
             {
                 if (opcode.GetType() == typeof(JSR))
                 {
                     JSR jsr = (JSR)opcode;
                     if (jsr.name == name)
                     {
-                        int jsrIndex = opcodes.FindIndex(x => x.ID == jsr.ID);
+                        int jsrIndex = ReferenceProgram.FindIndex(x => x.ID == jsr.ID);
                         //transition to the SBR if the PC equals the index of the JSR
                         Exit.TransitionsTo(jsr.Exit).When(Globals._ProgramCounter.IsEqualTo(jsrIndex));
                     }

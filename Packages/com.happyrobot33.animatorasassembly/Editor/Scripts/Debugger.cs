@@ -169,16 +169,9 @@ namespace AnimatorAsAssembly
                 //get the program counter
                 int PC = PCparam.intVal;
                 EditorGUILayout.LabelField("PC: " + PC);
-                if (PC == 0)
-                {
-                    EditorGUILayout.LabelField("At entry vector");
-                }
-                else
-                {
-                    EditorGUILayout.LabelField(
-                        "Current instruction: " + debugger.aaa.instructionStringList[PC - 1]
-                    );
-                }
+                EditorGUILayout.LabelField(
+                    "Current instruction: " + debugger.aaa.instructionStringList[PC]
+                );
                 #endregion
 
                 #region total clock

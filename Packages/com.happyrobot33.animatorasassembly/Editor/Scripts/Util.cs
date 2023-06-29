@@ -85,11 +85,34 @@ namespace AnimatorAsAssembly
             //completely empty the controller except for the base information
             AnimatorController newController = new AnimatorController();
 
-            //overwrite the asset
-            EditorUtility.CopySerialized(newController, controller);
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+
+                //remove every sub asset
+                foreach (var subAsset in AssetDatabase.LoadAllAssetsAtPath(
+                    AssetDatabase.GetAssetPath(controller)
+                ))
+                {
+                    if (subAsset != controller)
+                    {
+                        AssetDatabase.RemoveObjectFromAsset(subAsset);
+                    }
+                }
+
+                //overwrite the controller
+                EditorUtility.CopySerialized(newController, controller);
+
+                EditorUtility.SetDirty(controller);
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
 
             //save the asset
             AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         /// <summary> Cleans a animator controller by removing all unreferenced sub assets </summary>

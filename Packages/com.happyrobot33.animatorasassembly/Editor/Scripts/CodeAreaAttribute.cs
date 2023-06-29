@@ -11,33 +11,19 @@ namespace AnimatorAsAssembly
     /// <remarks> Certain characters are not counted as a line, such as # </remarks>
     public class CodeAreaAttribute : PropertyAttribute
     {
-        public bool readOnly = false;
-
-        public GUIStyle lineStyleRead = new GUIStyle(EditorStyles.label);
-        public GUIStyle codeStyleRead = new GUIStyle(EditorStyles.label);
-        public GUIStyle lineStyleWrite = new GUIStyle(EditorStyles.textArea);
-        public GUIStyle codeStyleWrite = new GUIStyle(EditorStyles.textArea);
+        public GUIStyle lineStyle = new GUIStyle(EditorStyles.textArea);
+        public GUIStyle codeStyle = new GUIStyle(EditorStyles.textArea);
 
         public CodeAreaAttribute()
         {
             InitStyles();
         }
 
-        public CodeAreaAttribute(bool readOnly)
-        {
-            InitStyles();
-            this.readOnly = readOnly;
-        }
-
         public void InitStyles()
         {
-            codeStyleRead.wordWrap = false;
-            codeStyleRead.alignment = TextAnchor.UpperLeft;
-            lineStyleRead.alignment = TextAnchor.UpperRight;
-
-            codeStyleWrite.wordWrap = false;
-            codeStyleWrite.alignment = TextAnchor.UpperLeft;
-            lineStyleWrite.alignment = TextAnchor.UpperRight;
+            codeStyle.wordWrap = false;
+            codeStyle.alignment = TextAnchor.UpperLeft;
+            lineStyle.alignment = TextAnchor.UpperRight;
 
             //font set
             //first load all resources in the resources folder
@@ -54,19 +40,14 @@ namespace AnimatorAsAssembly
                     break;
                 }
             }
-            codeStyleRead.font = font;
-            codeStyleWrite.font = font;
-            codeStyleWrite.richText = true;
-            lineStyleRead.font = font;
-            lineStyleWrite.font = font;
+            codeStyle.font = font;
+            codeStyle.richText = true;
+            lineStyle.font = font;
 
             //font size
             const int size = 14;
-            codeStyleRead.fontSize = size;
-            codeStyleWrite.fontSize = size;
-            lineStyleRead.fontSize = size;
-            lineStyleWrite.fontSize = size;
-            //Debug.Log(font);
+            codeStyle.fontSize = size;
+            lineStyle.fontSize = size;
         }
     }
 
@@ -82,20 +63,99 @@ namespace AnimatorAsAssembly
             .Enum
             .Forest;
 
+        string coloredText = "";
+        private readonly Texture2D backgroundTexture = new Texture2D(1, 1);
+        bool onVisible = false;
+        CodeAreaAttribute codeAreaAttribute;
+        GUIStyle invisibleStyle;
+        private void OnEnable(SerializedProperty property)
+        {
+            coloredText = SyntaxHighlight(
+                        property.stringValue,
+                        SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme)
+                    );
+
+            //get a reference to the attribute
+            codeAreaAttribute = (CodeAreaAttribute)attribute;
+
+            //check if the editorpref exists
+            if (!EditorPrefs.HasKey("CodeAreaTheme"))
+            {
+                //if it doesnt, set it to the default theme
+                EditorPrefs.SetInt(
+                    "CodeAreaTheme",
+                    (int)SyntaxHighlighterSchemes.Themes.Enum.Forest
+                );
+            }
+
+            //set the current theme to the one saved in the editor prefs
+            currentSelectedTheme = (SyntaxHighlighterSchemes.Themes.Enum)
+                EditorPrefs.GetInt("CodeAreaTheme", (int)currentSelectedTheme);
+
+            //initialize the invisible style
+            invisibleStyle = new GUIStyle(codeAreaAttribute.codeStyle);
+            //create a invisible texture
+            Texture2D invisTexture = new Texture2D(1, 1);
+            invisTexture.SetPixel(0, 0, Color.clear);
+            invisTexture.Apply();
+            invisibleStyle.normal.background = invisTexture;
+            invisibleStyle.hover.background = invisTexture;
+            invisibleStyle.active.background = invisTexture;
+            invisibleStyle.focused.background = invisTexture;
+            Color clear = Color.clear;
+            invisibleStyle.normal.textColor = clear;
+            invisibleStyle.hover.textColor = clear;
+            invisibleStyle.active.textColor = clear;
+            invisibleStyle.focused.textColor = clear;
+
+            SetBackgroundTexture(currentSelectedTheme);
+        }
+
+        private void SetBackgroundTexture(SyntaxHighlighterSchemes.Themes.Enum theme)
+        {
+            backgroundTexture.SetPixel(
+                0,
+                0,
+                ColorUtility.TryParseHtmlString(
+                    SyntaxHighlighterSchemes.Themes.GetTheme(theme).background,
+                    out Color color
+                )
+                    ? color
+                    : Color.white
+                );
+            backgroundTexture.Apply();
+
+            codeAreaAttribute.codeStyle.normal.background = backgroundTexture;
+            codeAreaAttribute.codeStyle.hover.background = backgroundTexture;
+            codeAreaAttribute.codeStyle.active.background = backgroundTexture;
+            codeAreaAttribute.codeStyle.focused.background = backgroundTexture;
+
+            codeAreaAttribute.lineStyle.normal.background = backgroundTexture;
+            codeAreaAttribute.lineStyle.hover.background = backgroundTexture;
+            codeAreaAttribute.lineStyle.active.background = backgroundTexture;
+            codeAreaAttribute.lineStyle.focused.background = backgroundTexture;
+        }
+
         // TODO: Figure out why TF this renders differently on a vertical monitor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            //get a reference to the attribute
-            CodeAreaAttribute codeAreaAttribute = (CodeAreaAttribute)attribute;
+            //make a fake OnEnable function
+            if (!onVisible)
+            {
+                OnEnable(property);
+                onVisible = true;
+            }
 
             EditorGUI.BeginChangeCheck();
 
-            position.height = codeAreaAttribute.codeStyleWrite.CalcHeight(
+            position.height = codeAreaAttribute.codeStyle.CalcHeight(
                 new GUIContent(property.stringValue),
                 0
             );
 
             const int lineNumberWidth = 30;
+
+            string userText;
 
             //create some space on the left for the line numbers by making a text area rect
             Rect textAreaRect = new Rect(
@@ -114,7 +174,6 @@ namespace AnimatorAsAssembly
             );
             string lineNumbers = "";
 
-            Profiler.BeginSample("Line Numbering");
             int LineNumber = 0;
             totalLines = property.stringValue.Split('\n').Length;
             string[] lines = property.stringValue.Split('\n');
@@ -132,113 +191,57 @@ namespace AnimatorAsAssembly
                     lineNumbers += "\n";
                 }
             }
-            Profiler.EndSample();
 
-            Profiler.BeginSample("Read Only Check");
-            //if the attribute is not read only, make it editable
-            if (!codeAreaAttribute.readOnly)
+            //create a dropdown menu for the code style
+            currentSelectedTheme = (SyntaxHighlighterSchemes.Themes.Enum)
+                EditorGUILayout.EnumPopup(label: "Theme", selected: currentSelectedTheme);
+
+            //ALL of this mess essentially just makes a label behind the text area the user interacts with that is highlighted.
+            //The box the user is actually typing into is completely invisible
+            EditorGUI.LabelField(
+                textAreaRect,
+                coloredText,
+                codeAreaAttribute.codeStyle
+            );
+            userText = EditorGUI.TextArea(
+                textAreaRect,
+                property.stringValue,
+                invisibleStyle
+            );
+            EditorGUI.LabelField(
+                lineNumbersRect,
+                lineNumbers,
+                codeAreaAttribute.lineStyle
+            );
+
+            //if the user has changed the text, update whats needed
+            if (EditorGUI.EndChangeCheck())
             {
-                //check if the editorpref exists
-                if (!EditorPrefs.HasKey("CodeAreaTheme"))
-                {
-                    //if it doesnt, set it to the default theme
-                    EditorPrefs.SetInt(
-                        "CodeAreaTheme",
-                        (int)SyntaxHighlighterSchemes.Themes.Enum.Forest
+                //remove any zero width spaces
+                userText = userText.Replace("\u200B", "");
+                //remove any carriage returns
+                userText = userText.Replace("\r", "");
+                property.stringValue = userText;
+                coloredText = SyntaxHighlight(
+                        property.stringValue,
+                        SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme)
                     );
-                }
-
-                //set the current theme to the one saved in the editor prefs
-                currentSelectedTheme = (SyntaxHighlighterSchemes.Themes.Enum)
-                    EditorPrefs.GetInt("CodeAreaTheme", (int)currentSelectedTheme);
-
-                //create a dropdown menu for the code style
-                currentSelectedTheme = (SyntaxHighlighterSchemes.Themes.Enum)
-                    EditorGUILayout.EnumPopup(label: "Theme", selected: currentSelectedTheme);
 
                 //save the selected theme to the editor prefs
                 EditorPrefs.SetInt("CodeAreaTheme", (int)currentSelectedTheme);
 
-                //create a dummy fill texture2d with the background color of the text area
-                Texture2D fillTexture = new Texture2D(1, 1);
-                fillTexture.SetPixel(
-                    0,
-                    0,
-                    SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme).background
-                );
-                fillTexture.Apply();
-
-                codeAreaAttribute.codeStyleWrite.normal.background = fillTexture;
-                codeAreaAttribute.codeStyleWrite.hover.background = fillTexture;
-                codeAreaAttribute.codeStyleWrite.active.background = fillTexture;
-                codeAreaAttribute.codeStyleWrite.focused.background = fillTexture;
-
-                codeAreaAttribute.lineStyleWrite.normal.background = fillTexture;
-                codeAreaAttribute.lineStyleWrite.hover.background = fillTexture;
-                codeAreaAttribute.lineStyleWrite.active.background = fillTexture;
-                codeAreaAttribute.lineStyleWrite.focused.background = fillTexture;
-
-                //ALL of this mess essentially just makes a label behind the text area the user interacts with that is highlighted.
-                //The box the user is actually typing into is completely invisible
-                EditorGUI.LabelField(
-                    textAreaRect,
-                    SyntaxHighlight(
-                        property.stringValue,
-                        SyntaxHighlighterSchemes.Themes.GetTheme(currentSelectedTheme)
-                    ),
-                    codeAreaAttribute.codeStyleWrite
-                );
-                GUIStyle invis = new GUIStyle(codeAreaAttribute.codeStyleWrite);
-                //create a invisible texture
-                Texture2D invisTexture = new Texture2D(1, 1);
-                invisTexture.SetPixel(0, 0, Color.clear);
-                invisTexture.Apply();
-                invis.normal.background = invisTexture;
-                invis.hover.background = invisTexture;
-                invis.active.background = invisTexture;
-                invis.focused.background = invisTexture;
-                Color clear = Color.clear;
-                invis.normal.textColor = clear;
-                invis.hover.textColor = clear;
-                invis.active.textColor = clear;
-                invis.focused.textColor = clear;
-                string text = EditorGUI.TextArea(
-                    textAreaRect,
-                    property.stringValue,
-                    invis
-                );
-
-                //remove any zero width spaces
-                text = text.Replace("\u200B", "");
-                //remove any carriage returns
-                text = text.Replace("\r", "");
-                //GUI.contentColor = Random.ColorHSV();
-                property.stringValue = text;
-                EditorGUI.LabelField(
-                    lineNumbersRect,
-                    lineNumbers,
-                    codeAreaAttribute.lineStyleWrite
-                );
+                SetBackgroundTexture(currentSelectedTheme);
             }
-            else
-            {
-                EditorGUI.LabelField(
-                    textAreaRect,
-                    property.stringValue,
-                    codeAreaAttribute.codeStyleRead
-                );
-                EditorGUI.LabelField(lineNumbersRect, lineNumbers, codeAreaAttribute.lineStyleRead);
-            }
-            EditorGUI.EndChangeCheck();
-            Profiler.EndSample();
         }
 
         internal string SyntaxHighlight(string text, SyntaxHighlighterSchemes.ColorTheme Theme)
         {
+            Profiler.BeginSample("Syntax Highlighting");
             //loop through each line
             string[] lines = text.Split('\n');
             for (int i = 0; i <= lines.Length - 1; i++)
             {
+                Profiler.BeginSample("Line Highlighting");
                 string line = lines[i];
                 //if the line is not empty
                 if (line.Length > 0)
@@ -271,6 +274,7 @@ namespace AnimatorAsAssembly
                                     //colorize each part of the code
                                     for (int j = 0; j <= codeSplit.Length - 1; j++)
                                     {
+                                        Profiler.BeginSample("Reflection Based Colorization");
                                         //color index
                                         string color;
                                         try
@@ -284,7 +288,7 @@ namespace AnimatorAsAssembly
                                         }
                                         //get the color itself
                                         object value = Theme.GetType().GetField(color).GetValue(Theme);
-                                        Color colorValue;
+                                        string colorValue;
                                         //if the color is null, color it as error
                                         if (value == null)
                                         {
@@ -292,9 +296,10 @@ namespace AnimatorAsAssembly
                                         }
                                         else
                                         {
-                                            colorValue = (Color)value;
+                                            colorValue = (string)value;
                                         }
                                         codeSplit[j] = Colorize(codeSplit[j], colorValue);
+                                        Profiler.EndSample();
                                     }
                                 }
                                 else
@@ -340,6 +345,7 @@ namespace AnimatorAsAssembly
                 }
                 //replace the line with the colored line
                 lines[i] = line;
+                Profiler.EndSample();
             }
 
             //recombine the lines
@@ -348,6 +354,7 @@ namespace AnimatorAsAssembly
             {
                 text += line + "\n";
             }
+            Profiler.EndSample();
             //exclude the last newline
             return text.Substring(0, text.Length - 1);
         }
@@ -361,11 +368,6 @@ namespace AnimatorAsAssembly
             return text;
         }
 
-        internal string Colorize(string text, Color color)
-        {
-            return Colorize(text, "#" + ColorUtility.ToHtmlStringRGB(color));
-        }
-
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             if (property.propertyType == SerializedPropertyType.String)
@@ -373,7 +375,7 @@ namespace AnimatorAsAssembly
                 //get a reference to the attribute
                 CodeAreaAttribute codeAreaAttribute = (CodeAreaAttribute)attribute;
 
-                return codeAreaAttribute.codeStyleWrite.CalcHeight(
+                return codeAreaAttribute.codeStyle.CalcHeight(
                     new GUIContent(property.stringValue),
                     1
                 );

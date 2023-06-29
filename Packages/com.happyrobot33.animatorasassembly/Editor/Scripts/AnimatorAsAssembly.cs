@@ -455,11 +455,17 @@ namespace AnimatorAsAssembly
         {
             Profiler.BeginSample("LinkMicroCode");
 
+            //give each instruction a reference to the instruction list
+            foreach (Commands.OPCODE instruction in Instructions)
+            {
+                instruction.ReferenceProgram = Instructions;
+            }
+
             //loop through the instructions, linking the relevant states based on the instruction
             for (int i = 0; i < Instructions.Count; i++)
             {
                 //link the states
-                Instructions[i].Link(Instructions);
+                Instructions[i].Linker();
             }
 
             Profiler.EndSample();

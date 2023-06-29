@@ -122,70 +122,10 @@ namespace AnimatorAsAssembly.Commands
             yield break;
         }
 
-        public override void Link(List<OPCODE> opcodes)
+        public override void Linker()
         {
-            //find self in list using the ID
-            int index = opcodes.FindIndex(x => x.ID == this.ID);
-
-            //link the previous opcode to this one
-            //skip if this is the first opcode
-            if (index != 0)
-            {
-                opcodes[index - 1].Exit.AutomaticallyMovesTo(Entry);
-            }
-
-            //find the subroutine that this LBL is in
-            int subroutineStart = 0;
-            int subroutineEnd = opcodes.Count - 1;
-            //first determine if we are in a subroutine by checking up
-            for (int i = index; i >= 0; i--)
-            {
-                if (opcodes[i].GetType() == typeof(SBR))
-                {
-                    //we are in a subroutine
-                    //set the start of the subroutine to the index of the SUB
-                    subroutineStart = i;
-                    break;
-                }
-            }
-
-            //find the end of the subroutine
-            for (int i = index; i < opcodes.Count; i++)
-            {
-                if (opcodes[i].GetType() == typeof(RTS))
-                {
-                    //we are in a subroutine
-                    //set the start of the subroutine to the index of the SUB
-                    subroutineEnd = i;
-                    break;
-                }
-            }
-
-            //find the LBL
-            foreach (OPCODE opcode in opcodes)
-            {
-                if (opcode.GetType() == typeof(LBL))
-                {
-                    //check if it is within the subroutine
-                    if (opcodes.IndexOf(opcode) < subroutineStart || opcodes.IndexOf(opcode) > subroutineEnd)
-                    {
-                        //not in the subroutine
-                        continue;
-                    }
-                    LBL lbl = (LBL)opcode;
-                    if (lbl.name == LBLname)
-                    {
-                        //transition to the LBL
-                        _jumpAway.AutomaticallyMovesTo(lbl.Entry);
-
-                        //set the program counter to the index of the LBL
-                        _jumpAway.Drives(Globals._ProgramCounter, opcodes.IndexOf(lbl));
-                        break;
-                    }
-                }
-            }
-
-            base.Link(opcodes);
+            LinkToPrevious();
+            LinkToLBL(_jumpAway, LBLname);
         }
 
         public void Link(AacFlState destination)

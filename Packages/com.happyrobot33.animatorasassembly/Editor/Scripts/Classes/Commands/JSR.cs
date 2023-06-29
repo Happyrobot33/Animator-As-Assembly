@@ -63,20 +63,13 @@ namespace AnimatorAsAssembly.Commands
         }
 
         //override the linker to jump to the subroutine instead
-        public override void Link(List<OPCODE> opcodes)
+        public override void Linker()
         {
-            //find self in list using the ID
-            int index = opcodes.FindIndex(x => x.ID == this.ID);
-
-            //link the previous opcode to this one
-            //skip if this is the first opcode
-            if (index != 0)
-            {
-                opcodes[index - 1].Exit.AutomaticallyMovesTo(Entry);
-            }
+            LinkToPrevious();
+            DriveProgramCounter();
 
             //find the subroutine
-            foreach (OPCODE opcode in opcodes)
+            foreach (OPCODE opcode in ReferenceProgram)
             {
                 if (opcode.GetType() == typeof(SBR))
                 {
@@ -86,8 +79,8 @@ namespace AnimatorAsAssembly.Commands
                         //transition to the SBR
                         jumpState.AutomaticallyMovesTo(sbr.Entry);
 
-                        //set the program counter to the index of the LBL
-                        jumpState.Drives(Globals._ProgramCounter, opcodes.IndexOf(sbr));
+                        //set the program counter to the index of the SBR
+                        jumpState.Drives(Globals._ProgramCounter, ReferenceProgram.IndexOf(sbr));
                         break;
                     }
                 }
