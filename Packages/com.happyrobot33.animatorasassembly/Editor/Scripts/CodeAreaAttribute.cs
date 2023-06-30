@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.Profiling;
 using System;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AnimatorAsAssembly
 {
@@ -233,6 +236,22 @@ namespace AnimatorAsAssembly
 
                 SetBackgroundTexture(currentSelectedTheme);
             }
+
+            //create copy buttons for different visual styles
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Copy Rich Text"))
+            {
+                GUIUtility.systemCopyBuffer = coloredText;
+            }
+            if (GUILayout.Button("Copy Discord Text"))
+            {
+                GUIUtility.systemCopyBuffer = "```ansi\n" + RichTextToASCII(coloredText) + "\n```";
+            }
+            if (GUILayout.Button("Copy Plain Text"))
+            {
+                GUIUtility.systemCopyBuffer = userText;
+            }
+            EditorGUILayout.EndHorizontal();
         }
 
         internal string SyntaxHighlight(string text, SyntaxHighlighterSchemes.ColorTheme Theme)
@@ -373,6 +392,84 @@ namespace AnimatorAsAssembly
                 return "<color=" + color + ">" + text + "</color>";
             }
             return text;
+        }
+
+        /// <summary> This will take in a string with rich text color tags and return a string using ascii color codes instead </summary>
+        private string RichTextToASCII(string text)
+        {
+            //use this regex to get just the color tags
+            //the first group is the color hex itself
+            Regex tag = new Regex("<color=#([a-zA-Z0-9]+)>");
+            //remove all closing tags
+            text = text.Replace("</color>", "");
+            //get all the matches
+            MatchCollection tagMatches = tag.Matches(text);
+            //loop through each match
+            foreach (Match match in tagMatches)
+            {
+                //get the color tag
+                string colorTag = match.Groups[1].Value;
+
+                //find the closest ascii color
+                string asciiColor = HexToANSI(colorTag);
+
+                //replace the color tag with the ascii color
+                text = text.Replace(match.Value, asciiColor);
+            }
+            return text;
+        }
+
+        public static string HexToANSI(string hex)
+        {
+            //static dictionary of all the colors available and their equivalent RGB
+            Dictionary<Color, int> colorTable = new Dictionary<Color, int>()
+            {
+                { DecimalColor(70, 70, 70), 30 }, //gray
+                { DecimalColor(255,0,0), 31}, //red
+                { DecimalColor(0,255,0), 32}, //green
+                { DecimalColor(255,255,0), 33}, //yellow
+                { DecimalColor(0,0,255), 34}, //blue
+                { DecimalColor(247,15,232), 35}, //pink
+                { DecimalColor(0,247,247), 34}, //cyan
+                { DecimalColor(255,255,255), 35}, //white
+            };
+            //convert the hex to a color
+            ColorUtility.TryParseHtmlString("#" + hex, out Color color);
+
+            //get the closest color
+            int closestColor = ClosestColor(colorTable.Keys.ToList(), color);
+
+            //get the int value of the color
+            int colorValue = colorTable[colorTable.Keys.ToList()[closestColor]];
+
+            //return the ascii color code
+            return "\u001b[0;" + colorValue + "m";
+        }
+
+        // closed match in RGB space
+        public static int ClosestColor(List<Color> colors, Color target)
+        {
+            var colorDiffs = colors.Select(n => ColorDiff(n, target)).Min(n => n);
+            return colors.FindIndex(n => ColorDiff(n, target) == colorDiffs);
+        }
+
+        // distance in RGB space
+        public static int ColorDiff(Color c1, Color c2)
+        {
+            int c1r = (int)(c1.r * 255);
+            int c1g = (int)(c1.g * 255);
+            int c1b = (int)(c1.b * 255);
+            int c2r = (int)(c2.r * 255);
+            int c2g = (int)(c2.g * 255);
+            int c2b = (int)(c2.b * 255);
+            return (int)Math.Sqrt(((c1r - c2r) * (c1r - c2r))
+                                + ((c1g - c2g) * (c1g - c2g))
+                                + ((c1b - c2b) * (c1b - c2b)));
+        }
+
+        private static Color DecimalColor(int r, int g, int b)
+        {
+            return new Color(r / 255f, g / 255f, b / 255f);
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
