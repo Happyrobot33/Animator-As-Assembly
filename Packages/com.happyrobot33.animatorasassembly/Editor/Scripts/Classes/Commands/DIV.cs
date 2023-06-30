@@ -99,16 +99,16 @@ namespace AnimatorAsAssembly.Commands
             yield return PB.SetProgress(0.3f);
 
             //while R >= D
-            JIGE jige = new JIGE(Remainder, Denominator, _layer, _progressWindow);
-            yield return jige;
+            JIF jif = new JIF(Remainder, Conditional.GreaterThanOrEqual, Denominator, _layer, _progressWindow);
+            yield return jif;
             yield return PB.SetProgress(0.4f);
-            jige.Link(sub.Entry);
+            jif.Link(sub.Entry);
 
             sub.Exit.AutomaticallyMovesTo(inc.Entry);
-            inc.Exit.AutomaticallyMovesTo(jige.Entry);
+            inc.Exit.AutomaticallyMovesTo(jif.Entry);
             #endregion
 
-            mov.Exit.AutomaticallyMovesTo(jige.Entry);
+            mov.Exit.AutomaticallyMovesTo(jif.Entry);
 
             MOV returnQ = new MOV(Quotient, ReturnQuotient, _layer, _progressWindow);
             yield return returnQ;
@@ -118,7 +118,7 @@ namespace AnimatorAsAssembly.Commands
             yield return returnR;
             yield return PB.SetProgress(1f);
 
-            jige.Exit.AutomaticallyMovesTo(returnQ.Entry);
+            jif.Exit.AutomaticallyMovesTo(returnQ.Entry);
             returnQ.Exit.AutomaticallyMovesTo(returnR.Entry);
             returnR.Exit.AutomaticallyMovesTo(exit);
 
@@ -130,7 +130,7 @@ namespace AnimatorAsAssembly.Commands
                     mov,
                     sub,
                     inc,
-                    jige,
+                    jif,
                     returnQ,
                     returnR,
                     exit

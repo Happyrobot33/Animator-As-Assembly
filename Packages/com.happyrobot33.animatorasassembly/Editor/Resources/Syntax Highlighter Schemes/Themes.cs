@@ -22,7 +22,7 @@ namespace AnimatorAsAssembly.SyntaxHighlighterSchemes
         public string label;
         public string instruction;
         public string subroutine;
-        public string base0F;
+        public string conditional;
     }
 
     public static class Themes
@@ -49,7 +49,7 @@ namespace AnimatorAsAssembly.SyntaxHighlighterSchemes
                     label = "#00ad9c",
                     instruction = "#407ee7",
                     subroutine = "#6666ea",
-                    base0F = "#c33ff3"
+                    conditional = "#c33ff3"
                 };
                 return theme;
             }
@@ -77,7 +77,7 @@ namespace AnimatorAsAssembly.SyntaxHighlighterSchemes
                     label = "#5485b6",
                     instruction = "#7272ca",
                     subroutine = "#8464c4",
-                    base0F = "#bd5187"
+                    conditional = "#bd5187"
                 };
                 return theme;
             }
@@ -105,7 +105,7 @@ namespace AnimatorAsAssembly.SyntaxHighlighterSchemes
                     label = "#22a2c9",
                     instruction = "#3d8fd1",
                     subroutine = "#6679cc",
-                    base0F = "#9c637a"
+                    conditional = "#9c637a"
                 };
                 return theme;
             }
@@ -133,7 +133,7 @@ namespace AnimatorAsAssembly.SyntaxHighlighterSchemes
                     label = "#2d8f6f",
                     instruction = "#257fad",
                     subroutine = "#6b6bb8",
-                    base0F = "#b72dd2"
+                    conditional = "#b72dd2"
                 };
                 return theme;
             }
