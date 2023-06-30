@@ -19,9 +19,6 @@ namespace AnimatorAsAssembly.Commands
         public AacFlState carry;
         public AacFlState sumAndCarry;
 
-        // this is a predefined entry from another opcode. Saves a cycle for each full adder used
-        public AacFlState maskedEntry;
-
         /// <summary> Adds two bits and a carry bit </summary>
         /// <param name="A"> The first bit to add </param>
         /// <param name="B"> The second bit to add </param>
@@ -60,7 +57,7 @@ namespace AnimatorAsAssembly.Commands
         {
             Profiler.BeginSample("FULLADDER");
             //entry state
-            AacFlState entry = maskedEntry ?? _layer.NewState("FULLADDER/ENTRY");
+            AacFlState entry = _layer.NewState("FULLADDER");
             AacFlState exit = _layer.NewState("FULLADDER/EXIT");
             entry.Drives(SUM, false);
             entry.Drives(CARRY, false);

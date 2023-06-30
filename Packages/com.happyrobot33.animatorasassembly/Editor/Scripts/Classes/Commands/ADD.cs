@@ -119,15 +119,8 @@ namespace AnimatorAsAssembly.Commands
                     prevcarry = _layer.BoolParameter("ADD/PREV_CARRY");
                     FullAdders[j - 1].Exit.DrivingCopies(FullAdders[j - 1].CARRY, prevcarry);
                 }
-
-                // either the previous adder's exit or the main entry state
-                AacFlState previousAdderExit = j == 0 ? entry : FullAdders[j - 1].Exit;
-
                 // create a FullAdder for each bit
-                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, _layer, _progressWindow)
-                {
-                    maskedEntry = previousAdderExit
-                };
+                FULLADDER adder = new FULLADDER(A[j], B[j], prevcarry, _layer, _progressWindow);
                 yield return adder;
                 //copy the sum bit to the output register
                 adder.Exit.DrivingCopies(adder.SUM, SUM[j]);
@@ -145,7 +138,12 @@ namespace AnimatorAsAssembly.Commands
             MOV mov = new MOV(SUM, C, _layer, _progressWindow);
             yield return mov;
 
-            //link the full adder to mov
+            //link the full adders together
+            entry.AutomaticallyMovesTo(FullAdders[0].Entry);
+            for (int j = 0; j < Register.BitDepth - 1; j++)
+            {
+                FullAdders[j].Exit.AutomaticallyMovesTo(FullAdders[j + 1].Entry);
+            }
             FullAdders[Register.BitDepth - 1].Exit.AutomaticallyMovesTo(mov.Entry);
             mov.Exit.AutomaticallyMovesTo(exit);
 
