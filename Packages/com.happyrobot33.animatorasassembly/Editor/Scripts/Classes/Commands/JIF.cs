@@ -243,7 +243,7 @@ namespace AnimatorAsAssembly.Commands
                     default:
                         throw new Exception("Invalid conditional");
                 }
-                yield return PB.SetProgress((float)i / Register.BitDepth);
+                yield return PB.SetProgress(1.0f - ((float)i / Register.BitDepth));
             }
 
             //connect the entry to the first state
