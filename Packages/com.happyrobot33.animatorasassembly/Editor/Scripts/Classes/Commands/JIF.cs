@@ -49,23 +49,35 @@ namespace AnimatorAsAssembly.Commands
             Conditional parsedCond;
             switch (args[1])
             {
+                case "==":
+                    parsedCond = Conditional.Equal;
+                    break;
+                case "!=":
+                    parsedCond = Conditional.NotEqual;
+                    break;
                 case "<":
                     parsedCond = Conditional.LessThan;
+                    break;
+                case "!<":
+                    parsedCond = Conditional.GreaterThanOrEqual;
                     break;
                 case "<=":
                     parsedCond = Conditional.LessThanOrEqual;
                     break;
-                case "==":
-                    parsedCond = Conditional.Equal;
+                case "!<=":
+                    parsedCond = Conditional.GreaterThan;
                     break;
                 case ">=":
                     parsedCond = Conditional.GreaterThanOrEqual;
                     break;
+                case "!>=":
+                    parsedCond = Conditional.LessThan;
+                    break;
                 case ">":
                     parsedCond = Conditional.GreaterThan;
                     break;
-                case "!=":
-                    parsedCond = Conditional.NotEqual;
+                case "!>":
+                    parsedCond = Conditional.LessThanOrEqual;
                     break;
                 default:
                     throw new Exception("Invalid conditional: " + args[1]);
