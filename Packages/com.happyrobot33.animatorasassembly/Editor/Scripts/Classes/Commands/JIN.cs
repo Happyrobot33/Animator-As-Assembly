@@ -26,14 +26,14 @@ namespace AnimatorAsAssembly.Commands
             Init(A, lblname, Layer, progressWindow);
         }
 
-        /// <summary> Jumps to a state if A > B </summary>
+        /// <summary> Jumps to a state if A is negative </summary>
         /// <remarks> This is used for internal jumps. After initializing this, Link(state) MUST be called </remarks>
         public JIN(Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
         {
             Init(A, "INTERNAL", Layer, progressWindow);
         }
 
-        /// <summary> Jumps to a LBL if A > B </summary>
+        /// <summary> Jumps to a LBL if A is negative </summary>
         /// <param name="args"> The arguments for the command </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public JIN(string[] args, AacFlLayer Layer, ComplexProgressBar progressWindow)
