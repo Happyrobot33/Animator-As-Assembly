@@ -55,7 +55,7 @@ namespace AnimatorAsAssembly.Commands
             //if the value is not negative, skip the absolute
             JIN skip = new JIN(A, _layer, _progressWindow);
             yield return skip;
-            skip.Link(exit);
+            skip.Exit.AutomaticallyMovesTo(exit);
             entry.AutomaticallyMovesTo(skip.Entry);
 
             yield return PB.SetProgress(0.33f);
@@ -63,7 +63,7 @@ namespace AnimatorAsAssembly.Commands
             //if it is negative, make it positive
             NEG neg = new NEG(A, _layer, _progressWindow);
             yield return neg;
-            skip.Exit.AutomaticallyMovesTo(neg.Entry);
+            skip.Link(neg.Entry);
             neg.Exit.AutomaticallyMovesTo(exit);
 
             yield return PB.SetProgress(1);
