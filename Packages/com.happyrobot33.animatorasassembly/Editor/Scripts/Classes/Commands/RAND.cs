@@ -15,8 +15,8 @@ namespace AnimatorAsAssembly.Commands
         public Register max;
 
         /// <summary> Loads a register with a random value with a defined range </summary>
-        /// <param name="MIN"> The minimum value that can be generated </param>
-        /// <param name="MAX"> The maximum value that can be generated </param>
+        /// <param name="min"> The minimum value that can be generated </param>
+        /// <param name="max"> The maximum value that can be generated </param>
         /// <param name="A"> The register to load the value into </param>
         /// <param name="Layer"> The FX controller that this command is linked to </param>
         public RAND(Register min, Register max, Register A, AacFlLayer Layer, ComplexProgressBar progressWindow)
